@@ -2,7 +2,11 @@
   "id": "canakkale_1915",
   "title": "Çanakkale Deniz Zaferi",
   "date": "18 Mart 1915",
-  "summary": "Müttefik donanması Çanakkale Boğazı'nı geçip İstanbul'a ulaşmak istedi. Erenköy Koyu'na 8 Mart gecesi Nusret mayın gemisinin döşediği 26 mayın ve kıyı bataryaları saldırıyı durdurdu. Bouvet, Irresistible ve Ocean zırhlıları battı; Inflexible ve Gaulois ağır hasar gördü.",
+  "sides": {
+    "ottoman": "Osmanlı Devleti (İttifak Devletleri)",
+    "enemy": "İtilaf Devletleri (Britanya, Fransa)"
+  },
+  "summary": "İtilaf donanması Çanakkale Boğazı'nı geçip İstanbul'a ulaşmak istedi. Erenköy Koyu'na 8 Mart gecesi Nusret mayın gemisinin döşediği 26 mayın ve kıyı bataryaları saldırıyı durdurdu. Bouvet, Irresistible ve Ocean zırhlıları battı; Inflexible ve Gaulois ağır hasar gördü.",
   "leaders_ottoman": [
     {
       "name": "Mustafa Kemal",
@@ -25,7 +29,7 @@
       "role": "Nusret'in mayın döşeme uzmanı"
     }
   ],
-  "leaders_allied": [
+  "leaders_entente": [
     {
       "name": "Amiral Sackville Carden / John de Robeck",
       "role": "Britanya Doğu Akdeniz Filosu komutanı"

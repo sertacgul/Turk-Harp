@@ -5,13 +5,13 @@ on:
   pull_request:
 
 env:
-  GODOT_VERSION: "4.3"
+  GODOT_VERSION: "4.7"
 
 jobs:
   test:
     runs-on: ubuntu-latest
     container:
-      image: barichello/godot-ci:4.3
+      image: barichello/godot-ci:4.7
     steps:
       - uses: actions/checkout@v4
       - name: Import project
@@ -35,7 +35,7 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     container:
-      image: barichello/godot-ci:4.3
+      image: barichello/godot-ci:4.7
     strategy:
       fail-fast: false
       matrix:

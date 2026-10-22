@@ -26,7 +26,7 @@ var max_detection := 0.0
 var patrols: Array = []
 var _cam_yaw_offset := 0.0
 
-var _joy: VirtualJoystick
+var _joy: TouchStick
 var _drop_btn: Button
 var _det_bar: ProgressBar
 var _map: MiniMap
@@ -51,7 +51,7 @@ func _ready() -> void:
 	Sfx.listener = cam
 	set_objective("Brifing")
 	show_briefing("Nusret'in Gecesi", "7-8 Mart 1915 · Erenköy Koyu",
-		"Müttefik gemileri her gece boğazı ışıldaklarla tarıyor. Nusret mayın gemisi tüm ışıklarını söndürerek Erenköy Koyu'na süzülecek ve kıyıya paralel %d mayın döşeyecek. Bu mayınlar 18 Mart'ta düşman zırhlılarının kaderini belirleyecek." % MINE_COUNT,
+		"İtilaf gemileri her gece boğazı ışıldaklarla tarıyor. Nusret mayın gemisi tüm ışıklarını söndürerek Erenköy Koyu'na süzülecek ve kıyıya paralel %d mayın döşeyecek. Bu mayınlar 18 Mart'ta düşman zırhlılarının kaderini belirleyecek." % MINE_COUNT,
 		["W/S ya da sol kol: hız · A/D: dümen · Boşluk ya da MAYIN: mayın bırak",
 		"Işıldak huzmesine yakalanırsan tespit çubuğu dolar; dolarsa görev başarısız olur.",
 		"Altın çember içindeki koya en az %d mayın bırak, sonra Çanakkale'ye (yeşil çember) dön." % MIN_MINES,
@@ -142,7 +142,7 @@ func _build_patrols() -> void:
 
 
 func _build_controls() -> void:
-	_joy = VirtualJoystick.new()
+	_joy = TouchStick.new()
 	_joy.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 	_joy.position = Vector2(30, -250)
 	ui.add_child(_joy)
@@ -248,8 +248,8 @@ func _autopilot() -> Vector2:
 
 
 func _update_boat(delta: float) -> void:
-	var t := _joy.output.y * -1.0
-	var r := -_joy.output.x
+	var t: float = -_joy.output.y
+	var r: float = -_joy.output.x
 	if _autoplay:
 		var a := _autopilot()
 		r = -a.x
@@ -356,5 +356,5 @@ func _check_end() -> void:
 		var st := 1 + (1 if laid.size() >= 22 else 0) + (1 if max_detection < 50.0 else 0)
 		finish(true, st, 3 + laid.size() / 5 + st * 2, [
 			"%d mayın Erenköy Koyu'na döşendi." % laid.size(),
-			"Tarihte Nusret 26 mayın döşedi ve fark edilmeden döndü. Müttefikler bu hattı keşfedemedi.",
+			"Tarihte Nusret 26 mayın döşedi ve fark edilmeden döndü. İtilaf Devletleri bu hattı keşfedemedi.",
 			"Bu mayınlar 18 Mart görevinde senin bıraktığın yerlerde olacak."])

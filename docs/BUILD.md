@@ -1,6 +1,6 @@
 # Çalıştırma, Derleme ve Test
 
-Gereksinim: [Godot 4.3](https://godotengine.org/download/archive/4.3-stable/) (standart sürüm, .NET değil).
+Gereksinim: [Godot 4.7](https://godotengine.org/download/) (standart sürüm, .NET değil).
 
 ## Bilgisayarda çalıştırma (Mac / Windows / Linux)
 1. Godot'u aç, **Import** ile `project.godot` dosyasını seç.

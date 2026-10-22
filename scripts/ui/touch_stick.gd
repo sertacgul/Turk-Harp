@@ -1,4 +1,4 @@
-class_name VirtualJoystick
+class_name TouchStick
 extends Control
 ## Dokunmatik ekranlar için sanal kol. output: -1..1 aralığında vektör.
 

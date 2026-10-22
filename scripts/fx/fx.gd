@@ -33,7 +33,7 @@ static func _billboard(additive: bool) -> StandardMaterial3D:
 	if _materials.has(key):
 		return _materials[key]
 	var m := StandardMaterial3D.new()
-	# BILLBOARD_PARTICLES, Compatibility render modunda parçacık ölçeğini yok sayıyor (Godot 4.3).
+	# BILLBOARD_PARTICLES, Compatibility render modunda parçacık ölçeğini yok sayıyor.
 	m.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
 	m.billboard_keep_scale = true
 	m.vertex_color_use_as_albedo = true

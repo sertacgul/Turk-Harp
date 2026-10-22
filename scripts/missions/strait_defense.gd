@@ -1,6 +1,6 @@
 extends MissionBase
 ## 18 Mart 1915: Rumeli Mecidiye Tabyası'nın topunu yönet, diğer bataryalara hedef göster,
-## Seyit Onbaşı ile cephane taşı. Müttefik filosu tarihî üç hat halinde gelir.
+## Seyit Onbaşı ile cephane taşı. İtilaf filosu tarihî üç hat halinde gelir.
 
 const GRAVITY := Vector3(0, -40.0, 0)
 const BASE_MUZZLE_SPEED := 210.0
@@ -155,14 +155,14 @@ func _ready() -> void:
 	Sfx.listener = cam
 	set_objective("Brifing")
 	show_briefing("18 Mart: Boğaz Savunması", "18 Mart 1915 · Çanakkale Boğazı",
-		"Müttefik donanması boğazı geçip İstanbul'a ulaşmak için saldırıyor. Rumeli Mecidiye Tabyası'ndaki topu sen yönetiyorsun. Erenköy Koyu'ndaki mayınlar (%d adet) Nusret'in döşediği yerde bekliyor." % mines.size(),
+		"İtilaf donanması boğazı geçip İstanbul'a ulaşmak için saldırıyor. Rumeli Mecidiye Tabyası'ndaki topu sen yönetiyorsun. Erenköy Koyu'ndaki mayınlar (%d adet) Nusret'in döşediği yerde bekliyor." % mines.size(),
 		["Sürükle ya da W/A/S/D: nişan al · Boşluk ya da ATEŞ: atış · Z ya da DÜRBÜN: yakınlaştır",
 		"HARİTA: taktik görünüm. Bir gemiye dokunarak diğer bataryaların ateşini yoğunlaştır.",
 		"Cephane azalınca SEYİT düğmesi: Seyit Onbaşı 215 kg'lık mermiyi sırtında taşır.",
 		"Hedef: en az %d gemi batsın, %d gemi Nara'yı geçmesin. Yıldızlar: kendi topunla 2 gemi batır, tabyanı sağlam tut." % [SINK_TARGET, PASS_LIMIT],
-		"Komutanlar: Cevat Paşa (Çanakkale Müstahkem Mevki), Amiral de Robeck ve Amiral Guépratte (Müttefik)."])
+		"Komutanlar: Cevat Paşa (Osmanlı Devleti, İttifak Devletleri; Çanakkale Müstahkem Mevki), Amiral de Robeck ve Amiral Guépratte (İtilaf Devletleri)."])
 	mission_started.connect(func() -> void:
-		banner("ÇANAKKALE GEÇİLMEZ", "Müttefik donanması boğaza giriyor", 4.0))
+		banner("ÇANAKKALE GEÇİLMEZ", "İtilaf donanması boğaza giriyor", 4.0))
 
 
 func _exit_tree() -> void:
@@ -732,7 +732,7 @@ func _damage_ship(s: Ship, dmg: float, by_player := false) -> void:
 			focus = null
 
 
-# ------------------------------------------------------------------ Müttefik filosu
+# ------------------------------------------------------------------ İtilaf filosu
 
 func _spawn_ship(spec: Dictionary) -> void:
 	var s := Ship.new()
@@ -998,6 +998,6 @@ func _check_end() -> void:
 				"Batırılan gemiler: %s" % ", ".join(sunk_names),
 				"Senin topunun batırdığı: %d" % player_kills,
 				"Tarihte 18 Mart 1915'te Bouvet, Irresistible ve Ocean battı; Inflexible, Suffren ve Gaulois ağır yaralandı.",
-				"Boğaz denizden geçilemedi. Müttefikler 25 Nisan'da Gelibolu'ya çıkarma kararı aldı."])
+				"Boğaz denizden geçilemedi. İtilaf Devletleri 25 Nisan'da Gelibolu'ya çıkarma kararı aldı."])
 		else:
 			finish(false, 0, 0, ["Filo geri çekildi ama yalnızca %d gemi batırıldı (hedef %d)." % [sunk, SINK_TARGET]])

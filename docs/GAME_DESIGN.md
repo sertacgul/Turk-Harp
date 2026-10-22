@@ -18,7 +18,7 @@ Türk tarihinin gerçek savaşlarını, oyuncunun hem **bireysel** (top başınd
 | Conkbayırı (Ağustos) | Planlı | Piyade | Anafartalar Grubu taarruzu |
 
 ## Teknik mimari
-- **Motor:** Godot 4.3, GDScript. Masaüstü Forward+, mobil Mobile render.
+- **Motor:** Godot 4.7, GDScript. Masaüstü Forward+, mobil Mobile render.
 - `scripts/core`: `GameState` (kayıt, ilerleme, yükseltmeler), `Sfx` (çalışma anında sentezlenen sesler, ses hızına göre gecikme).
 - `scripts/world`: `StraitWorld` (prosedürel boğaz: arazi, su, gökyüzü, köyler, kaleler), `ShipBuilder` (dönem gemileri, bayraklar).
 - `scripts/fx`: `Fx` (patlama, su sütunu, namlu alevi, duman, yangın, iz).

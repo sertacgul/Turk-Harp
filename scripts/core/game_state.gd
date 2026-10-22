@@ -10,7 +10,7 @@ const MISSIONS := [
 		"date": "7-8 Mart 1915",
 		"scene": "res://scenes/missions/nusret_night.tscn",
 		"requires": "",
-		"summary": "Müttefik ışıldakları boğazı tararken küçük mayın gemisi Nusret, Erenköy Koyu'na kıyıya paralel 26 mayın döşer. Bu mayınlar 18 Mart'ın kaderini belirleyecektir.",
+		"summary": "İtilaf ışıldakları boğazı tararken küçük mayın gemisi Nusret, Erenköy Koyu'na kıyıya paralel 26 mayın döşer. Bu mayınlar 18 Mart'ın kaderini belirleyecektir.",
 	},
 	{
 		"id": "18mart",
@@ -18,7 +18,7 @@ const MISSIONS := [
 		"date": "18 Mart 1915",
 		"scene": "res://scenes/missions/strait_defense.tscn",
 		"requires": "nusret",
-		"summary": "Müttefik donanması üç hat halinde boğaza girer. Rumeli Mecidiye Tabyası'nın topunu sen yönet, diğer bataryalara hedef göster. Cephane bittiğinde Seyit Onbaşı mermiyi sırtında taşır.",
+		"summary": "İtilaf donanması üç hat halinde boğaza girer. Rumeli Mecidiye Tabyası'nın topunu sen yönet, diğer bataryalara hedef göster. Cephane bittiğinde Seyit Onbaşı mermiyi sırtında taşır.",
 	},
 	{
 		"id": "ariburnu",
