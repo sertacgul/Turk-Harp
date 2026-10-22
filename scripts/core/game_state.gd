@@ -45,6 +45,14 @@ const UPGRADES := {
 	"seyit": {"title": "Seyit'in Gücü", "desc": "Cephane taşıma süresi -%20", "costs": [1, 3, 5]},
 }
 
+## Zorluk çarpanları. enemy_damage: düşman hasarı, enemy_scatter: düşman isabetsizliği,
+## player_damage: oyuncu hasarı, detection: ışıldak tespit hızı, honor: kazanılan Şeref.
+const DIFFICULTIES := {
+	"kolay": {"title": "Kolay", "enemy_damage": 0.6, "enemy_scatter": 1.35, "player_damage": 1.3, "detection": 0.6, "honor": 0.75},
+	"normal": {"title": "Normal", "enemy_damage": 1.0, "enemy_scatter": 1.0, "player_damage": 1.0, "detection": 1.0, "honor": 1.0},
+	"zor": {"title": "Zor", "enemy_damage": 1.45, "enemy_scatter": 0.75, "player_damage": 0.85, "detection": 1.45, "honor": 1.5},
+}
+
 ## Varsayılan (tarihî) mayın hattı: Erenköy Koyu'nda kıyıya paralel 26 mayın.
 var default_mines: Array[Vector3] = []
 
@@ -52,7 +60,7 @@ var stars := {}
 var honor := 0
 var upgrades := {"range": 0, "reload": 0, "armor": 0, "seyit": 0}
 var laid_mines: Array[Vector3] = []
-var settings := {"quality": "high", "sfx": 0.8}
+var settings := {"quality": "high", "sfx": 0.8, "difficulty": "normal"}
 var current_mission := ""
 
 
@@ -102,6 +110,26 @@ func buy_upgrade(key: String) -> bool:
 
 func mines_for_battle() -> Array[Vector3]:
 	return laid_mines if laid_mines.size() > 0 else default_mines
+
+
+func difficulty() -> String:
+	var d: String = settings.get("difficulty", "normal")
+	return d if DIFFICULTIES.has(d) else "normal"
+
+
+func difficulty_title() -> String:
+	return DIFFICULTIES[difficulty()]["title"]
+
+
+## Seçili zorluğun çarpanı (ör. diff("enemy_damage")).
+func diff(key: String) -> float:
+	return DIFFICULTIES[difficulty()][key]
+
+
+func set_difficulty(d: String) -> void:
+	if DIFFICULTIES.has(d):
+		settings["difficulty"] = d
+		save_game()
 
 
 func high_quality() -> bool:

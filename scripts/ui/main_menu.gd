@@ -71,7 +71,7 @@ func _clear() -> VBoxContainer:
 	_screen.add_child(cc)
 	var box := VBoxContainer.new()
 	box.alignment = BoxContainer.ALIGNMENT_CENTER
-	box.add_theme_constant_override("separation", 14)
+	box.add_theme_constant_override("separation", 10)
 	cc.add_child(box)
 	return box
 
@@ -83,7 +83,7 @@ func show_main() -> void:
 	var spacer := Control.new()
 	spacer.custom_minimum_size.y = 20
 	box.add_child(spacer)
-	for item in [["Kampanya", show_campaign], ["Ayarlar", show_settings], ["Hakkında", show_about]]:
+	for item in [["Oyuna Başla", show_campaign], ["Ayarlar", show_settings], ["Hakkında", show_about]]:
 		var cc := CenterContainer.new()
 		cc.add_child(UiTheme.button(item[0], item[1], 320))
 		box.add_child(cc)
@@ -99,7 +99,14 @@ func show_campaign() -> void:
 	head.add_theme_constant_override("separation", 30)
 	head.add_child(UiTheme.label("Çanakkale Seferi", 42, UiTheme.GOLD))
 	head.add_child(UiTheme.label("Şeref: %d" % GameState.honor, 28, UiTheme.TEXT))
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(spacer)
+	var back := UiTheme.button("Geri", show_main, 160)
+	back.custom_minimum_size.y = 46
+	head.add_child(back)
 	box.add_child(head)
+	box.add_child(_difficulty_row())
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 16)
 	box.add_child(row)
@@ -111,14 +118,33 @@ func show_campaign() -> void:
 	box.add_child(ups)
 	for key in GameState.UPGRADES:
 		ups.add_child(_upgrade_card(key))
-	var cc := CenterContainer.new()
-	cc.add_child(UiTheme.button("Geri", show_main, 220))
-	box.add_child(cc)
+
+
+## Kolay / Normal / Zor seçimi; seçili olan altın çerçeveyle vurgulanır.
+func _difficulty_row() -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	row.add_child(UiTheme.label("Zorluk:", 22, UiTheme.TEXT))
+	for key in GameState.DIFFICULTIES:
+		var b := UiTheme.button(GameState.DIFFICULTIES[key]["title"], func() -> void:
+			GameState.set_difficulty(key)
+			show_campaign(), 150)
+		b.custom_minimum_size.y = 44
+		if key == GameState.difficulty():
+			var sel := UiTheme._box(UiTheme.GOLD.darkened(0.25), UiTheme.GOLD, 3)
+			b.add_theme_stylebox_override("normal", sel)
+			b.add_theme_stylebox_override("hover", sel)
+			b.add_theme_color_override("font_color", Color(0.08, 0.06, 0.03))
+			b.add_theme_color_override("font_hover_color", Color(0.08, 0.06, 0.03))
+		row.add_child(b)
+	var hint := {"kolay": "Düşman daha az isabetli, Şeref x0.75", "normal": "Tarihî denge", "zor": "Düşman daha isabetli ve güçlü, Şeref x1.5"}
+	row.add_child(UiTheme.label("  " + hint[GameState.difficulty()], 17, UiTheme.MUTED))
+	return row
 
 
 func _mission_card(m: Dictionary) -> Control:
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(290, 330)
+	panel.custom_minimum_size = Vector2(290, 290)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 8)
 	panel.add_child(v)
@@ -171,6 +197,10 @@ func show_settings() -> void:
 		GameState.save_game()
 		get_tree().reload_current_scene(), 380)
 	box.add_child(q)
+	box.add_child(UiTheme.button("Zorluk: " + GameState.difficulty_title(), func() -> void:
+		var keys := GameState.DIFFICULTIES.keys()
+		GameState.set_difficulty(keys[(keys.find(GameState.difficulty()) + 1) % keys.size()])
+		show_settings(), 380))
 	box.add_child(UiTheme.label("Ses", 20, UiTheme.TEXT))
 	var slider := HSlider.new()
 	slider.min_value = 0.0

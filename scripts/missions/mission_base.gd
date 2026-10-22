@@ -135,7 +135,7 @@ func _overlay_panel() -> VBoxContainer:
 
 func show_briefing(title: String, date: String, body: String, notes: Array) -> void:
 	var box := _overlay_panel()
-	box.add_child(UiTheme.label(date, 18, UiTheme.MUTED, HORIZONTAL_ALIGNMENT_CENTER))
+	box.add_child(UiTheme.label("%s  ·  Zorluk: %s" % [date, GameState.difficulty_title()], 18, UiTheme.MUTED, HORIZONTAL_ALIGNMENT_CENTER))
 	box.add_child(UiTheme.label(title, 40, UiTheme.GOLD, HORIZONTAL_ALIGNMENT_CENTER))
 	box.add_child(UiTheme.wrap_label(body, 19, UiTheme.TEXT, 720))
 	for n in notes:
@@ -161,6 +161,7 @@ func finish(success: bool, earned_stars: int, honor_gain: int, lines: Array) -> 
 		return
 	finished = true
 	running = false
+	honor_gain = int(round(honor_gain * GameState.diff("honor")))
 	if success:
 		GameState.complete(mission_id, earned_stars, honor_gain)
 	var box := _overlay_panel()
@@ -169,14 +170,14 @@ func finish(success: bool, earned_stars: int, honor_gain: int, lines: Array) -> 
 		var cc := CenterContainer.new()
 		cc.add_child(StarRow.new(earned_stars, 44.0))
 		box.add_child(cc)
-		box.add_child(UiTheme.label("+%d Şeref" % honor_gain, 24, UiTheme.GOLD, HORIZONTAL_ALIGNMENT_CENTER))
+		box.add_child(UiTheme.label("+%d Şeref  ·  Zorluk: %s" % [honor_gain, GameState.difficulty_title()], 24, UiTheme.GOLD, HORIZONTAL_ALIGNMENT_CENTER))
 	for l in lines:
 		box.add_child(UiTheme.wrap_label(str(l), 19, UiTheme.TEXT, 720))
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 16)
 	row.add_child(UiTheme.button("Tekrar", _restart, 200))
-	row.add_child(UiTheme.button("Kampanya", _to_menu, 240))
+	row.add_child(UiTheme.button("Görevler", _to_menu, 240))
 	box.add_child(row)
 
 
@@ -202,7 +203,7 @@ func toggle_pause() -> void:
 		box.add_child(UiTheme.label("DURAKLATILDI", 40, UiTheme.GOLD, HORIZONTAL_ALIGNMENT_CENTER))
 		box.add_child(UiTheme.button("Devam", toggle_pause))
 		box.add_child(UiTheme.button("Yeniden Başla", _restart))
-		box.add_child(UiTheme.button("Kampanyaya Dön", _to_menu))
+		box.add_child(UiTheme.button("Görevlere Dön", _to_menu))
 	elif _pause_panel:
 		_pause_panel.queue_free()
 

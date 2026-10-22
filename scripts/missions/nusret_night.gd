@@ -312,7 +312,7 @@ func _update_detection(delta: float) -> void:
 		var ang := rad_to_deg((-sl.global_basis.z).angle_to(to))
 		if ang < 9.0:
 			lit = true
-			detection += delta * (55.0 * (1.0 - d / 900.0) + 18.0)
+			detection += delta * (55.0 * (1.0 - d / 900.0) + 18.0) * GameState.diff("detection")
 	if not lit:
 		detection = maxf(detection - delta * 8.0, 0.0)
 	detection = minf(detection, 100.0)

@@ -488,7 +488,7 @@ func fire_player() -> void:
 	ammo -= 1
 	reload = reload_time()
 	var dir := -player.pitch.global_basis.z
-	_spawn_shell(player.muzzle.global_position, dir * muzzle_speed(), true, true, PLAYER_DAMAGE)
+	_spawn_shell(player.muzzle.global_position, dir * muzzle_speed(), true, true, PLAYER_DAMAGE * GameState.diff("player_damage"))
 	Fx.muzzle_flash(self, player.muzzle.global_position, dir, 1.4)
 	Sfx.play("cannon", 0.0)
 	shake(1.2)
@@ -888,11 +888,11 @@ func _ship_fire(s: Ship, delta: float) -> void:
 	var muzzles: Array = s.parts["muzzles"]
 	var m: Marker3D = muzzles[randi() % muzzles.size()]
 	var from := m.global_position
-	var scatter := 50.0 - minf(elapsed * 0.05, 15.0)
+	var scatter := (50.0 - minf(elapsed * 0.05, 15.0)) * GameState.diff("enemy_scatter")
 	var aim := target.pos() + Vector3(randf_range(-scatter, scatter), 0, randf_range(-scatter, scatter))
 	aim.y = StraitWorld.height_at(aim.x, aim.z)
 	var flight := clampf(from.distance_to(aim) / 160.0, 2.0, 7.0)
-	_spawn_shell(from, _ballistic(from, aim, flight), false, false, randf_range(7.0, 11.0))
+	_spawn_shell(from, _ballistic(from, aim, flight), false, false, randf_range(7.0, 11.0) * GameState.diff("enemy_damage"))
 	Fx.muzzle_flash(self, from, (aim - from).normalized(), 1.6)
 	Sfx.play_at("cannon", from, -2.0)
 
