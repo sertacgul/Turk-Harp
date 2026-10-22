@@ -1094,10 +1094,13 @@ func _autoplay_step() -> void:
 				bd = d
 				best = e
 	if best:
-		var to := best.pos() + Vector3(0, 1.2, 0) - (player.pos() + Vector3(0, 1.6, 0))
-		yaw = atan2(-to.x, -to.z)
-		pitch = atan2(to.y, Vector2(to.x, to.z).length())
 		aiming = true
+		# Nişangâh kamera ışınıdır; omuz kamerasının kaymasını iki adımda düzelt.
+		for i in 3:
+			_update_camera()
+			var to := best.pos() + Vector3(0, 1.2, 0) - cam.global_position
+			yaw = atan2(-to.x, -to.z)
+			pitch = atan2(to.y, Vector2(to.x, to.z).length())
 		_update_camera()
 		fire_player()
 	if phase == 2 and elapsed > DEFENSE_END + 20.0 and fmod(elapsed, 45.0) < get_process_delta_time():
