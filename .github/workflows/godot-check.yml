@@ -1,0 +1,15 @@
+name: godot-check
+on:
+  push:
+  pull_request:
+jobs:
+  import-and-parse:
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Import project and check scripts parse
+        run: godot --headless --import --path . 2>&1 | tee import.log; ! grep -E "SCRIPT ERROR|Parse Error" import.log
+      - name: Smoke-run battle scene for 120 frames
+        run: godot --headless --path . --quit-after 120 res://scenes/canakkale_battle.tscn 2>&1 | tee run.log; ! grep -E "SCRIPT ERROR" run.log
