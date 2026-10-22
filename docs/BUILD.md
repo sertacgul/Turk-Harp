@@ -1,22 +1,36 @@
-# Derleme ve Dışa Aktarma
+# Çalıştırma, Derleme ve Test
 
-Gereksinim: [Godot 4.3+](https://godotengine.org/download) (standart sürüm, GDScript).
+Gereksinim: [Godot 4.3](https://godotengine.org/download/archive/4.3-stable/) (standart sürüm, .NET değil).
 
-## Masaüstü (Windows / macOS / Linux)
-1. Godot'ta `project.godot` dosyasını aç.
-2. F5 ile çalıştır (ana sahne: menü).
-3. Project > Export ile platform seç.
+## Bilgisayarda çalıştırma (Mac / Windows / Linux)
+1. Godot'u aç, **Import** ile `project.godot` dosyasını seç.
+2. ▶ (Cmd+B / F5) ile çalıştır.
+
+Hazır derlemeler: GitHub'da **Actions > godot** iş akışının son başarılı çalışmasında `TurkHarp-macOS`, `TurkHarp-Windows`, `TurkHarp-Linux` dosyaları indirilebilir.
+macOS derlemesi imzasızdır: ilk açılışta uygulamaya sağ tıklayıp **Aç** deyin.
 
 ## Android
-1. Android SDK ve JDK 17 kur, Godot Editor Settings > Export > Android yollarını ayarla.
-2. Export şablonlarını indir (Editor > Manage Export Templates).
-3. Project > Export > Android; keystore oluştur; APK/AAB dışa aktar.
+1. Android SDK ve JDK 17 kur; Godot Editor Settings > Export > Android yollarını ayarla.
+2. Editor > Manage Export Templates ile şablonları indir.
+3. Project > Export > Android > Export Project (hata ayıklama anahtarı Godot tarafından oluşturulur).
 
 ## iOS
-1. macOS ve Xcode gerekir; Apple Developer hesabı ile imzala.
-2. Project > Export > iOS; Xcode projesini oluştur; cihazda veya TestFlight ile çalıştır.
+1. macOS + Xcode + Apple Developer hesabı gerekir.
+2. `export_presets.cfg` içindeki iOS ön ayarına Team ID gir.
+3. Project > Export > iOS ile Xcode projesi oluştur, Xcode'dan cihaza yükle.
 
-Oyun fare ve dokunma girdisini aynı kodla işler (tek dokunuş = sol tık); sabit 1280x720 yatay yerleşim kullanılır.
+## Render
+- Masaüstü: Forward+; mobil: Mobile render.
+- Düşük donanım için Ayarlar > Grafik: Düşük (gölge, parçacık sayısı ve arazi çözünürlüğü azalır).
 
-## CI
-`.github/workflows/godot-check.yml` projeyi headless içe aktarır ve savaş sahnesini kısa süre çalıştırarak betik hatalarını yakalar.
+## Testler
+`tools/shot.tscn` bir sahneyi yükler, zamanlanmış komutları çalıştırır ve isteğe bağlı ekran görüntüsü alır:
+
+```
+godot --headless --path . res://tools/shot.tscn -- \
+  scene=res://scenes/missions/strait_defense.tscn \
+  cmds=0.5:start_mission,0.6:debug_autoplay,45:debug_status,46:quit speed=8
+```
+
+`debug_autoplay` görevi otomatik oynatır; CI her push'ta iki görevi de bu şekilde baştan sona oynatır ve betik hatası arar.
+Ekran görüntüsü için `--headless` yerine bir ekran (ör. `xvfb-run`) ile çalıştırıp `shot` komutunu kullanın.

@@ -1,24 +1,31 @@
-# Oyun Tasarım Belgesi (Taslak)
+# Oyun Tasarım Belgesi
 
-## Çekirdek Döngü
-1. Senaryo seç (savaş, taraf, dönem).
-2. Strateji haritasında ordu yönet: birlik üretimi, yürüyüş, lojistik, moral, hava/arazi.
-3. Savaş anına gir: tek kahraman/komutan olarak bireysel dövüş, birlik komutası, formasyon emirleri.
-4. Sonuç, tarihî gerçekle karşılaştırılır; "tarihî mod" ve "alternatif tarih" seçenekleri.
+## Vizyon
+Türk tarihinin gerçek savaşlarını, oyuncunun hem **bireysel** (top başında, dümende, siperde) hem de **komutan** (bataryalar, birlikler, filolar) olarak yaşadığı 3D, ilerlemeli bir kampanya.
 
-## Modlar
-- **Kampanya:** Dönemlere göre bağlı savaşlar (ör. Atatürk: Sakarya -> Büyük Taarruz).
-- **Tekil Savaş:** Tek senaryo.
-- **Çok Oyunculu:** 1v1, takım savaşı, işbirlikçi (co-op) tarihî görevler, sıralamalı maçlar.
-- **Eğitim/Ansiklopedi:** Her savaş için komutanlar, silahlar, haritalar ve kaynakça.
+## Çekirdek döngü
+1. **Brifing:** Tarihî bağlam, komutanlar, hedefler.
+2. **Görev:** Bireysel kontrol + komuta katmanı (taktik harita).
+3. **Sonuç:** 1-3 yıldız, Şeref puanı, tarihte gerçekte ne olduğu.
+4. **İlerleme:** Şeref ile yükseltmeler; bir görevin sonucu sonrakini etkiler (ör. Nusret'in mayınları 18 Mart'ta aynı yerde).
 
-## Teknik Öneri
-- Motor: Godot 4 (MIT, açık kaynak, GDScript/C#).
-- Çok oyunculu: Godot high-level multiplayer (ENet/WebSocket), sunucu otoriteli.
-- Veri: JSON/YAML ile savaş, lider, birlik tanımları (`data/`).
-- Çeviri: gettext; ilk diller Türkçe ve İngilizce.
+## Çanakkale seferi (ilk sefer)
+| Görev | Durum | Bireysel | Komuta |
+|---|---|---|---|
+| Nusret'in Gecesi (7-8 Mart 1915) | Oynanabilir | Nusret'i dümenle, ışıldaklardan kaç, mayın bırak | Rota ve zamanlama |
+| 18 Mart: Boğaz Savunması | Oynanabilir | Rumeli Mecidiye topu, Seyit Onbaşı | Taktik haritadan diğer bataryalara hedef |
+| Arıburnu: 57. Alay (25 Nisan) | Planlı | Piyade (üçüncü şahıs) | Mustafa Kemal ile birlik komutası |
+| Conkbayırı (Ağustos) | Planlı | Piyade | Anafartalar Grubu taarruzu |
 
-## Tarihî Doğruluk Kuralları
-- Her savaş/lider kaydı en az 2 güvenilir kaynak içerir.
-- Kaynaksız veri birleştirilmez.
-- Gerçek kişilere saygılı, propaganda içermeyen dil.
+## Teknik mimari
+- **Motor:** Godot 4.3, GDScript. Masaüstü Forward+, mobil Mobile render.
+- `scripts/core`: `GameState` (kayıt, ilerleme, yükseltmeler), `Sfx` (çalışma anında sentezlenen sesler, ses hızına göre gecikme).
+- `scripts/world`: `StraitWorld` (prosedürel boğaz: arazi, su, gökyüzü, köyler, kaleler), `ShipBuilder` (dönem gemileri, bayraklar).
+- `scripts/fx`: `Fx` (patlama, su sütunu, namlu alevi, duman, yangın, iz).
+- `scripts/missions`: `MissionBase` (HUD, brifing, duraklatma, sonuç, kamera sarsıntısı) ve görevler.
+- Tüm görseller kodla üretilir; sanatçı modelleri geldikçe `ShipBuilder` ve `StraitWorld` içindeki ilgili parçalar .glb modellerle değiştirilecek.
+
+## Tarihî doğruluk kuralları
+- Her görev, lider ve gemi kaydı en az iki güvenilir kaynağa dayanır.
+- Oyun içi sonuç ekranı gerçekte ne olduğunu söyler.
+- Gerçek kişilere ve tüm taraflardaki kayıplara saygılı dil.

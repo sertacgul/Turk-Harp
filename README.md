@@ -1,8 +1,15 @@
 # Türk Harp
 
-Türk tarihinin kuruluşundan günümüze uzanan gerçek savaşlarını konu alan; **ücretsiz**, **açık kaynak**, **tek ve çok oyunculu** bir strateji/aksiyon oyunu.
+Türk tarihinin kuruluşundan günümüze uzanan gerçek savaşlarını konu alan; **ücretsiz**, **açık kaynak**, **3D**, **tek ve çok oyunculu** bir strateji/aksiyon oyunu. Bilgisayar (Mac, Windows, Linux), iOS ve Android için Godot 4 ile geliştirilir.
 
-> Durum: Erken tasarım aşaması. Katkılara açıktır.
+> Durum: v0.2. İlk sefer **Çanakkale 1915**: *Nusret'in Gecesi* ve *18 Mart: Boğaz Savunması* görevleri oynanabilir.
+
+## Hemen oyna
+
+1. [Godot 4.3](https://godotengine.org/download/archive/4.3-stable/) indir.
+2. Bu depoyu indir, Godot'ta **Import** ile `project.godot` dosyasını aç, ▶ ile çalıştır.
+
+Ayrıntılar ve mobil derleme: [docs/BUILD.md](docs/BUILD.md).
 
 ## Fikir
 

@@ -1,0 +1,64 @@
+name: godot
+
+on:
+  push:
+  pull_request:
+
+env:
+  GODOT_VERSION: "4.3"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Import project
+        run: godot --headless --import --path . 2>&1 | tee import.log; ! grep -E "SCRIPT ERROR|Parse Error" import.log
+      - name: Autoplay Nusret mission
+        run: >
+          godot --headless --path . res://tools/shot.tscn --
+          scene=res://scenes/missions/nusret_night.tscn
+          cmds=0.5:start_mission,0.6:debug_autoplay,25:debug_status,26:quit speed=8 2>&1 | tee nusret.log
+      - name: Autoplay 18 Mart mission
+        run: >
+          godot --headless --path . res://tools/shot.tscn --
+          scene=res://scenes/missions/strait_defense.tscn
+          cmds=0.5:start_mission,0.6:debug_autoplay,45:debug_status,46:quit speed=8 2>&1 | tee strait.log
+      - name: Load main menu
+        run: godot --headless --path . res://tools/shot.tscn -- cmds=3:show_campaign,4:quit 2>&1 | tee menu.log
+      - name: Fail on script errors
+        run: "! grep -E 'SCRIPT ERROR' nusret.log strait.log menu.log"
+
+  export:
+    needs: test
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.3
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - preset: macOS
+            path: build/macos/TurkHarp.zip
+          - preset: Windows
+            path: build/windows/TurkHarp.exe
+          - preset: Linux
+            path: build/linux/TurkHarp.x86_64
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install export templates
+        run: |
+          mkdir -p ~/.local/share/godot/export_templates/
+          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable || true
+      - name: Export ${{ matrix.preset }}
+        run: |
+          mkdir -p $(dirname ${{ matrix.path }})
+          godot --headless --path . --import
+          godot --headless --path . --export-release "${{ matrix.preset }}" ${{ matrix.path }}
+          ls -la build/*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TurkHarp-${{ matrix.preset }}
+          path: build/

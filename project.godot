@@ -4,18 +4,23 @@ config_version=5
 [application]
 
 config/name="Türk Harp"
-config/description="Türk tarihinin savaşları: ücretsiz, açık kaynak strateji ve aksiyon oyunu."
+config/description="Türk tarihinin savaşları: ücretsiz, açık kaynak 3D strateji ve aksiyon oyunu."
 run/main_scene="res://scenes/main_menu.tscn"
-config/features=PackedStringArray("4.3", "GL Compatibility")
+config/features=PackedStringArray("4.3", "Forward Plus")
 config/icon="res://icon.svg"
+
+[autoload]
+
+GameState="*res://scripts/core/game_state.gd"
+Sfx="*res://scripts/core/sfx.gd"
 
 [display]
 
 window/size/viewport_width=1280
 window/size/viewport_height=720
 window/stretch/mode="canvas_items"
-window/stretch/aspect="keep"
-window/handheld/orientation=0
+window/stretch/aspect="expand"
+window/handheld/orientation=4
 
 [input_devices]
 
@@ -23,6 +28,7 @@ pointing/emulate_mouse_from_touch=true
 
 [rendering]
 
-renderer/rendering_method="gl_compatibility"
-renderer/rendering_method.mobile="gl_compatibility"
+renderer/rendering_method="forward_plus"
+renderer/rendering_method.mobile="mobile"
 textures/vram_compression/import_etc2_astc=true
+anti_aliasing/quality/msaa_3d=1
