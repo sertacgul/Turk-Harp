@@ -152,7 +152,7 @@ func _process(delta: float) -> void:
 		_update_battle(delta)
 	for bm in _booms:
 		bm.t += delta
-	_booms = _booms.filter(func(x: Boom) -> bool: return x.t < 0.8)
+	_booms.assign(_booms.filter(func(x: Boom) -> bool: return x.t < 0.8))
 	queue_redraw()
 
 
@@ -168,7 +168,7 @@ func _update_battle(delta: float) -> void:
 		_update_battery(b, delta)
 	_update_shells(delta)
 	_check_mines()
-	_ships = _ships.filter(func(s: Ship) -> bool: return s.afloat() or s.sink >= 0.0 and s.sink < 2.0)
+	_ships.assign(_ships.filter(func(s: Ship) -> bool: return s.afloat() or (s.sink >= 0.0 and s.sink < 2.0)))
 	if _focus != null and not _focus.afloat():
 		_focus = null
 	_check_end()
@@ -252,7 +252,7 @@ func _update_shells(delta: float) -> void:
 		sh.t += delta
 		if sh.t >= sh.dur:
 			_land(sh)
-	_shells = _shells.filter(func(x: Shell) -> bool: return x.t < x.dur)
+	_shells.assign(_shells.filter(func(x: Shell) -> bool: return x.t < x.dur))
 
 
 func _land(sh: Shell) -> void:
