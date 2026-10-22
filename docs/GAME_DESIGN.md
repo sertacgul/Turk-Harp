@@ -14,7 +14,7 @@ Türk tarihinin gerçek savaşlarını, oyuncunun hem **bireysel** (top başınd
 |---|---|---|---|
 | Nusret'in Gecesi (7-8 Mart 1915) | Oynanabilir | Nusret'i dümenle, ışıldaklardan kaç, mayın bırak | Rota ve zamanlama |
 | 18 Mart: Boğaz Savunması | Oynanabilir | Rumeli Mecidiye topu, Seyit Onbaşı | Taktik haritadan diğer bataryalara hedef |
-| Arıburnu: 57. Alay (25 Nisan) | Planlı | Piyade (üçüncü şahıs) | Mustafa Kemal ile birlik komutası |
+| Arıburnu: 57. Alay (25 Nisan) | Oynanabilir | Üçüncü şahıs piyade subayı, tüfek ve süngü | 6 bölüğe emir, mevzi ele geçirme, süngü hücumu |
 | Conkbayırı (Ağustos) | Planlı | Piyade | Anafartalar Grubu taarruzu |
 
 ## Teknik mimari

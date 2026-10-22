@@ -306,3 +306,21 @@ static func trail(target: Node3D, s := 1.0) -> GPUParticles3D:
 	target.add_child(p)
 	p.emitting = true
 	return p
+
+
+## Kurşunun toprağa çarptığı yerde küçük toz bulutu.
+static func dust(parent: Node, pos: Vector3, s := 1.0) -> void:
+	var p := _particles(8, 1.2, false, 1.0)
+	var pm := ParticleProcessMaterial.new()
+	pm.direction = Vector3.UP
+	pm.spread = 35.0
+	pm.initial_velocity_min = 1.5 * s
+	pm.initial_velocity_max = 4.0 * s
+	pm.gravity = Vector3(0, -4, 0)
+	pm.damping_min = 2.0
+	pm.damping_max = 3.0
+	pm.scale_min = 0.6 * s
+	pm.scale_max = 1.4 * s
+	pm.scale_curve = _curve([Vector2(0, 0.5), Vector2(1, 1.8)])
+	pm.color_ramp = _ramp([Color(0.6, 0.5, 0.38, 0.8), Color(0.6, 0.52, 0.4, 0.0)], [0.0, 1.0])
+	_one_shot(parent, pos, p, pm)

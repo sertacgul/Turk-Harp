@@ -24,9 +24,9 @@ const MISSIONS := [
 		"id": "ariburnu",
 		"title": "Arıburnu: 57. Alay",
 		"date": "25 Nisan 1915",
-		"scene": "",
+		"scene": "res://scenes/missions/ariburnu.tscn",
 		"requires": "18mart",
-		"summary": "Mustafa Kemal komutasındaki 19. Tümen, Arıburnu'na çıkan ANZAC birliklerini durdurur. (Yapım aşamasında)",
+		"summary": "Şafakta ANZAC birlikleri Arıburnu'na çıkar. Mustafa Kemal'in 57. Alay'ı ile Conkbayırı'nı tut, bölüklerini yönet ve süngü hücumuyla sırtları geri al.",
 	},
 	{
 		"id": "conkbayiri",

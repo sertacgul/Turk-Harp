@@ -2,7 +2,7 @@
 
 Türk tarihinin kuruluşundan günümüze uzanan gerçek savaşlarını konu alan; **ücretsiz**, **açık kaynak**, **3D**, **tek ve çok oyunculu** bir strateji/aksiyon oyunu. Bilgisayar (Mac, Windows, Linux), iOS ve Android için Godot 4 ile geliştirilir.
 
-> Durum: v0.2. İlk sefer **Çanakkale 1915**: *Nusret'in Gecesi* ve *18 Mart: Boğaz Savunması* görevleri oynanabilir.
+> Durum: v0.3. İlk sefer **Çanakkale 1915**: *Nusret'in Gecesi*, *18 Mart: Boğaz Savunması* ve *Arıburnu: 57. Alay* görevleri oynanabilir. Kolay, Normal ve Zor zorluk seviyeleri vardır.
 
 ## Hemen oyna
 

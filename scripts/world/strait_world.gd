@@ -85,75 +85,14 @@ func build(is_night: bool) -> void:
 
 
 func _build_environment() -> void:
-	var hq := GameState.high_quality()
-	var sky_mat := ProceduralSkyMaterial.new()
-	environment = Environment.new()
-	environment.background_mode = Environment.BG_SKY
-	environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
-	environment.tonemap_white = 6.0
-	environment.glow_enabled = true
-	environment.glow_intensity = 0.35 if not night else 1.0
-	environment.glow_hdr_threshold = 1.3 if not night else 0.9
-	environment.glow_bloom = 0.0
-	environment.fog_enabled = true
-	environment.ssao_enabled = hq and RenderingServer.get_rendering_device() != null
-	environment.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-	sun = DirectionalLight3D.new()
-	sun.shadow_enabled = hq
-	sun.directional_shadow_max_distance = 700.0
-	if night:
-		sky_mat.sky_top_color = Color(0.01, 0.015, 0.04)
-		sky_mat.sky_horizon_color = Color(0.05, 0.07, 0.13)
-		sky_mat.ground_horizon_color = Color(0.03, 0.04, 0.07)
-		sky_mat.ground_bottom_color = Color(0.0, 0.0, 0.0)
-		sky_mat.sun_angle_max = 2.0
-		sky_mat.sky_energy_multiplier = 0.6
-		environment.fog_light_color = Color(0.04, 0.06, 0.1)
-		environment.fog_density = 0.0011
-		environment.ambient_light_energy = 0.6
-		environment.tonemap_exposure = 1.5
-		sun.light_color = Color(0.6, 0.7, 1.0)
-		sun.light_energy = 0.55
-		sun.rotation_degrees = Vector3(-35.0, -130.0, 0.0)
-	else:
-		sky_mat.sky_top_color = Color(0.22, 0.42, 0.72)
-		sky_mat.sky_horizon_color = Color(0.72, 0.76, 0.8)
-		sky_mat.ground_horizon_color = Color(0.55, 0.6, 0.65)
-		sky_mat.ground_bottom_color = Color(0.15, 0.2, 0.25)
-		environment.fog_light_color = Color(0.62, 0.68, 0.76)
-		environment.fog_density = 0.00016
-		environment.fog_sky_affect = 0.3
-		environment.ambient_light_energy = 0.45
-		environment.tonemap_exposure = 0.95
-		sun.light_color = Color(1.0, 0.94, 0.84)
-		sun.light_energy = 1.05
-		sun.rotation_degrees = Vector3(-38.0, 150.0, 0.0)
-	var sky := Sky.new()
-	sky.sky_material = sky_mat
-	environment.sky = sky
-	var we := WorldEnvironment.new()
-	we.environment = environment
-	add_child(we)
-	add_child(sun)
+	var atm := Atmosphere.build(self, "night" if night else "day")
+	environment = atm["environment"]
+	sun = atm["sun"]
 
 
 func _build_water() -> void:
-	var plane := PlaneMesh.new()
-	plane.size = Vector2(X_MAX - X_MIN + 2000.0, Z_HALF * 2.0 + 2000.0)
-	var sub := 220 if GameState.high_quality() else 120
-	plane.subdivide_width = sub
-	plane.subdivide_depth = sub
-	var mat := ShaderMaterial.new()
-	mat.shader = load("res://shaders/water.gdshader")
-	if night:
-		mat.set_shader_parameter("deep_color", Color(0.02, 0.05, 0.09))
-		mat.set_shader_parameter("shallow_color", Color(0.05, 0.12, 0.18))
-	plane.material = mat
-	var water := MeshInstance3D.new()
-	water.mesh = plane
-	water.position = Vector3((X_MIN + X_MAX) * 0.5, 0.0, 0.0)
-	water.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(water)
+	Atmosphere.water(self, Vector3((X_MIN + X_MAX) * 0.5, 0.0, 0.0),
+		Vector2(X_MAX - X_MIN + 2000.0, Z_HALF * 2.0 + 2000.0), "night" if night else "day")
 
 
 func _terrain_color(h: float, slope: float, x: float, z: float) -> Color:

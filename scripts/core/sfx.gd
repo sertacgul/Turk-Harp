@@ -24,6 +24,9 @@ func _ready() -> void:
 	_streams["sea"] = _make(6.0, 0.03, 0.0, 0.0, 0.0, 0.5, 0.0, true)
 	_streams["engine"] = _engine(2.0)
 	_streams["mine_drop"] = _make(0.9, 0.35, 5.0, 90.0, 10.0, 0.6, 0.02)
+	_streams["rifle"] = _make(0.5, 0.7, 14.0, 120.0, 25.0, 0.8, 0.001)
+	_streams["far_rifle"] = _make(0.6, 0.2, 9.0, 0.0, 0.0, 0.6, 0.002)
+	_streams["bugle"] = _bugle()
 	for i in POOL_SIZE:
 		var p := AudioStreamPlayer.new()
 		add_child(p)
@@ -86,6 +89,24 @@ func _sweep(dur: float, a: float, b: float) -> AudioStreamWAV:
 	return _write(out)
 
 
+## Borazan: hücum işareti için kısa bir ezgi (testere dalgası, hafif vibrato).
+func _bugle() -> AudioStreamWAV:
+	var notes := [[392.0, 0.18], [523.25, 0.18], [659.25, 0.18], [783.99, 0.5], [659.25, 0.18], [783.99, 0.8]]
+	var out := PackedFloat32Array()
+	for n in notes:
+		var hz: float = n[0]
+		var dur: float = n[1]
+		var count := int(dur * RATE)
+		var phase := 0.0
+		for i in count:
+			var t := float(i) / RATE
+			phase += hz * (1.0 + 0.004 * sin(TAU * 5.5 * t)) / RATE
+			var saw := 2.0 * (phase - floorf(phase + 0.5))
+			var env := minf(t / 0.02, 1.0) * minf((dur - t) / 0.04, 1.0)
+			out.append((saw * 0.6 + sin(TAU * phase) * 0.4) * env * 0.35)
+	return _write(out)
+
+
 func _engine(dur: float) -> AudioStreamWAV:
 	var n := int(dur * RATE)
 	var out := PackedFloat32Array()
@@ -127,6 +148,8 @@ func play_at(name: String, pos: Vector3, volume_db := 0.0) -> void:
 	var actual := name
 	if name == "boom" and dist > 600.0:
 		actual = "far_boom"
+	elif name == "rifle" and dist > 120.0:
+		actual = "far_rifle"
 	var delay := dist / SPEED_OF_SOUND
 	if delay < 0.05:
 		play(actual, vol)

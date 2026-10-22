@@ -26,10 +26,15 @@ jobs:
           godot --headless --path . res://tools/shot.tscn --
           scene=res://scenes/missions/strait_defense.tscn
           cmds=0.5:start_mission,0.6:debug_autoplay,45:debug_status,46:quit speed=8 2>&1 | tee strait.log
+      - name: Autoplay Ariburnu mission
+        run: >
+          godot --headless --path . res://tools/shot.tscn --
+          scene=res://scenes/missions/ariburnu.tscn
+          cmds=0.5:start_mission,0.6:debug_autoplay,60:debug_status,61:quit speed=8 2>&1 | tee ariburnu.log
       - name: Load main menu
         run: godot --headless --path . res://tools/shot.tscn -- cmds=3:show_campaign,4:quit 2>&1 | tee menu.log
       - name: Fail on script errors
-        run: "! grep -E 'SCRIPT ERROR' nusret.log strait.log menu.log"
+        run: "! grep -E 'SCRIPT ERROR' nusret.log strait.log ariburnu.log menu.log"
 
   export:
     needs: test

@@ -27,13 +27,15 @@ var _last_message_time := -100.0
 var _rng := RandomNumberGenerator.new()
 
 
-func setup(id: String, is_night: bool) -> void:
+## build_strait false ise görev kendi dünyasını kurar (ör. Arıburnu).
+func setup(id: String, is_night: bool, build_strait := true) -> void:
 	mission_id = id
 	GameState.current_mission = id
 	_rng.randomize()
-	world = StraitWorld.new()
-	add_child(world)
-	world.build(is_night)
+	if build_strait:
+		world = StraitWorld.new()
+		add_child(world)
+		world.build(is_night)
 	_build_hud()
 	Sfx.start_loop("sea", -16.0)
 
