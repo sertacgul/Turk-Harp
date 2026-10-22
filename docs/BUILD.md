@@ -20,7 +20,8 @@ macOS derlemesi imzasızdır: ilk açılışta uygulamaya sağ tıklayıp **Aç*
 3. Project > Export > iOS ile Xcode projesi oluştur, Xcode'dan cihaza yükle.
 
 ## Render
-- Masaüstü: Forward+; mobil: Mobile render.
+- Varsayılan: Compatibility (OpenGL). Mac, eski ekran kartları ve telefonlarda en sorunsuz mod.
+- Daha gelişmiş görüntü için Project Settings > Rendering > Renderer ayarından Forward+ seçilebilir.
 - Düşük donanım için Ayarlar > Grafik: Düşük (gölge, parçacık sayısı ve arazi çözünürlüğü azalır).
 
 ## Testler
