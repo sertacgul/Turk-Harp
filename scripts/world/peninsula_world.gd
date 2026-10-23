@@ -69,7 +69,9 @@ func build() -> void:
 	var atm := Atmosphere.build(self, "dawn")
 	environment = atm["environment"]
 	sun = atm["sun"]
-	Atmosphere.water(self, Vector3(-900.0, 0.0, 0.0), Vector2(2600.0, 3000.0), "dawn")
+	var bounds := Vector4(X_MIN, -Z_HALF, X_MAX - X_MIN, Z_HALF * 2.0)
+	var heights := Atmosphere.bake_heights(func(x: float, z: float) -> float: return height_at(x, z), bounds)
+	Atmosphere.water(self, Vector3(-900.0, 0.0, 0.0), Vector2(2600.0, 3000.0), "dawn", heights, bounds)
 	_build_terrain()
 	_build_scrub()
 	_build_boats()
@@ -110,23 +112,10 @@ func _build_terrain() -> void:
 			for i in [a, a + 1, a + nx, a + 1, a + nx + 1, a + nx]:
 				st.add_index(i)
 	st.generate_normals()
-	var mat := StandardMaterial3D.new()
-	mat.vertex_color_use_as_albedo = true
-	mat.roughness = 0.97
-	var tex := NoiseTexture2D.new()
-	tex.seamless = true
-	tex.width = 256
-	tex.height = 256
-	var tn := FastNoiseLite.new()
-	tn.frequency = 0.08
-	tex.noise = tn
-	var ramp := Gradient.new()
-	ramp.set_color(0, Color(0.7, 0.7, 0.7))
-	ramp.set_color(1, Color(1, 1, 1))
-	tex.color_ramp = ramp
-	mat.albedo_texture = tex
-	mat.uv1_triplanar = true
-	mat.uv1_scale = Vector3(0.12, 0.12, 0.12)
+	var mat := ShaderMaterial.new()
+	mat.shader = load("res://shaders/terrain.gdshader")
+	mat.set_shader_parameter("rock_color", Color(0.55, 0.45, 0.36))
+	mat.set_shader_parameter("octaves", 5 if GameState.high_quality() else 3)
 	var mi := MeshInstance3D.new()
 	mi.mesh = st.commit()
 	mi.material_override = mat
@@ -134,38 +123,13 @@ func _build_terrain() -> void:
 
 
 func _build_scrub() -> void:
-	var count := 5000 if GameState.high_quality() else 1600
-	var bush := SphereMesh.new()
-	bush.radius = 1.0
-	bush.height = 1.3
-	bush.radial_segments = 6
-	bush.rings = 3
-	var m := StandardMaterial3D.new()
-	m.albedo_color = Color(0.17, 0.22, 0.1)
-	m.roughness = 1.0
-	bush.material = m
-	var mm := MultiMesh.new()
-	mm.transform_format = MultiMesh.TRANSFORM_3D
-	mm.mesh = bush
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 1915
-	var xf: Array[Transform3D] = []
-	var tries := 0
-	while xf.size() < count and tries < count * 8:
-		tries += 1
-		var x := rng.randf_range(X_MIN + 300.0, X_MAX)
-		var z := rng.randf_range(-Z_HALF, Z_HALF)
-		if land_depth(x, z) < 25.0:
-			continue
-		var s := rng.randf_range(0.8, 2.4)
-		xf.append(Transform3D(Basis.from_scale(Vector3(s, s * 0.7, s)).rotated(Vector3.UP, rng.randf() * TAU), Vector3(x, height_at(x, z) + 0.3 * s, z)))
-	mm.instance_count = xf.size()
-	for i in xf.size():
-		mm.set_instance_transform(i, xf[i])
-	var inst := MultiMeshInstance3D.new()
-	inst.multimesh = mm
-	inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(inst)
+	var hq := GameState.high_quality()
+	var h := func(x: float, z: float) -> float: return height_at(x, z)
+	var land := func(x: float, z: float) -> bool: return land_depth(x, z) > 22.0
+	# Muharebe alanında sık çimen, her yerde maki çalıları (kümeler halinde).
+	var bushy := func(x: float, z: float) -> bool: return land_depth(x, z) > 25.0 and noise().get_noise_2d(x * 2.5, z * 2.5) > -0.05
+	Vegetation.scatter(self, "grass", 90000 if hq else 15000, Vector4(-250.0, -450.0, 560.0, 350.0), h, land, 3, 220.0 if hq else 120.0)
+	Vegetation.scatter(self, "bush", 9000 if hq else 2500, Vector4(X_MIN + 300.0, -Z_HALF, X_MAX, Z_HALF), h, bushy, 5, 700.0)
 
 
 ## Kumsala çekilmiş çıkarma sandalları.

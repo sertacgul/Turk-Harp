@@ -25,8 +25,9 @@ macOS derlemesi imzasızdır: ilk açılışta uygulamaya sağ tıklayıp **Aç*
 3. Project > Export > iOS ile Xcode projesi oluştur, Xcode'dan cihaza yükle.
 
 ## Render
-- Varsayılan: Compatibility (OpenGL). Mac, eski ekran kartları ve telefonlarda en sorunsuz mod.
-- Daha gelişmiş görüntü için Project Settings > Rendering > Renderer ayarından Forward+ seçilebilir.
+- Bilgisayar: Forward+ (Mac'te Metal). SSAO, SSIL, ekran uzayı yansımaları, hacimsel sis ve yumuşak gölgeler açıktır.
+- Telefon ve web: Compatibility (OpenGL/WebGL). Görsel efektlerin bir kısmı kapalıdır.
+- Forward+ sorun çıkarırsa: Project Settings > Rendering > Renderer > Rendering Method = gl_compatibility.
 - Düşük donanım için Ayarlar > Grafik: Düşük (gölge, parçacık sayısı ve arazi çözünürlüğü azalır).
 
 ## Testler

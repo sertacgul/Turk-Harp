@@ -20,7 +20,8 @@ Türk tarihinin gerçek savaşlarını, oyuncunun hem **bireysel** (top başınd
 ## Teknik mimari
 - **Motor:** Godot 4.7, GDScript. Masaüstü Forward+, mobil Mobile render.
 - `scripts/core`: `GameState` (kayıt, ilerleme, yükseltmeler), `Sfx` (çalışma anında sentezlenen sesler, ses hızına göre gecikme).
-- `scripts/world`: `StraitWorld` (prosedürel boğaz: arazi, su, gökyüzü, köyler, kaleler), `ShipBuilder` (dönem gemileri, bayraklar).
+- `scripts/world`: `StraitWorld` ve `PeninsulaWorld` (prosedürel arazi), `Atmosphere` (gökyüzü shader'ı, ışık, sis, deniz), `Vegetation` (çimen ve maki), `ShipBuilder` (dönem gemileri, bayraklar), `HumanBuilder` + `HumanRig` (iskeletli insan modelleri, IK ile tüfek ve dürbün tutma).
+- `shaders`: `sky` (bulut, güneş, yıldız), `terrain` (katmanlı kaya, mikro kabartma), `water` (Gerstner dalgaları, kıyı köpüğü), `foliage` (rüzgârda salınan bitki).
 - `scripts/fx`: `Fx` (patlama, su sütunu, namlu alevi, duman, yangın, iz).
 - `scripts/missions`: `MissionBase` (HUD, brifing, duraklatma, sonuç, kamera sarsıntısı) ve görevler.
 - Tüm görseller kodla üretilir; sanatçı modelleri geldikçe `ShipBuilder` ve `StraitWorld` içindeki ilgili parçalar .glb modellerle değiştirilecek.

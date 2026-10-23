@@ -35,9 +35,10 @@ class Soldier:
 	var side := 0
 	var root: Node3D
 	var model: Node3D
-	var legs: Array[Node3D] = []
-	var arms: Node3D
 	var muzzle: Marker3D
+	var rig: HumanRig
+	var jab := 0.0
+	var aim := 0.0
 	var hp := 100.0
 	var squad: Squad
 	var goal := Vector3.ZERO
@@ -114,6 +115,7 @@ var reload_t := 0.0
 var bolt_t := 0.0
 var last_hit_t := -100.0
 var _touch_mode := false
+var _cursor_free := false
 var _look_touch := -1
 var _tracers: Array[MeshInstance3D] = []
 var _tracer_i := 0
@@ -153,7 +155,7 @@ func _ready() -> void:
 		"Şafakta İtilaf Devletleri'nin ANZAC birlikleri Arıburnu'na çıktı ve sırtlara tırmanıyor. 19. Tümen Komutanı Yarbay Mustafa Kemal, 57. Alay'ı Conkbayırı'na yetiştiriyor. Sen alayın bir subayısın: önce Conkbayırı'nı tut, sonra taarruz emriyle Cesaret Tepe ve Kırmızı Sırt'ı geri al.",
 		["Hareket: W/A/S/D, yön tuşları ya da sol kol · Bakış: fare ya da ekranı sürükle · Koşu: Shift",
 		"Ateş: sol tık ya da ATEŞ · Nişan: sağ tık ya da NİŞAN · Doldur: R · Süngü: F (yakın dövüş)",
-		"Bölük seç: 1-6 · Q: beni izle · E: nişan aldığın yerde mevzi tut · M ya da HARİTA: haritadan emir ver",
+		"Bölük seç: 1-6 · Q: beni izle · E: nişan aldığın yerde mevzi tut · M: harita · Alt: imleci açıp düğmelere tıkla",
 		"Conkbayırı düşerse görev başarısız olur. Canın: %d." % lives,
 		"Taraflar: Osmanlı Devleti (İttifak Devletleri) ve ANZAC birlikleri (İtilaf Devletleri)."])
 	mission_started.connect(func() -> void:
@@ -249,13 +251,12 @@ func _build_tracers() -> void:
 
 func _new_soldier(kind: String, side: int, at: Vector3) -> Soldier:
 	var s := Soldier.new()
-	var parts := SoldierBuilder.build(kind)
+	var rig := HumanBuilder.build(kind)
+	s.rig = rig
 	s.side = side
-	s.root = parts["root"]
-	s.model = parts["model"]
-	s.legs.assign(parts["legs"])
-	s.arms = parts["arms"]
-	s.muzzle = parts["muzzle"]
+	s.root = rig.root
+	s.model = rig.model
+	s.muzzle = rig.muzzle
 	add_child(s.root)
 	s.root.position = PeninsulaWorld.ground(at)
 	s.goal = s.root.position
@@ -380,15 +381,21 @@ func _build_controls() -> void:
 		b.visible = i < 4
 		squad_row.add_child(b)
 		_squad_btns.append(b)
-	squad_row.add_child(UiTheme.button("İZLE", _order_follow, 90))
-	squad_row.add_child(UiTheme.button("MEVZİ", _order_hold_here, 100))
-	_map_btn = UiTheme.button("HARİTA", toggle_tactical, 120)
+	squad_row.add_child(UiTheme.button("İZLE (Q)", _order_follow, 110))
+	squad_row.add_child(UiTheme.button("MEVZİ (E)", _order_hold_here, 120))
+	_map_btn = UiTheme.button("HARİTA (M)", toggle_tactical, 140)
 	squad_row.add_child(_map_btn)
 	for b in squad_row.get_children():
 		(b as Button).custom_minimum_size.y = 50
 		(b as Button).add_theme_font_size_override("font_size", 18)
 
-	_charge_btn = UiTheme.button("SÜNGÜ HÜCUMU!", order_charge, 260)
+	_charge_btn = UiTheme.button("SÜNGÜ HÜCUMU! (H)", order_charge, 300)
+	if not _touch_mode:
+		var hint := UiTheme.label("Alt: imleci aç/kapat (düğmelere tıklamak için)  ·  Esc: duraklat", 16, UiTheme.MUTED, HORIZONTAL_ALIGNMENT_RIGHT)
+		hint.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+		hint.position = Vector2(-640, -32)
+		hint.custom_minimum_size.x = 620
+		ui.add_child(hint)
 	_charge_btn.set_anchors_preset(Control.PRESET_CENTER_TOP)
 	_charge_btn.position = Vector2(-130, 60)
 	_charge_btn.visible = false
@@ -558,7 +565,7 @@ func toggle_tactical() -> void:
 	tactical = not tactical
 	tactical_cam.current = tactical
 	cam.current = not tactical
-	_map_btn.text = "GERİ" if tactical else "HARİTA"
+	_map_btn.text = "GERİ (M)" if tactical else "HARİTA (M)"
 	land.environment.fog_enabled = not tactical
 	for q in squads:
 		q.label.visible = tactical and q.side == OTTOMAN
@@ -572,7 +579,7 @@ func toggle_pause() -> void:
 
 
 func _update_mouse() -> void:
-	var capture := running and not finished and not tactical and not get_tree().paused and not _touch_mode
+	var capture := running and not finished and not tactical and not get_tree().paused and not _touch_mode and not _cursor_free
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED if capture else Input.MOUSE_MODE_VISIBLE
 
 
@@ -595,6 +602,10 @@ func _unhandled_input(event: InputEvent) -> void:
 				toggle_tactical()
 			KEY_H:
 				order_charge()
+			KEY_ALT:
+				# İmleci serbest bırak: alttaki düğmelere tıklanabilir; boş yere tıklayınca bakışa dönülür.
+				_cursor_free = not _cursor_free
+				_update_mouse()
 			_:
 				if event.keycode >= KEY_1 and event.keycode <= KEY_6:
 					_select_squad(event.keycode - KEY_1)
@@ -620,6 +631,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 			if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+				_cursor_free = false
 				_update_mouse()
 			else:
 				fire_player()
@@ -709,9 +721,7 @@ func _melee_player() -> void:
 			if d < bd:
 				bd = d
 				best = e
-	var tw := create_tween()
-	tw.tween_property(player.arms, "position:z", -0.5, 0.1)
-	tw.tween_property(player.arms, "position:z", 0.0, 0.25)
+	player.jab = 1.0
 	if best:
 		_damage(best, 100.0, player)
 
@@ -798,7 +808,8 @@ func _update_player(delta: float) -> void:
 	if not PeninsulaWorld.is_water(next.x, next.z):
 		player.root.position = PeninsulaWorld.ground(next)
 	player.root.rotation.y = yaw
-	player.arms.rotation.x = clampf(pitch, -0.6, 0.6)
+	player.aim = clampf(pitch, -0.6, 0.6)
+	player.rig.aiming_amount = move_toward(player.rig.aiming_amount, 1.0 if aiming else 0.0, delta * 5.0)
 	_animate(player, move.length() / maxf(delta, 0.001), delta)
 
 
@@ -806,8 +817,7 @@ func _respawn() -> void:
 	player.hp = 100.0
 	player.dead_t = -1.0
 	player.root.position = PeninsulaWorld.ground(PeninsulaWorld.CONKBAYIRI + Vector3(70, 0, -10))
-	player.model.rotation = Vector3.ZERO
-	player.model.position = Vector3.ZERO
+	player.rig.reset_fall()
 	clip = PLAYER_CLIP
 	message("Yeniden saflardasın. Kalan can: %d" % lives, UiTheme.MUTED)
 
@@ -827,14 +837,13 @@ func _update_camera() -> void:
 # ------------------------------------------------------------------ yapay zekâ
 
 func _animate(s: Soldier, spd: float, delta: float) -> void:
+	s.jab = move_toward(s.jab, 0.0, delta * 3.0)
 	if spd > 0.3:
-		s.walk += delta * spd * 2.2
-		var a := sin(s.walk) * 0.6
-		s.legs[0].rotation.x = a
-		s.legs[1].rotation.x = -a
-	else:
-		s.legs[0].rotation.x = move_toward(s.legs[0].rotation.x, 0.0, delta * 3.0)
-		s.legs[1].rotation.x = move_toward(s.legs[1].rotation.x, 0.0, delta * 3.0)
+		s.rig.walk += delta * spd * 2.4
+	# Uzaktaki askerlerin pozu her karede değil, üç karede bir güncellenir.
+	if not s.is_player and cam and s.pos().distance_to(cam.global_position) > 90.0 and (Engine.get_process_frames() + s.root.get_instance_id()) % 3 != 0:
+		return
+	s.rig.apply_pose(spd, s.aim, ease(s.jab, 0.5))
 
 
 func _update_squads() -> void:
@@ -909,11 +918,18 @@ func _update_soldier(s: Soldier, delta: float) -> void:
 	elif s.enemy:
 		var te := s.enemy.pos() - s.pos()
 		s.root.rotation.y = atan2(-te.x, -te.z)
+	# Durup ateş ederken tüfek omuza kalkar ve namlu düşmana eğilir.
+	var target_aim := 1.0 if s.enemy != null and not moving and not s.no_ammo else 0.0
+	s.rig.aiming_amount = move_toward(s.rig.aiming_amount, target_aim, delta * 3.0)
+	if s.enemy:
+		var te3 := s.enemy.pos() - s.pos()
+		s.aim = clampf(atan2(te3.y, Vector2(te3.x, te3.z).length()), -0.5, 0.5)
 	_animate(s, spd if moving else 0.0, delta)
 	if s.enemy == null:
 		return
 	if enemy_d < MELEE_RANGE and s.melee_cd <= 0.0:
 		s.melee_cd = _rng2.randf_range(0.9, 1.4)
+		s.jab = 1.0
 		if _rng2.randf() < 0.45:
 			_damage(s.enemy, 80.0, s)
 		return
@@ -989,8 +1005,7 @@ func _update_dead(s: Soldier, delta: float) -> void:
 		return
 	s.dead_t += delta
 	var k := clampf(s.dead_t / 0.6, 0.0, 1.0)
-	s.model.rotation.x = lerpf(0.0, PI / 2.0 * 0.95, k)
-	s.model.position.y = lerpf(0.0, 0.25, k)
+	s.rig.fall(k)
 
 
 func _naval_fire(delta: float) -> void:
@@ -1060,6 +1075,15 @@ func debug_autoplay() -> void:
 	_autoplay = true
 
 
+## Geliştirme: oyuncuyu Mustafa Kemal'in önüne getirip ona baktırır.
+func debug_look_kemal() -> void:
+	_autoplay = false
+	player.root.position = PeninsulaWorld.ground(kemal.pos() + Vector3(-3.2, 0, 1.0))
+	var to := kemal.pos() + Vector3(0, 1.5, 0) - (player.pos() + Vector3(0, 1.6, 0))
+	yaw = atan2(-to.x, -to.z) + 0.25
+	pitch = 0.0
+
+
 func debug_status() -> void:
 	var own := []
 	for key in objectives:
@@ -1125,6 +1149,10 @@ func mission_process(delta: float) -> void:
 		_update_objectives(delta)
 		_cleanup()
 		_check_end()
+	if kemal:
+		# Mustafa Kemal arada bir dürbünle cepheyi gözetler.
+		var cycle := fmod(elapsed + 3.0, 14.0)
+		kemal.rig.apply_pose(0.0, -0.05, 0.0, clampf(minf(cycle - 4.0, 12.0 - cycle), 0.0, 1.0))
 	if not tactical:
 		_update_camera()
 	_update_hud()

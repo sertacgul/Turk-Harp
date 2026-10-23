@@ -91,8 +91,10 @@ func _build_environment() -> void:
 
 
 func _build_water() -> void:
+	var bounds := Vector4(X_MIN, -Z_HALF, X_MAX - X_MIN, Z_HALF * 2.0)
+	var heights := Atmosphere.bake_heights(func(x: float, z: float) -> float: return height_at(x, z), bounds)
 	Atmosphere.water(self, Vector3((X_MIN + X_MAX) * 0.5, 0.0, 0.0),
-		Vector2(X_MAX - X_MIN + 2000.0, Z_HALF * 2.0 + 2000.0), "night" if night else "day")
+		Vector2(X_MAX - X_MIN + 2000.0, Z_HALF * 2.0 + 2000.0), "night" if night else "day", heights, bounds)
 
 
 func _terrain_color(h: float, slope: float, x: float, z: float) -> Color:
@@ -134,21 +136,10 @@ func _build_terrain() -> void:
 			st.add_index(a + nx)
 	st.generate_normals()
 	var mesh := st.commit()
-	var mat := StandardMaterial3D.new()
-	mat.vertex_color_use_as_albedo = true
-	mat.roughness = 0.95
-	var tex := NoiseTexture2D.new()
-	tex.seamless = true
-	tex.width = 256
-	tex.height = 256
-	var tn := FastNoiseLite.new()
-	tn.frequency = 0.05
-	tex.noise = tn
-	var ramp := Gradient.new()
-	ramp.set_color(0, Color(0.72, 0.72, 0.72))
-	ramp.set_color(1, Color(1.0, 1.0, 1.0))
-	tex.color_ramp = ramp
-	mat.albedo_texture = tex
+	var mat := ShaderMaterial.new()
+	mat.shader = load("res://shaders/terrain.gdshader")
+	mat.set_shader_parameter("rock_color", Color(0.5, 0.46, 0.4))
+	mat.set_shader_parameter("octaves", 5 if GameState.high_quality() else 3)
 	var terrain := MeshInstance3D.new()
 	terrain.mesh = mesh
 	terrain.material_override = mat
