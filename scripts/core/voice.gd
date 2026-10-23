@@ -1,6 +1,8 @@
 extends Node
 ## Konuşma ve haykırışlar. Önce assets/voices/<anahtar>.ogg (ya da .wav) gerçek kaydını çalar;
 ## kayıt yoksa işletim sisteminin Türkçe metin okuma sesini kullanır (macOS'ta "Yelda").
+## Serbest metinler (konuşmalar, intro anlatımı) assets/voices/lines/<metnin md5'i>.mp3 dosyasından çalınır;
+## bu dosyaları tools/generate_voices.py Google Cloud Text-to-Speech ile üretir.
 ## Kayıt listesi ve metinleri: docs/VOICES.md
 
 const LINES := {
@@ -58,20 +60,32 @@ func shout(key: String, min_gap := 2.5) -> void:
 		Sfx.play("crowd", -4.0)
 	var rec := _recording(key)
 	if rec:
-		for p in _players:
-			if not p.playing:
-				p.stream = rec
-				p.volume_db = linear_to_db(maxf(_volume(), 0.001))
-				p.pitch_scale = randf_range(0.97, 1.03)
-				p.play()
-				return
+		_play_stream(rec, 0.03)
 		return
 	speak(LINES.get(key, key))
 
 
-## Serbest metni okur. who: "kemal" daha ağır ve yavaş, "asker" daha hızlı.
+## Boş bir oynatıcıda sesi çalar; konuşmalar üst üste binmesin diye en fazla dört kanal.
+func _play_stream(stream: AudioStream, pitch_jitter: float) -> void:
+	for p in _players:
+		if not p.playing:
+			p.stream = stream
+			p.volume_db = linear_to_db(maxf(_volume(), 0.001))
+			p.pitch_scale = 1.0 + randf_range(-pitch_jitter, pitch_jitter)
+			p.play()
+			return
+
+
+## Serbest metni okur: önce önceden üretilmiş ses dosyası, yoksa sistemin metin okuma sesi.
+## who: "kemal" daha ağır ve yavaş, "asker" daha hızlı.
 func speak(text: String, who := "asker") -> void:
-	if not has_tts() or _volume() <= 0.01:
+	if _volume() <= 0.01:
+		return
+	var path := "res://assets/voices/lines/%s.mp3" % text.md5_text()
+	if ResourceLoader.exists(path):
+		_play_stream(load(path), 0.0)
+		return
+	if not has_tts():
 		return
 	var pitch := 0.85 if who == "kemal" else 1.0
 	var rate := 0.95 if who == "kemal" else 1.1
