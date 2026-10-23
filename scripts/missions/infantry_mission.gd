@@ -49,6 +49,9 @@ class Soldier:
 	var no_ammo := false
 	var bombs := 0
 	var name := ""
+	## Ateş ederken diz çöken askerler
+	var kneeler := false
+	var bolt_anim := 0.0
 	var is_player := false
 	var invulnerable := false
 
@@ -293,6 +296,7 @@ func _new_soldier(kind: String, side: int, at: Vector3) -> Soldier:
 	s.fire_cd = _rng2.randf_range(1.0, 4.0)
 	s.think_cd = _rng2.randf_range(0.0, 0.5)
 	s.bombs = 1 if _rng2.randf() < (0.3 if side == ANZAC else 0.15) else 0
+	s.kneeler = _rng2.randf() < 0.55
 	if side == OTTOMAN:
 		s.name = "Er %s (%s)" % [NAMES[_rng2.randi() % NAMES.size()], HOMETOWNS[_rng2.randi() % HOMETOWNS.size()]]
 	if side == OTTOMAN:
@@ -864,6 +868,7 @@ func _update_player(delta: float) -> void:
 	player.root.rotation.y = yaw
 	player.aim = clampf(pitch, -0.6, 0.6)
 	player.rig.aiming_amount = move_toward(player.rig.aiming_amount, 1.0 if aiming else 0.0, delta * 5.0)
+	player.rig.reload = move_toward(player.rig.reload, 1.0 if reload_t > 0.0 else 0.0, delta * 4.0)
 	_animate(player, move.length() / maxf(delta, 0.001), delta)
 
 
@@ -986,6 +991,9 @@ func _update_soldier(s: Soldier, delta: float) -> void:
 	# Durup ateş ederken tüfek omuza kalkar ve namlu düşmana eğilir.
 	var target_aim := 1.0 if s.enemy != null and not moving and not s.no_ammo else 0.0
 	s.rig.aiming_amount = move_toward(s.rig.aiming_amount, target_aim, delta * 3.0)
+	s.rig.kneel = move_toward(s.rig.kneel, target_aim if s.kneeler else 0.0, delta * 2.5)
+	s.bolt_anim = maxf(s.bolt_anim - delta, 0.0)
+	s.rig.reload = clampf(s.bolt_anim / 0.5, 0.0, 1.0) * 0.6
 	if s.enemy:
 		var te3 := s.enemy.pos() - s.pos()
 		s.aim = clampf(atan2(te3.y, Vector2(te3.x, te3.z).length()), -0.5, 0.5)
@@ -1006,6 +1014,7 @@ func _update_soldier(s: Soldier, delta: float) -> void:
 	if s.no_ammo or s.fire_cd > 0.0 or order == "retreat":
 		return
 	s.fire_cd = _rng2.randf_range(2.6, 4.6) * (1.6 if moving else 1.0)
+	s.bolt_anim = 0.9
 	var chance := 0.2 * pow(1.0 - enemy_d / RIFLE_RANGE, 1.2) * (0.6 if moving else 1.0)
 	# Mevzisinde yatan asker hem daha iyi nişan alır hem de daha zor vurulur.
 	if not moving and s.side == OTTOMAN:
@@ -1060,8 +1069,11 @@ func _damage(s: Soldier, amount: float, by: Soldier) -> void:
 		shake(0.6)
 	s.hp -= amount
 	if s.alive():
+		s.rig.flinch = 1.0
 		return
 	s.dead_t = 0.0
+	s.rig.fall_style = _rng2.randi() % 3
+	s.rig.kneel = 0.0
 	if by != null and by.is_player:
 		kills += 1
 	if s.is_player:

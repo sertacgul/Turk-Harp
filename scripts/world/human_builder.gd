@@ -229,6 +229,27 @@ class Builder:
 			for q in quad:
 				vert(s, q[0] + n * 0.006, n, Vector2.ZERO, q[1], q[1], 0.0)
 
+	## Yol boyunca yuvarlak kesitli tüp (rulo battaniye, kayış). Her nokta kendi kemiğine bağlanır.
+	func tube(key: String, mat: Material, pts: Array, radius: float, bones: Array, segs := 10) -> void:
+		var s := st(key, mat)
+		var rings: Array = []
+		for i in pts.size():
+			var p: Vector3 = pts[i]
+			var dir: Vector3 = ((pts[mini(i + 1, pts.size() - 1)] as Vector3) - (pts[maxi(i - 1, 0)] as Vector3)).normalized()
+			var side := dir.cross(Vector3.FORWARD if absf(dir.z) < 0.9 else Vector3.UP).normalized()
+			var up := side.cross(dir).normalized()
+			var row: Array = []
+			for k in segs + 1:
+				var a := TAU * float(k) / segs
+				var n := side * cos(a) + up * sin(a)
+				row.append([p + n * radius, n])
+			rings.append(row)
+		for i in pts.size() - 1:
+			for k in segs:
+				for q in [[i, k], [i + 1, k], [i + 1, k + 1], [i, k], [i + 1, k + 1], [i, k + 1]]:
+					var pn: Array = rings[q[0]][q[1]]
+					vert(s, pn[0], pn[1], Vector2(float(q[1]) / segs, float(q[0])), bones[q[0]], bones[q[0]], 0.0)
+
 	func commit() -> ArrayMesh:
 		var mesh := ArrayMesh.new()
 		for key in tools:
@@ -240,63 +261,207 @@ class Builder:
 
 # ------------------------------------------------------------------ gövde
 
+const VARIANTS := 10
+
+
+## Türün temel kıyafeti. Varyantlar bunun üzerine ten, yapı, yüz ve teçhizat farkları ekler.
 static func _spec(kind: String) -> Dictionary:
 	match kind:
 		"anzac":
 			return {"uniform": Color(0.6, 0.5, 0.35), "trousers": Color(0.56, 0.47, 0.33), "puttee": Color(0.5, 0.42, 0.3), "hat": Color(0.52, 0.42, 0.28),
-				"skin": Color(0.84, 0.63, 0.5), "leather": Color(0.42, 0.3, 0.18), "hat_kind": "slouch", "mustache": false, "height": 1.0, "boots": false, "coat": false}
+				"leather": Color(0.42, 0.3, 0.18), "hat_kind": "slouch", "height": 1.0, "boots": false, "coat": false, "west": true}
 		"british":
 			return {"uniform": Color(0.58, 0.5, 0.36), "trousers": Color(0.55, 0.47, 0.34), "puttee": Color(0.48, 0.41, 0.3), "hat": Color(0.82, 0.78, 0.66),
-				"skin": Color(0.86, 0.66, 0.54), "leather": Color(0.36, 0.26, 0.16), "hat_kind": "helmet", "mustache": false, "height": 1.0, "boots": false, "coat": false}
+				"leather": Color(0.36, 0.26, 0.16), "hat_kind": "helmet", "height": 1.0, "boots": false, "coat": false, "west": true}
 		"officer":
 			return {"uniform": Color(0.4, 0.4, 0.3), "trousers": Color(0.38, 0.37, 0.29), "puttee": Color(0.2, 0.14, 0.1), "hat": Color(0.42, 0.41, 0.31),
-				"skin": Color(0.78, 0.58, 0.44), "leather": Color(0.28, 0.17, 0.1), "hat_kind": "kabalak", "mustache": true, "height": 1.02, "boots": true, "coat": false}
+				"leather": Color(0.28, 0.17, 0.1), "hat_kind": "kabalak", "height": 1.02, "boots": true, "coat": false, "west": false}
 		"kemal":
 			return {"uniform": Color(0.43, 0.43, 0.37), "trousers": Color(0.36, 0.36, 0.31), "puttee": Color(0.12, 0.09, 0.07), "hat": Color(0.45, 0.44, 0.36),
-				"skin": Color(0.86, 0.68, 0.56), "leather": Color(0.2, 0.13, 0.08), "hat_kind": "kabalak", "mustache": true, "height": 1.06, "boots": true, "coat": true}
+				"leather": Color(0.2, 0.13, 0.08), "hat_kind": "kabalak", "height": 1.06, "boots": true, "coat": true, "west": false}
 		_:
 			return {"uniform": Color(0.47, 0.45, 0.32), "trousers": Color(0.45, 0.43, 0.31), "puttee": Color(0.4, 0.38, 0.28), "hat": Color(0.58, 0.54, 0.4),
-				"skin": Color(0.72, 0.55, 0.42), "leather": Color(0.4, 0.29, 0.17), "hat_kind": "kabalak", "mustache": true, "height": 1.0, "boots": false, "coat": false}
+				"leather": Color(0.4, 0.29, 0.17), "hat_kind": "kabalak", "height": 1.0, "boots": false, "coat": false, "west": false}
 
 
-static func _body_mesh(kind: String) -> ArrayMesh:
-	if _meshes.has(kind):
-		return _meshes[kind]
+static func _tint(c: Color, rng: RandomNumberGenerator, amount: float) -> Color:
+	var k := rng.randf_range(1.0 - amount, 1.0 + amount)
+	return Color(clampf(c.r * k * rng.randf_range(0.96, 1.04), 0, 1), clampf(c.g * k * rng.randf_range(0.96, 1.04), 0, 1), clampf(c.b * k * rng.randf_range(0.94, 1.06), 0, 1))
+
+
+## Türün n. varyantı: yapı, ten, saç, yüz, sakal/bıyık, solmuş kıyafet ve teçhizat.
+static func _variant(kind: String, v: int) -> Dictionary:
 	var sp := _spec(kind)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(kind) + v * 7919
+	var west: bool = sp["west"]
+	var fixed := kind == "kemal" or kind == "officer"
+	sp["height"] = float(sp["height"]) if fixed else rng.randf_range(0.93, 1.07)
+	sp["shoulders"] = 1.0 if fixed else rng.randf_range(0.92, 1.1)
+	sp["waist"] = 0.96 if kind == "kemal" else rng.randf_range(0.9, 1.15)
+	if west:
+		sp["skin"] = Color(0.93, 0.74, 0.62).lerp(Color(0.78, 0.53, 0.38), rng.randf())
+		sp["hair"] = [Color(0.25, 0.16, 0.09), Color(0.55, 0.42, 0.24), Color(0.12, 0.08, 0.05), Color(0.45, 0.2, 0.1)][rng.randi() % 4]
+	else:
+		sp["skin"] = Color(0.84, 0.66, 0.52).lerp(Color(0.54, 0.37, 0.26), rng.randf() * (0.3 if kind == "kemal" else 1.0))
+		sp["hair"] = Color(0.06, 0.05, 0.04).lerp(Color(0.2, 0.13, 0.08), rng.randf())
+	if kind == "kemal":
+		sp["skin"] = Color(0.88, 0.71, 0.6)
+		sp["hair"] = Color(0.42, 0.33, 0.22)
+	# Yüz biçimi
+	sp["head_w"] = rng.randf_range(0.93, 1.07)
+	sp["head_l"] = rng.randf_range(0.95, 1.06)
+	sp["jaw"] = rng.randf_range(0.88, 1.15)
+	sp["nose"] = rng.randf_range(0.85, 1.3)
+	sp["brow"] = rng.randf_range(0.7, 1.4)
+	if kind == "kemal":
+		sp["head_w"] = 0.96
+		sp["head_l"] = 1.04
+		sp["jaw"] = 0.95
+		sp["nose"] = 1.05
+		sp["brow"] = 1.1
+	# Sakal ve bıyık: none, thin, thick, handlebar; sakal ve kirli sakal
+	var r := rng.randf()
+	if kind == "kemal" or kind == "officer":
+		sp["mustache"] = "thin"
+		sp["beard"] = false
+		sp["stubble"] = false
+	elif west:
+		sp["mustache"] = "none" if r < 0.6 else ("thin" if r < 0.85 else "thick")
+		sp["beard"] = false
+		sp["stubble"] = rng.randf() < 0.35
+	else:
+		sp["mustache"] = "thick" if r < 0.45 else ("thin" if r < 0.75 else ("handlebar" if r < 0.9 else "none"))
+		sp["beard"] = rng.randf() < 0.25
+		sp["stubble"] = rng.randf() < 0.45
+	# Solmuş, yıpranmış kıyafetler
+	for key in ["uniform", "trousers", "puttee", "hat"]:
+		sp[key] = _tint(sp[key], rng, 0.0 if fixed else 0.1)
+	sp["blanket"] = not west and not fixed and rng.randf() < 0.55
+	sp["canteen"] = not fixed and rng.randf() < 0.75
+	sp["bandolier"] = not west and not fixed and rng.randf() < 0.4
+	sp["pack"] = west and rng.randf() < 0.55
+	sp["shirt"] = kind == "anzac" and rng.randf() < 0.3
+	sp["rolled"] = (kind == "anzac" and rng.randf() < 0.55) or (kind == "british" and rng.randf() < 0.3) or sp["shirt"]
+	if sp["shirt"]:
+		sp["uniform"] = [Color(0.66, 0.6, 0.48), Color(0.55, 0.58, 0.62), Color(0.62, 0.55, 0.42)][rng.randi() % 3]
+	if west and rng.randf() < 0.3:
+		sp["hat_kind"] = "cap"
+	return sp
+
+
+## Ten üzerine göz çukuru, kaş kemiği, elmacık, burun, dudak ve çene ile biçimlendirilmiş baş.
+static func _head(b: Builder, sp: Dictionary, skin: Material, stubble_mat: Material, HD: int) -> void:
+	var c := Vector3(0, 1.705, 0.005)
+	var rad := Vector3(0.081 * float(sp["head_w"]), 0.11 * float(sp["head_l"]), 0.097)
+	var jaw: float = sp["jaw"]
+	var nose: float = sp["nose"]
+	var brow: float = sp["brow"]
+	var segs := 28
+	var rings := 22
+	var grid: Array = []
+	for j in rings + 1:
+		var th := PI * float(j) / rings
+		var row: Array = []
+		for i in segs + 1:
+			var ph := TAU * float(i) / segs
+			var u := Vector3(sin(th) * cos(ph), cos(th), sin(th) * sin(ph))
+			var front := clampf(-u.z, 0.0, 1.0)
+			var p := u * rad
+			# Alt yüz daralır; çene genişliği varyanta göre
+			var lower := clampf(-u.y, 0.0, 1.0)
+			p.x *= lerpf(1.0, 0.78 * jaw, lower * lower)
+			p.z *= lerpf(1.0, 0.92, lower)
+			var d := 0.0
+			d += 0.006 * brow * exp(-pow((u.y - 0.3) / 0.07, 2.0)) * smoothstep(0.55, 0.9, front)
+			d -= 0.007 * exp(-pow((u.y - 0.14) / 0.08, 2.0)) * exp(-pow((absf(u.x) - 0.33) / 0.12, 2.0)) * smoothstep(0.5, 0.85, front)
+			d += 0.005 * exp(-pow(u.y / 0.1, 2.0)) * exp(-pow((absf(u.x) - 0.58) / 0.14, 2.0)) * smoothstep(0.3, 0.7, front)
+			var bridge := smoothstep(0.24, 0.0, u.y) * smoothstep(-0.2, -0.05, u.y)
+			d += 0.026 * nose * bridge * (0.4 + 0.6 * smoothstep(0.2, -0.12, u.y)) * exp(-pow(u.x / (0.09 * nose), 2.0)) * smoothstep(0.8, 0.98, front)
+			d -= 0.004 * exp(-pow((u.y + 0.33) / 0.04, 2.0)) * exp(-pow(u.x / 0.2, 2.0)) * smoothstep(0.8, 0.97, front)
+			d += 0.003 * exp(-pow((u.y + 0.28) / 0.05, 2.0)) * exp(-pow(u.x / 0.18, 2.0)) * smoothstep(0.8, 0.97, front)
+			d += 0.008 * jaw * exp(-pow((u.y + 0.62) / 0.12, 2.0)) * exp(-pow(u.x / 0.3, 2.0)) * smoothstep(0.6, 0.95, front)
+			row.append(c + p + u * d)
+		grid.append(row)
+	var st := b.st("skin", skin)
+	var lowface := b.st("stubble", stubble_mat) if sp["stubble"] else st
+	for j in rings:
+		for i in segs:
+			var q := [[j, i], [j + 1, i], [j + 1, i + 1], [j, i], [j + 1, i + 1], [j, i + 1]]
+			var center: Vector3 = grid[j][i]
+			var u_y := (center.y - c.y) / rad.y
+			var u_front := (c.z - center.z) / rad.z
+			var target := lowface if u_y < -0.25 and u_front > -0.2 else st
+			for k in q:
+				var jj: int = k[0]
+				var ii: int = k[1]
+				var p: Vector3 = grid[jj][ii]
+				var pu: Vector3 = grid[maxi(jj - 1, 0)][ii]
+				var pd: Vector3 = grid[mini(jj + 1, rings)][ii]
+				var pl: Vector3 = grid[jj][(ii - 1 + segs) % segs]
+				var pr: Vector3 = grid[jj][(ii + 1) % segs]
+				var n := (pr - pl).cross(pd - pu)
+				if n.dot(p - c) < 0.0:
+					n = -n
+				if n.length() < 0.000001:
+					n = p - c
+				b.vert(target, p, n, Vector2(float(ii) / segs, float(jj) / rings), HD, HD, 0.0)
+
+
+static func _body_mesh(kind: String, v: int) -> ArrayMesh:
+	var cache_key := "%s_%d" % [kind, v]
+	if _meshes.has(cache_key):
+		return _meshes[cache_key]
+	var sp := _variant(kind, v)
 	var b := Builder.new()
 	var cloth := material("fabric", sp["uniform"])
 	var trou := material("fabric", sp["trousers"])
 	var put := material("fabric", sp["puttee"])
 	var skin := material("skin", sp["skin"])
+	var hairc: Color = sp["hair"]
+	var stubble := material("skin", (sp["skin"] as Color).lerp(hairc, 0.3))
 	var lea := material("leather", sp["leather"])
-	var hair := material("hair", Color(0.08, 0.06, 0.05))
+	var hair := material("hair", hairc)
+	var dark := material("hair", Color(0.05, 0.04, 0.03))
+	var eye_white := material("skin", Color(0.86, 0.84, 0.8))
 	var metal := material("metal", Color(0.55, 0.5, 0.35))
 	var hatm := material("fabric", sp["hat"])
+	var wool := material("fabric", Color(0.5, 0.45, 0.38))
 	var H := bone_index("hips")
 	var SP := bone_index("spine")
 	var CH := bone_index("chest")
 	var NK := bone_index("neck")
 	var HD := bone_index("head")
+	var sw: float = sp["shoulders"]
+	var ww: float = sp["waist"]
 
-	# Ceket: kalçadan omuza; subay paltosu dize kadar iner.
-	var hem := 0.52 if sp["coat"] else 0.8
+	# Ceket (ya da gömlek): kalçadan omuza; subay paltosu dize kadar iner.
+	var shirt: bool = sp["shirt"]
+	var hem := 0.52 if sp["coat"] else (0.93 if shirt else 0.8)
 	b.loft("cloth", cloth, [
-		[hem, 0, 0.01, 0.2 if sp["coat"] else 0.19, 0.155, H, H, 0.0],
-		[0.9, 0, 0.0, 0.18, 0.13, H, H, 0.0],
-		[1.0, 0, 0.0, 0.16, 0.115, H, SP, 0.3],
-		[1.12, 0, 0.0, 0.165, 0.115, SP, SP, 0.0],
-		[1.27, 0, -0.005, 0.185, 0.13, SP, CH, 0.7],
-		[1.4, 0, 0.0, 0.2, 0.125, CH, CH, 0.0],
-		[1.47, 0, 0.005, 0.16, 0.1, CH, CH, 0.0],
+		[hem, 0, 0.01, (0.2 if sp["coat"] else (0.165 if shirt else 0.19)) * ww, 0.155 * ww, H, H, 0.0],
+		[0.9, 0, 0.0, 0.18 * ww, 0.13 * ww, H, H, 0.0],
+		[1.0, 0, -0.01 * (ww - 1.0) * 4.0, 0.16 * ww, 0.115 * ww, H, SP, 0.3],
+		[1.12, 0, -0.012 * (ww - 1.0) * 4.0, 0.165 * lerpf(1.0, ww, 0.7), 0.115 * lerpf(1.0, ww, 0.8), SP, SP, 0.0],
+		[1.27, 0, -0.005, 0.185 * sw, 0.13, SP, CH, 0.7],
+		[1.4, 0, 0.0, 0.2 * sw, 0.125, CH, CH, 0.0],
+		[1.47, 0, 0.005, 0.16 * sw, 0.1, CH, CH, 0.0],
 		[1.51, 0, 0.01, 0.075, 0.07, CH, NK, 0.5],
-	], 16)
+	], 18)
 	# Yaka ve düğmeler
-	b.loft("cloth", cloth, [[1.49, 0, 0.005, 0.08, 0.075, NK, NK, 0.0], [1.55, 0, 0.005, 0.072, 0.068, NK, NK, 0.0]], 12)
+	b.loft("cloth", cloth, [[1.49, 0, 0.005, 0.082, 0.077, NK, NK, 0.0], [1.575, 0, 0.008, 0.07, 0.068, NK, NK, 0.0]], 12)
 	for i in 5:
-		b.ellipsoid("metal", metal, Vector3(0, 1.43 - i * 0.09, -0.128 + i * 0.003), Vector3(0.009, 0.009, 0.006), CH if i < 2 else SP, 6, 4)
-	# Kemer, fişeklikler, kayış
-	b.loft("leather", lea, [[0.96, 0, 0.0, 0.172, 0.123, H, H, 0.0], [1.02, 0, 0.0, 0.17, 0.122, H, H, 0.0]], 16)
-	b.box("metal", metal, Vector3(0, 0.99, -0.125), Vector3(0.06, 0.05, 0.012), H)
+		b.ellipsoid("metal", metal, Vector3(0, 1.43 - i * 0.09, -0.128 * lerpf(1.0, ww, 0.5) + i * 0.003), Vector3(0.009, 0.009, 0.006), CH if i < 2 else SP, 6, 4)
+	if not shirt:
+		for side in [-1.0, 1.0]:
+			b.box("cloth", cloth, Vector3(side * 0.09 * sw, 1.36, -0.13), Vector3(0.07, 0.06, 0.012), CH)  # göğüs cepleri
+	# Kemer
+	b.loft("leather", lea, [[0.96, 0, 0.0, 0.172 * ww, 0.123 * ww, H, H, 0.0], [1.02, 0, 0.0, 0.17 * ww, 0.122 * ww, H, H, 0.0]], 16)
+	b.box("metal", metal, Vector3(0, 0.99, -0.125 * ww), Vector3(0.06, 0.05, 0.012), H)
+	if shirt:
+		# Pantolon askıları
+		for side in [-1.0, 1.0]:
+			b.ribbon("leather", lea, [Vector3(side * 0.09, 1.0, -0.12 * ww), Vector3(side * 0.1, 1.25, -0.135), Vector3(side * 0.11, 1.45, -0.09), Vector3(side * 0.1, 1.47, 0.06), Vector3(side * 0.06, 1.25, 0.13), Vector3(side * 0.05, 1.0, 0.12 * ww)], 0.022, [H, SP, CH, CH, SP, H])
 	if kind == "officer" or kind == "kemal":
 		# Sam Browne omuz kayışı (sol omuzdan sağ kalçaya) ve tabanca kılıfı
 		b.ribbon("leather", lea, [Vector3(-0.12, 1.46, 0.06), Vector3(-0.13, 1.44, -0.12), Vector3(-0.04, 1.3, -0.14), Vector3(0.06, 1.14, -0.125), Vector3(0.13, 1.0, -0.12)], 0.035, [CH, CH, CH, SP, H])
@@ -305,66 +470,112 @@ static func _body_mesh(kind: String) -> ArrayMesh:
 	else:
 		for side in [-1.0, 1.0]:
 			for k in 2:
-				b.box("leather", lea, Vector3(side * (0.06 + k * 0.065), 0.98, -0.13), Vector3(0.055, 0.07, 0.05), H)
-		# Ekmek torbası (sol kalça) ve göğüste çapraz kayış
-		b.box("cloth", hatm, Vector3(-0.17, 0.86, 0.06), Vector3(0.06, 0.16, 0.18), H)
+				b.box("leather", lea, Vector3(side * (0.06 + k * 0.065) * ww, 0.98, -0.13 * ww), Vector3(0.055, 0.07, 0.05), H)
+		b.box("cloth", hatm, Vector3(-0.17 * ww, 0.86, 0.06), Vector3(0.06, 0.16, 0.18), H)  # ekmek torbası
 		b.ribbon("leather", lea, [Vector3(0.13, 1.46, 0.05), Vector3(0.14, 1.44, -0.12), Vector3(0.04, 1.3, -0.14), Vector3(-0.07, 1.13, -0.125), Vector3(-0.15, 0.96, -0.11)], 0.04, [CH, CH, CH, SP, H])
+	if sp["bandolier"]:
+		# Göğüste çapraz fişeklik: sağ omuzdan sol kalçaya fişek cepleri
+		for k in 7:
+			var t := float(k) / 6.0
+			var pt := Vector3(lerpf(0.14, -0.14, t), lerpf(1.42, 1.0, t), -0.14 + sin(t * PI) * -0.01)
+			b.box("leather", lea, pt, Vector3(0.05, 0.055, 0.03), CH if t < 0.4 else (SP if t < 0.8 else H), Basis(Vector3.BACK, -0.6))
+	if sp["blanket"]:
+		# Sol omuzdan sağ kalçaya, göğüs ve sırttan dolanan rulo battaniye
+		for zside in [-1.0, 1.0]:
+			var pts := []
+			var bones := []
+			for k in 9:
+				var t := float(k) / 8.0
+				pts.append(Vector3(lerpf(-0.12, 0.16, t) * sw, lerpf(1.48, 0.97, t), zside * lerpf(0.11, 0.15, sin(t * PI))))
+				bones.append(CH if t < 0.45 else (SP if t < 0.8 else H))
+			b.tube("wool", wool, pts, 0.042, bones)
+	if sp["canteen"]:
+		b.ellipsoid("metal", material("fabric", Color(0.36, 0.33, 0.25)), Vector3(0.17 * ww, 0.88, 0.07), Vector3(0.035, 0.08, 0.07), H, 10, 6)
+	if sp["pack"]:
+		b.box("cloth", hatm, Vector3(0, 1.3, 0.15), Vector3(0.24 * sw, 0.26, 0.09), CH)
+		b.box("wool", wool, Vector3(0, 1.47, 0.14), Vector3(0.26 * sw, 0.06, 0.07), CH)
 	if kind == "kemal":
-		b.box("leather", lea, Vector3(0.05, 1.33, -0.14), Vector3(0.13, 0.07, 0.06), CH)  # dürbün göğüste
-		for x in [-0.03, 0.03]:
-			b.loft("metal", hair, [[1.3, x + 0.05, -0.16, 0.022, 0.022, CH, CH, 0.0], [1.37, x + 0.05, -0.16, 0.022, 0.022, CH, CH, 0.0]], 8)
-
+		b.box("leather", lea, Vector3(0.05, 1.33, -0.14), Vector3(0.13, 0.07, 0.06), CH)  # dürbün kutusu
 	# Boyun ve baş
-	b.loft("skin", skin, [[1.5, 0, 0.01, 0.055, 0.055, NK, NK, 0.0], [1.62, 0, 0.012, 0.05, 0.052, NK, HD, 1.0]], 12)
-	b.ellipsoid("skin", skin, Vector3(0, 1.705, 0.005), Vector3(0.082, 0.112, 0.098), HD, 16, 12)
-	b.ellipsoid("skin", skin, Vector3(0, 1.63, -0.04), Vector3(0.065, 0.045, 0.07), HD, 12, 8)  # çene
-	b.ellipsoid("skin", skin, Vector3(0, 1.692, -0.096), Vector3(0.011, 0.024, 0.016), HD, 8, 6)  # burun
+	b.loft("skin", skin, [[1.5, 0, 0.012, 0.062, 0.06, NK, NK, 0.0], [1.63, 0, 0.012, 0.056, 0.056, NK, HD, 1.0]], 12)
+	_head(b, sp, skin, stubble, HD)
+	var hw: float = sp["head_w"]
 	for side in [-1.0, 1.0]:
-		b.ellipsoid("skin", skin, Vector3(side * 0.086, 1.69, 0.005), Vector3(0.01, 0.024, 0.016), HD, 8, 6)  # kulak
-		b.ellipsoid("hair", hair, Vector3(side * 0.033, 1.712, -0.088), Vector3(0.009, 0.0055, 0.005), HD, 6, 4)  # göz
-		b.box("hair", hair, Vector3(side * 0.035, 1.733, -0.088), Vector3(0.03, 0.006, 0.008), HD, Basis(Vector3.BACK, side * -0.1))  # kaş
-	b.ellipsoid("hair", hair, Vector3(0, 1.73, 0.03), Vector3(0.085, 0.07, 0.085), HD, 12, 8)  # şapka altından görünen saç
-	if sp["mustache"]:
+		b.ellipsoid("skin", skin, Vector3(side * 0.083 * hw, 1.69, 0.008), Vector3(0.008, 0.027, 0.017), HD, 8, 6)  # kulak
+		var ex: float = side * 0.032 * hw
+		b.ellipsoid("eye", eye_white, Vector3(ex, 1.716, -0.08), Vector3(0.0095, 0.0048, 0.005), HD, 8, 5)  # göz akı
+		b.ellipsoid("hair", dark, Vector3(ex, 1.716, -0.0843), Vector3(0.0042, 0.0042, 0.0018), HD, 6, 4)  # iris
+		b.box("hair", hair, Vector3(side * 0.034 * hw, 1.736, -0.09), Vector3(0.032, 0.005 * float(sp["brow"]) + 0.003, 0.008), HD, Basis(Vector3.BACK, side * -0.1))  # kaş
+	b.ellipsoid("hair", hair, Vector3(0, 1.73, 0.03), Vector3(0.085 * hw, 0.07, 0.085), HD, 12, 8)  # şapka altından görünen saç
+	b.ellipsoid("lips", material("skin", (sp["skin"] as Color).lerp(Color(0.55, 0.25, 0.22), 0.45)), Vector3(0, 1.648, -0.091), Vector3(0.018, 0.0045, 0.006), HD, 8, 4)  # dudak
+	match sp["mustache"]:
+		"thin":
+			for side in [-1.0, 1.0]:
+				b.ellipsoid("hair", hair, Vector3(side * 0.018, 1.665, -0.095), Vector3(0.018, 0.004, 0.006), HD, 8, 4)
+		"thick":
+			for side in [-1.0, 1.0]:
+				b.ellipsoid("hair", hair, Vector3(side * 0.02, 1.662, -0.094), Vector3(0.023, 0.007, 0.009), HD, 8, 4)
+		"handlebar":
+			for side in [-1.0, 1.0]:
+				b.ellipsoid("hair", hair, Vector3(side * 0.02, 1.663, -0.094), Vector3(0.022, 0.0055, 0.008), HD, 8, 4)
+				b.ellipsoid("hair", hair, Vector3(side * 0.043, 1.672, -0.085), Vector3(0.006, 0.009, 0.005), HD, 6, 4)
+	if sp["beard"]:
+		b.ellipsoid("hair", hair, Vector3(0, 1.625, -0.05), Vector3(0.062 * float(sp["jaw"]), 0.048, 0.06), HD, 14, 8)
 		for side in [-1.0, 1.0]:
-			b.ellipsoid("hair", hair, Vector3(side * 0.019, 1.663, -0.094), Vector3(0.02, 0.0055, 0.008), HD, 8, 4)
+			b.ellipsoid("hair", hair, Vector3(side * 0.06, 1.66, -0.03), Vector3(0.018, 0.04, 0.035), HD, 8, 5)
 
 	# Şapkalar
 	match sp["hat_kind"]:
 		"helmet":
-			# Wolseley sıcak iklim miğferi: yüksek kubbe, öne ve arkaya uzanan siper, puggaree sargısı
+			# Wolseley sıcak iklim miğferi: yüksek kubbe, siper, puggaree sargısı
 			b.ellipsoid("hat", hatm, Vector3(0, 1.8, 0.005), Vector3(0.115, 0.1, 0.13), HD, 16, 10)
 			b.brim("hat", hatm, Vector3(0, 1.76, 0.0), 0.1, 0.17, HD, 0.0)
 			b.loft("hat", material("fabric", Color(0.72, 0.66, 0.52)), [[1.765, 0, 0.005, 0.118, 0.133, HD, HD, 0.0], [1.8, 0, 0.005, 0.113, 0.128, HD, HD, 0.0]], 16)
+		"cap":
+			# Siperli hizmet kasketi
+			b.loft("hat", hatm, [[1.77, 0, 0.005, 0.095, 0.105, HD, HD, 0.0], [1.81, 0, 0.0, 0.105, 0.118, HD, HD, 0.0], [1.83, 0, 0.0, 0.1, 0.11, HD, HD, 0.0]], 16, true)
+			b.box("leather", lea, Vector3(0, 1.768, -0.11), Vector3(0.15, 0.008, 0.06), HD, Basis(Vector3.RIGHT, 0.25))
 		"slouch":
 			b.brim("hat", hatm, Vector3(0, 1.79, 0), 0.08, 0.26, HD, 0.08)
 			b.loft("hat", hatm, [[1.78, 0, 0, 0.1, 0.11, HD, HD, 0.0], [1.86, 0, 0, 0.092, 0.1, HD, HD, 0.0], [1.9, 0, 0, 0.06, 0.08, HD, HD, 0.0]], 14, true)
 			b.loft("leather", lea, [[1.79, 0, 0, 0.102, 0.112, HD, HD, 0.0], [1.81, 0, 0, 0.102, 0.112, HD, HD, 0.0]], 14)
 		_:
 			# Kabalak (Enveriye): başa sarılmış kumaş; üst üste sarım katları
-			b.ellipsoid("hat", hatm, Vector3(0, 1.79, 0.005), Vector3(0.105, 0.085, 0.12), HD, 16, 10)
+			b.ellipsoid("hat", hatm, Vector3(0, 1.79, 0.005), Vector3(0.105 * hw, 0.085, 0.12), HD, 16, 10)
 			for k in 3:
 				var y := 1.755 + k * 0.03
-				b.loft("hat", hatm, [[y, 0, 0.005, 0.113 - k * 0.012, 0.128 - k * 0.012, HD, HD, 0.0], [y + 0.022, 0, 0.005, 0.11 - k * 0.012, 0.125 - k * 0.012, HD, HD, 0.0]], 16)
-			# Arkaya inen ense örtüsü
+				b.loft("hat", hatm, [[y, 0, 0.005, (0.113 - k * 0.012) * hw, 0.128 - k * 0.012, HD, HD, 0.0], [y + 0.022, 0, 0.005, (0.11 - k * 0.012) * hw, 0.125 - k * 0.012, HD, HD, 0.0]], 16)
 			b.box("hat", hatm, Vector3(0, 1.72, 0.09), Vector3(0.15, 0.08, 0.02), HD, Basis(Vector3.RIGHT, -0.25))
 
-	# Kollar
+	# Kollar ve bacaklar
 	for side in [1.0, -1.0]:
 		var pre := "r_" if side > 0.0 else "l_"
 		var UA := bone_index(pre + "upperarm")
 		var FA := bone_index(pre + "forearm")
 		var HA := bone_index(pre + "hand")
 		var x: float = side
-		b.loft("cloth", cloth, [
-			[0.95, x * 0.23, 0.0, 0.05, 0.05, FA, HA, 0.1],
-			[1.12, x * 0.222, 0.0, 0.052, 0.05, FA, FA, 0.0],
-			[1.17, x * 0.22, 0.0, 0.054, 0.052, UA, FA, 0.5],
-			[1.3, x * 0.21, 0.0, 0.06, 0.058, UA, UA, 0.0],
-			[1.42, x * 0.2, 0.0, 0.066, 0.066, UA, UA, 0.0],
-			[1.47, x * 0.18, 0.0, 0.05, 0.06, UA, CH, 0.5],
-		], 12)
-		b.ellipsoid("skin", skin, Vector3(x * 0.232, 0.875, -0.005), Vector3(0.03, 0.05, 0.026), HA, 10, 6)  # el
-		# Bacaklar
+		if sp["rolled"]:
+			# Sıvanmış kollar: önkol çıplak, dirsek üstünde kıvrım
+			b.loft("skin", skin, [[0.95, x * 0.23, 0.0, 0.036, 0.034, FA, HA, 0.1], [1.12, x * 0.222, 0.0, 0.043, 0.04, FA, FA, 0.0], [1.2, x * 0.22, 0.0, 0.046, 0.044, UA, FA, 0.5]], 12)
+			b.loft("cloth", cloth, [
+				[1.18, x * 0.22, 0.0, 0.06, 0.058, UA, FA, 0.4],
+				[1.23, x * 0.218, 0.0, 0.058, 0.056, UA, UA, 0.0],
+				[1.3, x * 0.21, 0.0, 0.058, 0.056, UA, UA, 0.0],
+				[1.42, x * 0.2 * sw, 0.0, 0.066, 0.066, UA, UA, 0.0],
+				[1.47, x * 0.18 * sw, 0.0, 0.05, 0.06, UA, CH, 0.5],
+			], 12)
+		else:
+			b.loft("cloth", cloth, [
+				[0.95, x * 0.23, 0.0, 0.05, 0.05, FA, HA, 0.1],
+				[1.12, x * 0.222, 0.0, 0.052, 0.05, FA, FA, 0.0],
+				[1.17, x * 0.22, 0.0, 0.054, 0.052, UA, FA, 0.5],
+				[1.3, x * 0.21, 0.0, 0.06, 0.058, UA, UA, 0.0],
+				[1.42, x * 0.2 * sw, 0.0, 0.066, 0.066, UA, UA, 0.0],
+				[1.47, x * 0.18 * sw, 0.0, 0.05, 0.06, UA, CH, 0.5],
+			], 12)
+		# El: avuç ve başparmak
+		b.ellipsoid("skin", skin, Vector3(x * 0.232, 0.88, -0.004), Vector3(0.026, 0.045, 0.022), HA, 10, 6)
+		b.ellipsoid("skin", skin, Vector3(x * 0.222, 0.895, -0.024), Vector3(0.01, 0.025, 0.01), HA, 6, 4)
 		var TH := bone_index(pre + "thigh")
 		var SH := bone_index(pre + "shin")
 		var FT := bone_index(pre + "foot")
@@ -373,21 +584,23 @@ static func _body_mesh(kind: String) -> ArrayMesh:
 			[0.42, lx, 0.0, 0.058, 0.058, SH, SH, 0.0],
 			[0.51, lx, 0.0, 0.065, 0.07, TH, SH, 0.5],
 			[0.72, lx, 0.0, 0.08, 0.085, TH, TH, 0.0],
-			[0.95, lx, 0.0, 0.1, 0.1, TH, H, 0.3],
+			[0.95, lx, 0.0, 0.1 * ww, 0.1 * ww, TH, H, 0.3],
 		], 12)
 		if sp["boots"]:
 			b.loft("leather", lea, [[0.06, lx, 0.0, 0.05, 0.06, FT, FT, 0.0], [0.12, lx, 0.0, 0.052, 0.058, SH, SH, 0.0], [0.46, lx, 0.0, 0.06, 0.062, SH, SH, 0.0]], 12)
 		else:
-			# Dolak (sargı) ve postal
+			# Dolak (sargı): spiral sargıyı andıran halkalar
 			var rings := []
-			for k in 6:
-				var y := 0.1 + k * 0.065
-				rings.append([y, lx, 0.0, 0.047 + k * 0.003, 0.05 + k * 0.003, SH, SH, 0.0])
+			for k in 9:
+				var y := 0.1 + k * 0.043
+				var bump := 0.004 if k % 2 == 0 else 0.0
+				rings.append([y, lx, 0.0, 0.047 + k * 0.002 + bump, 0.05 + k * 0.002 + bump, SH, SH, 0.0])
 			b.loft("puttee", put, rings, 12)
-		b.ellipsoid("leather", lea, Vector3(lx, 0.05, -0.04), Vector3(0.05, 0.05, 0.12), FT, 10, 6)  # ayakkabı
+		b.ellipsoid("leather", lea, Vector3(lx, 0.05, -0.04), Vector3(0.05, 0.05, 0.12), FT, 10, 6)  # postal
+		b.box("leather", lea, Vector3(lx, 0.012, -0.03), Vector3(0.1, 0.02, 0.25), FT)  # taban
 
 	var mesh := b.commit()
-	_meshes[kind] = mesh
+	_meshes[cache_key] = mesh
 	return mesh
 
 
@@ -435,10 +648,13 @@ static func _skin_for(skel_rest: Array) -> Skin:
 
 
 ## Yeni bir insan üretir: HumanRig döner (kök düğüm, iskelet, namlu ucu, poz fonksiyonları).
-static func build(kind: String) -> HumanRig:
+static func build(kind: String, variant := -1) -> HumanRig:
 	var rig := HumanRig.new()
-	var sp := _spec(kind)
+	if variant < 0:
+		variant = 0 if kind == "kemal" or kind == "officer" else randi() % VARIANTS
+	var sp := _variant(kind, variant)
 	rig.kind = kind
+	rig.seed = variant * 31 + randi() % 1000
 	rig.root = Node3D.new()
 	rig.model = Node3D.new()
 	rig.model.scale = Vector3.ONE * float(sp["height"])
@@ -456,7 +672,7 @@ static func build(kind: String) -> HumanRig:
 	skel.reset_bone_poses()
 	rig.model.add_child(skel)
 	var mi := MeshInstance3D.new()
-	mi.mesh = _body_mesh(kind)
+	mi.mesh = _body_mesh(kind, variant)
 	mi.skin = _skin_for([])
 	skel.add_child(mi)
 	mi.skeleton = NodePath("..")

@@ -16,16 +16,16 @@ func _ready() -> void:
 	pm.material = gm
 	ground.mesh = pm
 	add_child(ground)
-	var kinds := ["ottoman", "officer", "kemal", "anzac", "ottoman"]
+	var kinds := ["ottoman", "ottoman", "kemal", "anzac", "ottoman", "ottoman", "anzac", "british", "ottoman"]
 	for i in kinds.size():
-		var r := HumanBuilder.build(kinds[i])
+		var r := HumanBuilder.build(kinds[i], i % HumanBuilder.VARIANTS)
 		add_child(r.root)
-		r.root.position = Vector3(-2.4 + i * 1.2, 0, 0)
-		r.root.rotation.y = PI + 0.35
+		r.root.position = Vector3(-4.0 + i * 1.0, 0, -0.4 * (i % 2))
+		r.root.rotation.y = PI + 0.25
 		rigs.append(r)
 	cam = Camera3D.new()
 	add_child(cam)
-	cam.position = Vector3(0, 1.5, 4.2)
+	cam.position = Vector3(0, 1.5, 5.6)
 	cam.look_at(Vector3(0, 1.0, 0))
 
 
@@ -38,8 +38,12 @@ func _process(delta: float) -> void:
 			r.apply_pose(3.5, 0.0, 0.0)
 		elif r.kind == "kemal":
 			r.apply_pose(0.0, 0.0, 0.0, 1.0 if fmod(t, 6.0) > 3.0 else 0.0)
-		elif i == 3:
+		elif i == 3 or i == 7:
 			r.aiming_amount = 1.0
+			r.kneel = 1.0 if i == 3 else 0.0
+			r.apply_pose(0.0, 0.0, 0.0)
+		elif i == 5:
+			r.reload = 1.0
 			r.apply_pose(0.0, 0.0, 0.0)
 		else:
 			r.apply_pose(0.0, 0.1, 0.0)
@@ -51,5 +55,10 @@ func side() -> void:
 
 
 func close() -> void:
-	cam.position = Vector3(0.0, 1.65, 1.6)
-	cam.look_at(Vector3(0, 1.55, 0))
+	cam.position = Vector3(-1.4, 1.68, 1.4)
+	cam.look_at(Vector3(-1.4, 1.62, 0))
+
+
+func face() -> void:
+	cam.position = Vector3(-3.0, 1.7, 0.75)
+	cam.look_at(Vector3(-3.05, 1.68, 0))
