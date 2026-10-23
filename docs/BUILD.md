@@ -9,6 +9,11 @@ Gereksinim: [Godot 4.7](https://godotengine.org/download/) (standart sürüm, .N
 Hazır derlemeler: GitHub'da **Actions > godot** iş akışının son başarılı çalışmasında `TurkHarp-macOS`, `TurkHarp-Windows`, `TurkHarp-Linux` dosyaları indirilebilir.
 macOS derlemesi imzasızdır: ilk açılışta uygulamaya sağ tıklayıp **Aç** deyin.
 
+## Web (iPhone Safari, Android Chrome, bilgisayar tarayıcısı)
+1. Editor > Manage Export Templates ile şablonları indir.
+2. Project > Export > Web > Export Project ile `build/web/index.html` olarak dışa aktar (ön ayar hazır, iş parçacıksız sürüm: Safari uyumlu).
+3. `build/web` klasörünün içeriğini ZIP yapıp itch.io'ya HTML oyunu olarak yükle ("This file will be played in the browser", "Mobile friendly", yatay yön).
+
 ## Android
 1. Android SDK ve JDK 17 kur; Godot Editor Settings > Export > Android yollarını ayarla.
 2. Editor > Manage Export Templates ile şablonları indir.
