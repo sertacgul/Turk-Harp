@@ -25,9 +25,8 @@ macOS derlemesi imzasızdır: ilk açılışta uygulamaya sağ tıklayıp **Aç*
 3. Project > Export > iOS ile Xcode projesi oluştur, Xcode'dan cihaza yükle.
 
 ## Render
-- Bilgisayar: Forward+ (Mac'te Metal). SSAO, SSIL, ekran uzayı yansımaları, hacimsel sis ve yumuşak gölgeler açıktır.
-- Telefon ve web: Compatibility (OpenGL/WebGL). Görsel efektlerin bir kısmı kapalıdır.
-- Forward+ sorun çıkarırsa: Project Settings > Rendering > Renderer > Rendering Method = gl_compatibility.
+- Varsayılan her yerde Compatibility (OpenGL/WebGL): Mac'te en sorunsuz mod.
+- İsteğe bağlı Forward+: Project Settings > Rendering > Renderer > Rendering Method = forward_plus. SSAO, SSIL, ekran uzayı yansımaları ve hacimsel sis açılır. Mac'te Godot'u çökertirse Compatibility'ye geri dönün.
 - Düşük donanım için Ayarlar > Grafik: Düşük (gölge, parçacık sayısı ve arazi çözünürlüğü azalır).
 
 ## Testler

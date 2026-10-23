@@ -54,7 +54,10 @@ static func build(parent: Node, mode: String) -> Dictionary:
 			env.fog_density = 0.0009
 			env.volumetric_fog_density = 0.004
 			env.volumetric_fog_albedo = Color(0.6, 0.65, 0.75)
-			env.ambient_light_energy = 0.5
+			# Gece gökyüzü çok karanlık; ortam ışığı sabit, mavimsi ay ışığı olsun.
+			env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+			env.ambient_light_color = Color(0.16, 0.2, 0.32)
+			env.ambient_light_energy = 0.9
 			env.tonemap_exposure = 1.6
 			sun.light_color = Color(0.6, 0.7, 1.0)
 			sun.light_energy = 0.45
@@ -115,9 +118,9 @@ static func water(parent: Node, center: Vector3, size: Vector2, mode: String, he
 		mat.set_shader_parameter("height_bounds", bounds)
 		mat.set_shader_parameter("use_height_map", true)
 	if mode == "night":
-		mat.set_shader_parameter("deep_color", Color(0.01, 0.03, 0.06))
-		mat.set_shader_parameter("shallow_color", Color(0.03, 0.08, 0.1))
-		mat.set_shader_parameter("foam_color", Color(0.3, 0.33, 0.38))
+		mat.set_shader_parameter("deep_color", Color(0.035, 0.07, 0.12))
+		mat.set_shader_parameter("shallow_color", Color(0.06, 0.13, 0.17))
+		mat.set_shader_parameter("foam_color", Color(0.35, 0.38, 0.45))
 	elif mode == "dawn":
 		mat.set_shader_parameter("deep_color", Color(0.02, 0.07, 0.11))
 		mat.set_shader_parameter("shallow_color", Color(0.06, 0.22, 0.24))
