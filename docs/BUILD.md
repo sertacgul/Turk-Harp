@@ -24,6 +24,10 @@ macOS derlemesi imzasızdır: ilk açılışta uygulamaya sağ tıklayıp **Aç*
 2. `export_presets.cfg` içindeki iOS ön ayarına Team ID gir.
 3. Project > Export > iOS ile Xcode projesi oluştur, Xcode'dan cihaza yükle.
 
+## Fotogerçekçi varlıklar
+
+Gökyüzü, arazi dokuları ve kaya modelleri için `docs/ASSETS.md`.
+
 ## Render
 - Varsayılan her yerde Compatibility (OpenGL/WebGL): Mac'te en sorunsuz mod.
 - İsteğe bağlı Forward+: Project Settings > Rendering > Renderer > Rendering Method = forward_plus. SSAO, SSIL, ekran uzayı yansımaları ve hacimsel sis açılır. Mac'te Godot'u çökertirse Compatibility'ye geri dönün.

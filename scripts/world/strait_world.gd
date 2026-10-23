@@ -139,6 +139,7 @@ func _build_terrain() -> void:
 	var mat := ShaderMaterial.new()
 	mat.shader = load("res://shaders/terrain.gdshader")
 	mat.set_shader_parameter("rock_color", Color(0.5, 0.46, 0.4))
+	AssetLib.apply_terrain_textures(mat)
 	mat.set_shader_parameter("octaves", 5 if GameState.high_quality() else 3)
 	var terrain := MeshInstance3D.new()
 	terrain.mesh = mesh
@@ -184,6 +185,12 @@ func _build_trees() -> void:
 	var inst := MultiMeshInstance3D.new()
 	inst.multimesh = mm
 	add_child(inst)
+	# Kıyı kayalıkları (yalnızca indirilmiş modeller varsa).
+	var shore := func(x: float, z: float) -> bool:
+		var d := land_depth(x, z)
+		return d > -2.0 and d < 45.0 and noise().get_noise_2d(x * 3.0, z * 3.0 + 50.0) > 0.0
+	AssetLib.scatter_models(self, "rock", 1600 if GameState.high_quality() else 500, Vector4(X_MIN, -Z_HALF, X_MAX, Z_HALF),
+		func(x: float, z: float) -> float: return height_at(x, z), shore, Vector2(1.5, 5.0), 21, 900.0)
 
 
 func _build_settlements() -> void:

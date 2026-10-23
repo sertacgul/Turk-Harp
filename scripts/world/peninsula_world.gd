@@ -115,6 +115,7 @@ func _build_terrain() -> void:
 	var mat := ShaderMaterial.new()
 	mat.shader = load("res://shaders/terrain.gdshader")
 	mat.set_shader_parameter("rock_color", Color(0.55, 0.45, 0.36))
+	AssetLib.apply_terrain_textures(mat)
 	mat.set_shader_parameter("octaves", 5 if GameState.high_quality() else 3)
 	var mi := MeshInstance3D.new()
 	mi.mesh = st.commit()
@@ -130,6 +131,14 @@ func _build_scrub() -> void:
 	var bushy := func(x: float, z: float) -> bool: return land_depth(x, z) > 25.0 and noise().get_noise_2d(x * 2.5, z * 2.5) > -0.05
 	Vegetation.scatter(self, "grass", 90000 if hq else 15000, Vector4(-250.0, -450.0, 560.0, 350.0), h, land, 3, 220.0 if hq else 120.0)
 	Vegetation.scatter(self, "bush", 9000 if hq else 2500, Vector4(X_MIN + 300.0, -Z_HALF, X_MAX, Z_HALF), h, bushy, 5, 700.0)
+	# İndirilmiş fotogerçekçi modeller varsa: yamaçlarda kayalar, maki arasında gerçek çalılar.
+	var steep := func(x: float, z: float) -> bool:
+		if land_depth(x, z) < 6.0:
+			return false
+		var sl := absf(height_at(x + 2.0, z) - height_at(x - 2.0, z)) + absf(height_at(x, z + 2.0) - height_at(x, z - 2.0))
+		return sl > 1.6 or noise().get_noise_2d(x * 4.0 + 90.0, z * 4.0) > 0.45
+	AssetLib.scatter_models(self, "rock", 2500 if hq else 700, Vector4(X_MIN + 250.0, -Z_HALF, X_MAX, Z_HALF), h, steep, Vector2(0.5, 2.2), 11, 500.0)
+	AssetLib.scatter_models(self, "bush", 1800 if hq else 500, Vector4(-250.0, -450.0, 560.0, 350.0), h, bushy, Vector2(0.7, 1.4), 13, 300.0, 0.0)
 
 
 ## Kumsala çekilmiş çıkarma sandalları.

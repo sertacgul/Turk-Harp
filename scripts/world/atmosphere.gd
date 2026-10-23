@@ -93,6 +93,14 @@ static func build(parent: Node, mode: String) -> Dictionary:
 	var sky := Sky.new()
 	sky.sky_material = sky_mat
 	sky.process_mode = Sky.PROCESS_MODE_REALTIME
+	# İndirilmiş fotogerçekçi HDRI varsa prosedürel gökyüzünün yerine geçer.
+	var pano := AssetLib.hdri(mode)
+	if pano:
+		var pm := PanoramaSkyMaterial.new()
+		pm.panorama = pano
+		pm.energy_multiplier = {"night": 0.6, "dawn": 1.0}.get(mode, 1.0)
+		sky.sky_material = pm
+		sky.process_mode = Sky.PROCESS_MODE_QUALITY
 	sky.radiance_size = Sky.RADIANCE_SIZE_64
 	env.sky = sky
 	var we := WorldEnvironment.new()

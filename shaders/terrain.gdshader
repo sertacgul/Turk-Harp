@@ -7,6 +7,18 @@ uniform vec3 rock_color : source_color = vec3(0.47, 0.43, 0.37);
 uniform vec3 dirt_color : source_color = vec3(0.45, 0.36, 0.26);
 uniform float detail_strength = 1.0;
 uniform int octaves = 5;
+// İsteğe bağlı fotogerçekçi PBR katmanları (assets/textures, AssetLib.apply_terrain_textures).
+uniform bool textured = false;
+uniform float texture_mix = 0.7;
+uniform sampler2D grass_albedo : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
+uniform sampler2D dirt_albedo : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
+uniform sampler2D rock_albedo : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
+uniform sampler2D sand_albedo : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
+uniform sampler2D grass_normal : hint_normal, filter_linear_mipmap_anisotropic, repeat_enable;
+uniform sampler2D dirt_normal : hint_normal, filter_linear_mipmap_anisotropic, repeat_enable;
+uniform sampler2D rock_normal : hint_normal, filter_linear_mipmap_anisotropic, repeat_enable;
+uniform sampler2D sand_normal : hint_normal, filter_linear_mipmap_anisotropic, repeat_enable;
+uniform float tile = 0.25;
 
 varying vec3 wpos;
 varying vec3 wnorm;
@@ -39,6 +51,18 @@ float fbm(vec3 p, int n) {
 
 float bump(vec3 p, float rock) {
 	return fbm(p * 0.35, octaves) * (1.0 + rock * 1.5) + vnoise(p * 4.0) * 0.12;
+}
+
+// Yakında ayrıntılı, uzakta daha seyrek iki ölçekli örnekleme: tekrar deseni kırılır.
+vec4 layer(sampler2D t, vec2 uv, float near) {
+	vec4 a = texture(t, uv);
+	vec4 b = texture(t, uv * 0.23 + vec2(0.37, 0.71));
+	return mix(b, mix(b, a, 0.65), near);
+}
+
+// Kaya için üç eksenli (triplanar) izdüşüm: dik yamaçlarda doku esnemez.
+vec4 tri(sampler2D t, vec3 p, vec3 w) {
+	return texture(t, p.zy) * w.x + texture(t, p.xz) * w.y + texture(t, p.xy) * w.z;
 }
 
 void vertex() {
@@ -76,8 +100,38 @@ void fragment() {
 	float hz = bump(wpos + vec3(0, 0, e), rock);
 	vec3 g = vec3(hx - h0, 0.0, hz - h0) / e;
 	vec3 n = normalize(wnorm - g * detail_strength * (0.6 + rock) * (0.3 + 0.7 * near));
+	float rough = mix(mix(0.95, 0.78, rock), 0.35, wet * (1.0 - rock));
+	if (textured) {
+		vec2 uv = wpos.xz * tile;
+		vec3 tw = pow(abs(wnorm), vec3(4.0));
+		tw /= (tw.x + tw.y + tw.z);
+		vec3 tp = wpos * tile * 0.6;
+		// Katman ağırlıkları: kumsal, eğimde kaya, gürültüyle toprak lekeleri, kalan yer çimen.
+		float sand = (1.0 - smoothstep(1.2, 3.2, wpos.y + (fbm(wpos * 0.06, 2) - 0.5) * 1.5)) * (1.0 - rock);
+		float dirt = clamp(patch * 0.8 + (1.0 - near) * 0.1, 0.0, 1.0) * (1.0 - rock) * (1.0 - sand);
+		float grass = (1.0 - rock) * (1.0 - sand) * (1.0 - dirt);
+		vec4 ga = layer(grass_albedo, uv, near);
+		vec4 da = layer(dirt_albedo, uv * 1.3, near);
+		vec4 sa = layer(sand_albedo, uv * 1.1, near);
+		vec4 ra = tri(rock_albedo, tp, tw);
+		vec3 tex = ga.rgb * grass + da.rgb * dirt + sa.rgb * sand + ra.rgb * rock;
+		// Dokunun ortalama rengi (en küçük mip) ile biyom rengine göre tonlanır: harita renkleri korunur.
+		vec3 avg = textureLod(grass_albedo, vec2(0.5), 12.0).rgb * grass + textureLod(dirt_albedo, vec2(0.5), 12.0).rgb * dirt
+			+ textureLod(sand_albedo, vec2(0.5), 12.0).rgb * sand + textureLod(rock_albedo, vec2(0.5), 12.0).rgb * rock;
+		vec3 tinted = tex / max(avg, vec3(0.02)) * base;
+		base = mix(tinted, tex * (0.75 + macro * 0.5), texture_mix * 0.5);
+		base *= 1.0 - wet * 0.25;
+		vec3 tn = (layer(grass_normal, uv, near).xyz * grass + layer(dirt_normal, uv * 1.3, near).xyz * dirt
+			+ layer(sand_normal, uv * 1.1, near).xyz * sand + tri(rock_normal, tp, tw).xyz * rock) * 2.0 - 1.0;
+		// Teğet uzayı yaklaşık olarak dünya XZ düzlemi (çimen/toprak/kum düzlemsel izdüşüm).
+		n = normalize(n + vec3(tn.x, 0.0, -tn.y) * 0.9 * (0.4 + 0.6 * near));
+		// Pürüzlülük: koyu, gölgeli doku bölgeleri daha mat (doku birimi sınırı için ayrı harita yok).
+		float lum = dot(tex, vec3(0.3, 0.59, 0.11));
+		float tr = mix(0.97, 0.82, rock) - lum * 0.15;
+		rough = mix(tr, 0.35, wet * (1.0 - rock));
+	}
 	NORMAL = normalize((VIEW_MATRIX * vec4(n, 0.0)).xyz);
 	ALBEDO = base;
-	ROUGHNESS = mix(mix(0.95, 0.78, rock), 0.35, wet * (1.0 - rock));
+	ROUGHNESS = rough;
 	SPECULAR = 0.35;
 }
