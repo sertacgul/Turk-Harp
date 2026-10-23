@@ -137,8 +137,8 @@ func _build_scrub() -> void:
 			return false
 		var sl := absf(height_at(x + 2.0, z) - height_at(x - 2.0, z)) + absf(height_at(x, z + 2.0) - height_at(x, z - 2.0))
 		return sl > 1.6 or noise().get_noise_2d(x * 4.0 + 90.0, z * 4.0) > 0.45
-	AssetLib.scatter_models(self, "rock", 2500 if hq else 700, Vector4(X_MIN + 250.0, -Z_HALF, X_MAX, Z_HALF), h, steep, Vector2(0.5, 2.2), 11, 500.0)
-	AssetLib.scatter_models(self, "bush", 1800 if hq else 500, Vector4(-250.0, -450.0, 560.0, 350.0), h, bushy, Vector2(0.7, 1.4), 13, 300.0, 0.0)
+	AssetLib.scatter_models(self, "rock", 1200 if hq else 400, Vector4(X_MIN + 250.0, -Z_HALF, X_MAX, Z_HALF), h, steep, Vector2(0.5, 2.2), 11, 500.0)
+	AssetLib.scatter_models(self, "bush", 900 if hq else 300, Vector4(-250.0, -450.0, 560.0, 350.0), h, bushy, Vector2(0.7, 1.4), 13, 300.0, 0.0)
 
 
 ## Kumsala çekilmiş çıkarma sandalları.

@@ -13,6 +13,8 @@ static var _noise: FastNoiseLite
 var night := false
 var environment: Environment
 var sun: DirectionalLight3D
+## Saçılan kayalardan boş tutulacak alanlar: (x, 0, z, yarıçap).
+var _clear: Array[Vector4] = []
 
 
 static func noise() -> FastNoiseLite:
@@ -82,6 +84,7 @@ func build(is_night: bool) -> void:
 	_build_terrain()
 	_build_trees()
 	_build_settlements()
+	_build_rocks()
 
 
 func _build_environment() -> void:
@@ -185,11 +188,20 @@ func _build_trees() -> void:
 	var inst := MultiMeshInstance3D.new()
 	inst.multimesh = mm
 	add_child(inst)
-	# Kıyı kayalıkları (yalnızca indirilmiş modeller varsa).
+
+
+
+## Kıyı kayalıkları (yalnızca indirilmiş modeller varsa); kale, köy ve fenerlerin çevresi boş kalır.
+func _build_rocks() -> void:
 	var shore := func(x: float, z: float) -> bool:
 		var d := land_depth(x, z)
-		return d > -2.0 and d < 45.0 and noise().get_noise_2d(x * 3.0, z * 3.0 + 50.0) > 0.0
-	AssetLib.scatter_models(self, "rock", 1600 if GameState.high_quality() else 500, Vector4(X_MIN, -Z_HALF, X_MAX, Z_HALF),
+		if d <= -2.0 or d >= 45.0 or noise().get_noise_2d(x * 3.0, z * 3.0 + 50.0) <= 0.0:
+			return false
+		for c: Vector4 in _clear:
+			if Vector2(x - c.x, z - c.z).length() < c.w:
+				return false
+		return true
+	AssetLib.scatter_models(self, "rock", 800 if GameState.high_quality() else 300, Vector4(X_MIN, -Z_HALF, X_MAX, Z_HALF),
 		func(x: float, z: float) -> float: return height_at(x, z), shore, Vector2(1.5, 5.0), 21, 900.0)
 
 
@@ -236,6 +248,7 @@ func _cyl(r: float, h: float, pos: Vector3, mat: Material, top := -1.0) -> MeshI
 
 
 func _castle(at: Vector3, heart_shaped: bool) -> void:
+	_clear.append(Vector4(at.x, 0, at.z, 70.0))
 	var stone := _stone_mat()
 	var g := height_at(at.x, at.z)
 	_box(Vector3(70, 14, 50), Vector3(at.x, g + 5.0, at.z), stone)
@@ -248,6 +261,7 @@ func _castle(at: Vector3, heart_shaped: bool) -> void:
 
 
 func _village(center: Vector3, count: int, seed: int) -> void:
+	_clear.append(Vector4(center.x, 0, center.z, 110.0))
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed
 	var wall := StandardMaterial3D.new()
@@ -286,6 +300,7 @@ func _village(center: Vector3, count: int, seed: int) -> void:
 
 
 func _lighthouse(at: Vector3) -> void:
+	_clear.append(Vector4(at.x, 0, at.z, 25.0))
 	var g := height_at(at.x, at.z)
 	var white := StandardMaterial3D.new()
 	white.albedo_color = Color(0.92, 0.9, 0.86)

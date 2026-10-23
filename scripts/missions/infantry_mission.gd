@@ -211,6 +211,7 @@ func _build_objectives() -> void:
 	for key in defs:
 		var d: Array = defs[key]
 		var p := PeninsulaWorld.ground(d[1])
+		AssetLib.clear_around(self, p, 22.0)
 		var pole := MeshInstance3D.new()
 		var c := CylinderMesh.new()
 		c.top_radius = 0.08

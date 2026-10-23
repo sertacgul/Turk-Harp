@@ -1,0 +1,18 @@
+{
+  "hdri/dawn": "kloppenheim_06_puresky",
+  "hdri/day": "kloofendal_48d_partly_cloudy_puresky",
+  "hdri/night": "qwantani_night_puresky",
+  "models/bush_0": "shrub_01",
+  "models/bush_1": "shrub_02",
+  "models/rock_0": "namaqualand_boulder_02",
+  "models/rock_1": "rock_moss_set_01",
+  "models/rock_2": "boulder_01",
+  "textures/dirt_albedo": "brown_mud_leaves_01",
+  "textures/dirt_normal": "brown_mud_leaves_01",
+  "textures/grass_albedo": "aerial_grass_rock",
+  "textures/grass_normal": "aerial_grass_rock",
+  "textures/rock_albedo": "rock_face",
+  "textures/rock_normal": "rock_face",
+  "textures/sand_albedo": "coast_sand_01",
+  "textures/sand_normal": "coast_sand_01"
+}

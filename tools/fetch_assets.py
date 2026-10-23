@@ -24,11 +24,12 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 API = "https://api.polyhaven.com"
 UA = {"User-Agent": "TurkHarp-asset-fetcher/1.0 (https://github.com/sertacgul/Turk-Harp)"}
 
+# Gökyüzleri yalnızca "pure skies" (ufukta dağ/bina olmayan) HDRI'lardan seçilir: kendi arazimizle çakışmasın.
 # katman -> (tercih edilen kimlikler, aranacak etiketler)
 HDRIS = {
     "day": (["kloofendal_48d_partly_cloudy_puresky", "kloofendal_43d_clear_puresky"], ["partly cloudy", "clear", "midday", "sunny"]),
-    "dawn": (["kiara_1_dawn", "spruit_sunrise"], ["sunrise", "dawn", "morning"]),
-    "night": (["moonless_golf", "satara_night"], ["night"]),
+    "dawn": (["kloppenheim_06_puresky", "qwantani_sunrise_puresky"], ["sunrise", "dawn", "morning"]),
+    "night": (["qwantani_night_puresky", "kloppenheim_02_puresky"], ["night"]),
 }
 TEXTURES = {
     "grass": (["aerial_grass_rock", "rocky_grass", "forrest_ground_01"], ["grass", "meadow"]),
@@ -57,7 +58,9 @@ def download(url, path):
             f.write(chunk)
 
 
-def choose(catalog, preferred, tags, count=1):
+def choose(catalog, preferred, tags, count=1, category=None):
+    if category:
+        catalog = {k: v for k, v in catalog.items() if category in v.get("categories", [])}
     picks = [p for p in preferred if p in catalog]
     if len(picks) < count:
         scored = []
@@ -88,19 +91,27 @@ def main():
     ap.add_argument("--list", action="store_true")
     ap.add_argument("--res", default="2k")
     args = ap.parse_args()
+    manifest_path = os.path.join(ROOT, "assets/sources.json")
+    manifest = json.load(open(manifest_path)) if os.path.exists(manifest_path) else {}
+
+    def fresh(out, slot, aid):
+        """Dosya var ve aynı varlıktan indirildiyse True (seçim değiştiyse yeniden indirilir)."""
+        return os.path.exists(out) and manifest.get(slot) == aid
+
     credits = ["# Varlık Kaynakları", "", "Aşağıdaki varlıklar Poly Haven'dan alınmıştır (CC0, https://polyhaven.com/license).", ""]
 
     hdris = get_json(f"{API}/assets?t=hdris")
     for slot, (pref, tags) in HDRIS.items():
-        aid = choose(hdris, pref, tags)[0]
+        aid = choose(hdris, pref, tags, category="pure skies")[0]
         print(f"HDRI {slot}: {aid}")
         credits.append(f"- Gökyüzü ({slot}): [{aid}](https://polyhaven.com/a/{aid})")
         if args.list:
             continue
         out = os.path.join(ROOT, f"assets/hdri/{slot}.hdr")
-        if not os.path.exists(out):
+        if not fresh(out, "hdri/" + slot, aid):
             f = best(get_json(f"{API}/files/{aid}"), "hdri", args.res, "hdr")
             download(f["url"], out)
+            manifest["hdri/" + slot] = aid
 
     textures = get_json(f"{API}/assets?t=textures")
     for slot, (pref, tags) in TEXTURES.items():
@@ -112,13 +123,14 @@ def main():
         files = get_json(f"{API}/files/{aid}")
         for key, name in [("Diffuse", "albedo"), ("nor_gl", "normal")]:
             out = os.path.join(ROOT, f"assets/textures/{slot}_{name}.jpg")
-            if os.path.exists(out):
+            if fresh(out, f"textures/{slot}_{name}", aid):
                 continue
             f = best(files, key, args.res, "jpg") or best(files, key, args.res, "png")
             if f is None:
                 print(f"  {key} bulunamadı")
                 continue
             download(f["url"], out)
+            manifest[f"textures/{slot}_{name}"] = aid
 
     models = get_json(f"{API}/assets?t=models")
     for slot, (pref, tags, count) in MODELS.items():
@@ -128,7 +140,7 @@ def main():
             if args.list:
                 continue
             base = os.path.join(ROOT, f"assets/models/{slot}_{i}")
-            if os.path.exists(base + ".gltf"):
+            if fresh(base + ".gltf", f"models/{slot}_{i}", aid):
                 continue
             f = best(get_json(f"{API}/files/{aid}"), "gltf", "1k", "gltf")
             if f is None:
@@ -138,8 +150,11 @@ def main():
             download(f["url"], base + ".gltf")
             for rel, inc in f.get("include", {}).items():
                 download(inc["url"], os.path.join(os.path.dirname(base), rel))
+            manifest[f"models/{slot}_{i}"] = aid
 
     if not args.list:
+        with open(manifest_path, "w", encoding="utf-8") as fh:
+            json.dump(manifest, fh, indent=2, sort_keys=True)
         with open(os.path.join(ROOT, "assets/CREDITS.md"), "w", encoding="utf-8") as fh:
             fh.write("\n".join(credits) + "\n")
     print("Tamam.")

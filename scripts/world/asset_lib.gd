@@ -9,6 +9,9 @@ const TEX_DIR := "res://assets/textures/"
 const MODEL_DIR := "res://assets/models/"
 const TERRAIN_LAYERS := ["grass", "dirt", "rock", "sand"]
 
+const CELL := 120.0
+const SCATTER_GROUP := "asset_scatter"
+
 static var _mesh_cache := {}
 
 
@@ -39,7 +42,8 @@ static func apply_terrain_textures(mat: ShaderMaterial) -> bool:
 	return true
 
 
-## prefix_0.gltf, prefix_1.gltf ... dosyalarındaki ilk ağlar (malzemeleri gömülü).
+## prefix_0.gltf, prefix_1.gltf ... dosyalarındaki ağlar. Bir dosyada birden çok parça varsa
+## (ör. kaya seti) her parça ayrı bir çeşit olur; parçalar ortalanır ve tabanı y=0'a oturtulur.
 static func meshes(prefix: String) -> Array[Mesh]:
 	if _mesh_cache.has(prefix):
 		return _mesh_cache[prefix]
@@ -51,28 +55,96 @@ static func meshes(prefix: String) -> Array[Mesh]:
 		if scene == null:
 			break
 		var node := scene.instantiate()
-		var mi := _first_mesh(node)
-		if mi and mi.mesh:
-			var mesh := mi.mesh.duplicate() as Mesh
-			# Model ölçeği/yönelimi ağa işlenir (Poly Haven modelleri metre ölçeklidir).
-			for s in mesh.get_surface_count():
-				var m := mi.get_active_material(s)
-				if m:
-					mesh.surface_set_material(s, m)
-			out.append(mesh)
+		var parts: Array[MeshInstance3D] = []
+		_collect_meshes(node, parts)
+		for mi in parts:
+			var mesh := _bake(mi, _global_basis(mi), 3000 if prefix == "bush" else 1600)
+			if mesh:
+				out.append(mesh)
 		node.free()
 	_mesh_cache[prefix] = out
 	return out
 
 
-static func _first_mesh(n: Node) -> MeshInstance3D:
-	if n is MeshInstance3D:
-		return n
+static func _collect_meshes(n: Node, out: Array[MeshInstance3D]) -> void:
+	if n is MeshInstance3D and (n as MeshInstance3D).mesh and not String(n.name).to_lower().contains("proxy"):
+		out.append(n)
 	for c in n.get_children():
-		var r := _first_mesh(c)
-		if r:
-			return r
-	return null
+		_collect_meshes(c, out)
+
+
+## Ağaçta değil (sahneye eklenmemiş) düğümün dönüş/ölçeği; öteleme parçayı ortalarken atılır.
+static func _global_basis(n: Node) -> Basis:
+	var b := Basis.IDENTITY
+	var cur := n
+	while cur is Node3D:
+		b = (cur as Node3D).transform.basis * b
+		cur = cur.get_parent()
+	return b
+
+
+static func _bake(mi: MeshInstance3D, basis: Basis, max_tris: int) -> Mesh:
+	var src := mi.mesh
+	var aabb: AABB = Transform3D(basis, Vector3.ZERO) * src.get_aabb()
+	var center: Vector3 = aabb.get_center()
+	var shift := Transform3D(basis, Vector3(-center.x, -aabb.position.y, -center.z))
+	var nb := basis.inverse().transposed()
+	var out := ArrayMesh.new()
+	for s in src.get_surface_count():
+		var arrays := src.surface_get_arrays(s)
+		var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+		for i in verts.size():
+			verts[i] = shift * verts[i]
+		arrays[Mesh.ARRAY_VERTEX] = verts
+		if arrays[Mesh.ARRAY_NORMAL] is PackedVector3Array:
+			var norms: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+			for i in norms.size():
+				norms[i] = (nb * norms[i]).normalized()
+			arrays[Mesh.ARRAY_NORMAL] = norms
+		if arrays[Mesh.ARRAY_TANGENT] is PackedFloat32Array:
+			var tans: PackedFloat32Array = arrays[Mesh.ARRAY_TANGENT]
+			for i in range(0, tans.size(), 4):
+				var t := (basis * Vector3(tans[i], tans[i + 1], tans[i + 2])).normalized()
+				tans[i] = t.x
+				tans[i + 1] = t.y
+				tans[i + 2] = t.z
+			arrays[Mesh.ARRAY_TANGENT] = tans
+		if arrays[Mesh.ARRAY_INDEX] is PackedInt32Array:
+			arrays[Mesh.ARRAY_INDEX] = _lod_indices(src, s, arrays[Mesh.ARRAY_INDEX], max_tris)
+		out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+		var m := mi.get_active_material(s)
+		if m:
+			out.surface_set_material(out.get_surface_count() - 1, m)
+	return out if out.get_surface_count() > 0 else null
+
+
+## Taranmış modeller 50-150 bin üçgenlidir; binlerce kopya için içe aktarıcının ürettiği
+## LOD'lardan max_tris'e en yakın (onu aşmayan en ayrıntılı) olanı seçilir.
+static func _lod_indices(src: Mesh, surface: int, base: PackedInt32Array, max_tris: int) -> PackedInt32Array:
+	if base.size() / 3 <= max_tris:
+		return base
+	var d: Dictionary = RenderingServer.mesh_get_surface(src.get_rid(), surface)
+	var base_bytes: int = (d.get("index_data", PackedByteArray()) as PackedByteArray).size()
+	if base_bytes == 0:
+		return base
+	var stride := base_bytes / base.size()
+	var best := PackedByteArray()
+	for l in d.get("lods", []):
+		var data: PackedByteArray = l["index_data"]
+		if data.size() / stride / 3 <= max_tris:
+			best = data
+			break
+	if best.is_empty():
+		var lods: Array = d.get("lods", [])
+		if lods.is_empty():
+			return base
+		best = lods[-1]["index_data"]
+	var count := best.size() / stride
+	var out := PackedInt32Array()
+	out.resize(count)
+	for i in count:
+		out[i] = best.decode_u16(i * 2) if stride == 2 else best.decode_u32(i * 4)
+	return out
 
 
 ## Modelleri MultiMesh ile saçar. Model yoksa false döner (çağıran prosedürel yedeğe geçer).
@@ -83,9 +155,9 @@ static func scatter_models(parent: Node3D, prefix: String, count: int, area: Vec
 		return false
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed
-	var per: Array = []
-	for i in list.size():
-		per.append([] as Array[Transform3D])
+	# Kopyalar (çeşit, hücre) gruplarına ayrılır: her grup ayrı çizilir, böylece kamera dışındaki
+	# ve uzaktaki hücreler hiç çizilmez (tek dev MultiMesh her zaman tamamen çizilirdi).
+	var groups := {}
 	var placed := 0
 	var tries := 0
 	while placed < count and tries < count * 8:
@@ -98,15 +170,16 @@ static func scatter_models(parent: Node3D, prefix: String, count: int, area: Vec
 		var tilt := Basis(Vector3(rng.randf_range(-1, 1), 0, rng.randf_range(-1, 1)).normalized(), rng.randf_range(0.0, 0.25))
 		var basis := (tilt * Basis(Vector3.UP, rng.randf() * TAU)).scaled(Vector3(s, s * rng.randf_range(0.7, 1.2), s))
 		var y := float(height_fn.call(x, z)) - sink * s
-		(per[rng.randi() % list.size()] as Array[Transform3D]).append(Transform3D(basis, Vector3(x, y, z)))
+		var key := Vector3i(rng.randi() % list.size(), floori(x / CELL), floori(z / CELL))
+		if not groups.has(key):
+			groups[key] = [] as Array[Transform3D]
+		(groups[key] as Array[Transform3D]).append(Transform3D(basis, Vector3(x, y, z)))
 		placed += 1
-	for i in list.size():
-		var xf: Array[Transform3D] = per[i]
-		if xf.is_empty():
-			continue
+	for key: Vector3i in groups:
+		var xf: Array[Transform3D] = groups[key]
 		var mm := MultiMesh.new()
 		mm.transform_format = MultiMesh.TRANSFORM_3D
-		mm.mesh = list[i]
+		mm.mesh = list[key.x]
 		mm.instance_count = xf.size()
 		for j in xf.size():
 			mm.set_instance_transform(j, xf[j])
@@ -115,5 +188,19 @@ static func scatter_models(parent: Node3D, prefix: String, count: int, area: Vec
 		inst.visibility_range_end = fade_end
 		inst.visibility_range_end_margin = 40.0
 		inst.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
+		inst.add_to_group(SCATTER_GROUP)
 		parent.add_child(inst)
 	return true
+
+
+## Tabya, bayrak direği gibi oyun yapılarının çevresindeki saçılmış modelleri kaldırır (sıfır ölçek).
+static func clear_around(node: Node, center: Vector3, radius: float) -> void:
+	if not node.is_inside_tree():
+		return
+	for inst: MultiMeshInstance3D in node.get_tree().get_nodes_in_group(SCATTER_GROUP):
+		var mm := inst.multimesh
+		for i in mm.instance_count:
+			var t := mm.get_instance_transform(i)
+			var d := Vector2(t.origin.x - center.x, t.origin.z - center.z).length()
+			if d < radius + t.basis.get_scale().x * 1.5:
+				mm.set_instance_transform(i, Transform3D(Basis().scaled(Vector3.ZERO), t.origin))

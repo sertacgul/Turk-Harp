@@ -19,7 +19,13 @@ python3 tools/fetch_assets.py          # indir (varsayılan 2k çözünürlük)
 python3 tools/fetch_assets.py --res 1k # daha küçük dosyalar (telefon/web için)
 ```
 
-Sonra projeyi Godot 4.7'de bir kez açın; dosyalar otomatik içe aktarılır.
+Komutu **proje klasörünün içinde** çalıştırın (ör. `cd ~/Downloads/Turk-Harp`), sonra projeyi
+Godot 4.7'de bir kez açın; dosyalar otomatik içe aktarılır. Varlıklar depoya eklenmiştir; bu komut yalnızca
+seçimleri değiştirdiğinizde gerekir. `assets/sources.json` hangi dosyanın hangi varlıktan indirildiğini
+tutar: seçim değişince yalnızca değişen dosyalar yeniden indirilir.
+
+Taranmış modeller 50-150 bin üçgenlidir. Oyun, Godot'nun içe aktarırken ürettiği LOD'lardan
+1.600 (kaya) / 3.000 (çalı) üçgeni aşmayan sürümü kullanır ve kopyaları 120 m'lik hücrelere böler.
 
 Bulut (Claude Code) ortamında indirme için ortam ayarlarındaki ağ erişimine şu alan adları eklenmelidir:
 `polyhaven.com`, `api.polyhaven.com`, `dl.polyhaven.org`.

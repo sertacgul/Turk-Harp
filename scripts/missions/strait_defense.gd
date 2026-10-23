@@ -214,6 +214,7 @@ func _add_battery(spec: Dictionary) -> void:
 	b.root = Node3D.new()
 	add_child(b.root)
 	b.root.global_position = p
+	AssetLib.clear_around(self, p, 40.0)
 	var earth := _mat(Color(0.55, 0.48, 0.36))
 	var stone := _mat(Color(0.68, 0.63, 0.53))
 	_box(b.root, Vector3(30, 12, 24), Vector3(0, -4.5, 0), earth)
