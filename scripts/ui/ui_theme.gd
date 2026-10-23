@@ -70,7 +70,7 @@ static func wrap_label(text: String, size := 18, color := TEXT, width := 400.0) 
 
 
 static func button(text: String, cb: Callable, min_w := 260.0) -> Button:
-	var b := Button.new()
+	var b := TouchButton.new()
 	b.text = text
 	b.custom_minimum_size = Vector2(min_w, 56)
 	b.pressed.connect(func() -> void:

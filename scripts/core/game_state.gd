@@ -66,7 +66,22 @@ var current_mission := ""
 
 func _ready() -> void:
 	default_mines = StraitWorld.default_mine_line()
+	# Telefon ve tablette (uygulama ya da tarayıcı) varsayılan grafik ayarı Düşük.
+	if is_mobile():
+		settings["quality"] = "low"
 	load_game()
+	apply_render_settings()
+
+
+## Düşük ayarda 3D sahne daha düşük çözünürlükte çizilir; arayüz keskin kalır.
+func apply_render_settings() -> void:
+	var root := get_tree().root
+	root.scaling_3d_scale = 1.0 if high_quality() else 0.6
+	root.msaa_3d = Viewport.MSAA_2X if high_quality() else Viewport.MSAA_DISABLED
+
+
+func is_mobile() -> bool:
+	return OS.has_feature("mobile") or OS.has_feature("web_ios") or OS.has_feature("web_android")
 
 
 func mission(id: String) -> Dictionary:

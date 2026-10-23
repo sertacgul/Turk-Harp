@@ -195,6 +195,7 @@ func show_settings() -> void:
 	var q := UiTheme.button("Grafik: " + ("Yüksek" if GameState.high_quality() else "Düşük"), func() -> void:
 		GameState.settings["quality"] = "low" if GameState.high_quality() else "high"
 		GameState.save_game()
+		GameState.apply_render_settings()
 		get_tree().reload_current_scene(), 380)
 	box.add_child(q)
 	box.add_child(UiTheme.button("Zorluk: " + GameState.difficulty_title(), func() -> void:

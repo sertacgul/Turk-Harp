@@ -412,6 +412,13 @@ func _unhandled_input(event: InputEvent) -> void:
 				toggle_tactical()
 			KEY_R:
 				_call_seyit()
+	# Dokunmatikte her parmak ayrı işlenir; dokunuştan üretilen sahte fare olayları yok sayılır.
+	if event is InputEventScreenTouch and event.pressed and tactical:
+		_tactical_pick(event.position)
+	elif event is InputEventScreenDrag and not tactical:
+		_aim_by(event.relative)
+	if event is InputEventMouse and event.device == InputEvent.DEVICE_ID_EMULATION:
+		return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed:
 			_dragging = true
@@ -422,9 +429,13 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
 		toggle_zoom()
 	if event is InputEventMouseMotion and _dragging and not tactical:
-		var sens := 0.0025 * (0.35 if zoomed else 1.0)
-		aim_yaw -= event.relative.x * sens
-		aim_pitch = clampf(aim_pitch - event.relative.y * sens * 0.6, deg_to_rad(0.0), deg_to_rad(32.0))
+		_aim_by(event.relative)
+
+
+func _aim_by(rel: Vector2) -> void:
+	var sens := 0.0025 * (0.35 if zoomed else 1.0)
+	aim_yaw -= rel.x * sens
+	aim_pitch = clampf(aim_pitch - rel.y * sens * 0.6, deg_to_rad(0.0), deg_to_rad(32.0))
 
 
 func _tactical_pick(screen: Vector2) -> void:
