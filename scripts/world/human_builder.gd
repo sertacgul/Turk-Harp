@@ -245,6 +245,9 @@ static func _spec(kind: String) -> Dictionary:
 		"anzac":
 			return {"uniform": Color(0.6, 0.5, 0.35), "trousers": Color(0.56, 0.47, 0.33), "puttee": Color(0.5, 0.42, 0.3), "hat": Color(0.52, 0.42, 0.28),
 				"skin": Color(0.84, 0.63, 0.5), "leather": Color(0.42, 0.3, 0.18), "hat_kind": "slouch", "mustache": false, "height": 1.0, "boots": false, "coat": false}
+		"british":
+			return {"uniform": Color(0.58, 0.5, 0.36), "trousers": Color(0.55, 0.47, 0.34), "puttee": Color(0.48, 0.41, 0.3), "hat": Color(0.82, 0.78, 0.66),
+				"skin": Color(0.86, 0.66, 0.54), "leather": Color(0.36, 0.26, 0.16), "hat_kind": "helmet", "mustache": false, "height": 1.0, "boots": false, "coat": false}
 		"officer":
 			return {"uniform": Color(0.4, 0.4, 0.3), "trousers": Color(0.38, 0.37, 0.29), "puttee": Color(0.2, 0.14, 0.1), "hat": Color(0.42, 0.41, 0.31),
 				"skin": Color(0.78, 0.58, 0.44), "leather": Color(0.28, 0.17, 0.1), "hat_kind": "kabalak", "mustache": true, "height": 1.02, "boots": true, "coat": false}
@@ -327,6 +330,11 @@ static func _body_mesh(kind: String) -> ArrayMesh:
 
 	# Şapkalar
 	match sp["hat_kind"]:
+		"helmet":
+			# Wolseley sıcak iklim miğferi: yüksek kubbe, öne ve arkaya uzanan siper, puggaree sargısı
+			b.ellipsoid("hat", hatm, Vector3(0, 1.8, 0.005), Vector3(0.115, 0.1, 0.13), HD, 16, 10)
+			b.brim("hat", hatm, Vector3(0, 1.76, 0.0), 0.1, 0.17, HD, 0.0)
+			b.loft("hat", material("fabric", Color(0.72, 0.66, 0.52)), [[1.765, 0, 0.005, 0.118, 0.133, HD, HD, 0.0], [1.8, 0, 0.005, 0.113, 0.128, HD, HD, 0.0]], 16)
 		"slouch":
 			b.brim("hat", hatm, Vector3(0, 1.79, 0), 0.08, 0.26, HD, 0.08)
 			b.loft("hat", hatm, [[1.78, 0, 0, 0.1, 0.11, HD, HD, 0.0], [1.86, 0, 0, 0.092, 0.1, HD, HD, 0.0], [1.9, 0, 0, 0.06, 0.08, HD, HD, 0.0]], 14, true)

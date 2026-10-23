@@ -22,6 +22,9 @@ var _banner_time := 0.0
 var _pause_panel: Control
 var _overlay: Control
 var _shake := 0.0
+var _intro_done := false
+var _intro_layer: Control
+var _intro_skip: Callable
 var _last_message := ""
 var _last_message_time := -100.0
 var _rng := RandomNumberGenerator.new()
@@ -41,6 +44,7 @@ func setup(id: String, is_night: bool, build_strait := true) -> void:
 
 
 func _exit_tree() -> void:
+	Voice.stop()
 	Sfx.stop_all_loops()
 	get_tree().paused = false
 
@@ -135,7 +139,21 @@ func _overlay_panel() -> VBoxContainer:
 	return box
 
 
+## Görevin tarihî önemini anlatan intro kartları: [[başlık, metin], ...]. Alt sınıflar doldurur.
+func intro_cards() -> Array:
+	return []
+
+
+## Intro bittiğinde (ya da geçildiğinde) brifing gösterilir.
 func show_briefing(title: String, date: String, body: String, notes: Array) -> void:
+	if not _intro_done and not intro_cards().is_empty():
+		_intro_done = true
+		_play_intro(intro_cards(), show_briefing.bind(title, date, body, notes))
+		return
+	_show_briefing_panel(title, date, body, notes)
+
+
+func _show_briefing_panel(title: String, date: String, body: String, notes: Array) -> void:
 	var box := _overlay_panel()
 	box.add_child(UiTheme.label("%s  ·  Zorluk: %s" % [date, GameState.difficulty_title()], 18, UiTheme.MUTED, HORIZONTAL_ALIGNMENT_CENTER))
 	box.add_child(UiTheme.label(title, 40, UiTheme.GOLD, HORIZONTAL_ALIGNMENT_CENTER))
@@ -151,6 +169,11 @@ func show_briefing(title: String, date: String, body: String, notes: Array) -> v
 
 
 func start_mission() -> void:
+	if _intro_layer:
+		Voice.stop()
+		_intro_layer.queue_free()
+		_intro_layer = null
+		_restore_hud()
 	if _overlay:
 		_overlay.queue_free()
 		_overlay = null
@@ -221,7 +244,11 @@ func _to_menu() -> void:
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
-	if event.is_pressed() and (event as InputEventKey).keycode == KEY_ESCAPE:
+	var k := event as InputEventKey
+	if _intro_layer and k.pressed and k.keycode in [KEY_SPACE, KEY_ENTER, KEY_ESCAPE]:
+		_end_intro()
+		return
+	if event.is_pressed() and k.keycode == KEY_ESCAPE:
 		toggle_pause()
 
 
@@ -245,6 +272,98 @@ func _process(delta: float) -> void:
 		cam.h_offset = _rng.randf_range(-1.0, 1.0) * _shake * 0.6
 		cam.v_offset = _rng.randf_range(-1.0, 1.0) * _shake * 0.6
 	mission_process(delta)
+
+
+# ------------------------------------------------------------------ intro
+
+## Sinematik intro: sinema şeritleri, kart kart tarih ve metin, ağır müzik, isteğe bağlı seslendirme.
+func _play_intro(cards: Array, then: Callable) -> void:
+	_intro_skip = then
+	_intro_layer = Control.new()
+	_intro_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	ui.add_child(_intro_layer)
+	var shade := ColorRect.new()
+	shade.color = Color(0, 0, 0, 0.55)
+	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_intro_layer.add_child(shade)
+	# Intro sırasında oyun arayüzü gizli; yalnızca sahne ve intro görünür.
+	for c in ui.get_children():
+		if c != _intro_layer and c is CanvasItem:
+			c.set_meta("intro_hidden", (c as CanvasItem).visible)
+			(c as CanvasItem).visible = false
+	for top in [true, false]:
+		var bar := ColorRect.new()
+		bar.color = Color.BLACK
+		bar.anchor_right = 1.0
+		bar.anchor_top = 0.0 if top else 1.0
+		bar.anchor_bottom = 0.0 if top else 1.0
+		bar.offset_top = 0.0 if top else -90.0
+		bar.offset_bottom = 90.0 if top else 0.0
+		_intro_layer.add_child(bar)
+	var cc := CenterContainer.new()
+	cc.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_intro_layer.add_child(cc)
+	var box := VBoxContainer.new()
+	box.custom_minimum_size.x = 860
+	box.add_theme_constant_override("separation", 18)
+	cc.add_child(box)
+	var kicker := UiTheme.label("", 20, UiTheme.MUTED, HORIZONTAL_ALIGNMENT_CENTER)
+	var title := UiTheme.label("", 50, UiTheme.GOLD, HORIZONTAL_ALIGNMENT_CENTER)
+	var line := ColorRect.new()
+	line.color = UiTheme.GOLD.darkened(0.2)
+	line.custom_minimum_size = Vector2(120, 2)
+	line.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	var body := UiTheme.wrap_label("", 24, UiTheme.TEXT, 860)
+	body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	body.visible_ratio = 0.0
+	for n in [kicker, title, line, body]:
+		box.add_child(n)
+	var skip := UiTheme.button("Geç  ›", _end_intro, 140)
+	skip.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	skip.position = Vector2(-170, -72)
+	_intro_layer.add_child(skip)
+	Sfx.play("intro", -6.0)
+	var tw := _intro_layer.create_tween()
+	for i in cards.size():
+		var card: Array = cards[i]
+		tw.tween_callback(func() -> void:
+			kicker.text = "%d / %d" % [i + 1, cards.size()]
+			title.text = card[0]
+			body.text = card[1]
+			body.visible_ratio = 0.0
+			box.modulate.a = 0.0
+			Voice.speak(card[1], "kemal"))
+		tw.tween_property(box, "modulate:a", 1.0, 0.8)
+		tw.parallel().tween_property(body, "visible_ratio", 1.0, 2.6)
+		tw.tween_interval(maxf(4.0, String(card[1]).length() * 0.045))
+		tw.tween_property(box, "modulate:a", 0.0, 0.7)
+	tw.tween_callback(_end_intro)
+
+
+func _end_intro() -> void:
+	if _intro_layer == null:
+		return
+	Voice.stop()
+	var layer := _intro_layer
+	_intro_layer = null
+	_restore_hud()
+	var tw := layer.create_tween()
+	tw.tween_property(layer, "modulate:a", 0.0, 0.5)
+	tw.tween_callback(layer.queue_free)
+	_intro_skip.call()
+
+
+func _restore_hud() -> void:
+	for c in ui.get_children():
+		if c.has_meta("intro_hidden"):
+			(c as CanvasItem).visible = c.get_meta("intro_hidden")
+			c.remove_meta("intro_hidden")
+
+
+## Konuşma: mesaj akışında gösterir ve sesli okur.
+func say(who: String, text: String, color := UiTheme.TEXT) -> void:
+	message("%s: \"%s\"" % [who, text], color)
+	Voice.speak(text, "kemal" if who.contains("Kemal") else "asker")
 
 
 ## Tuş basılı mı? Hem tuşun üzerindeki harfe hem de klavyedeki yerine bakar;

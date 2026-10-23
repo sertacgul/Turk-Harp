@@ -156,18 +156,28 @@ func _ready() -> void:
 	set_objective("Brifing")
 	show_briefing("18 Mart: Boğaz Savunması", "18 Mart 1915 · Çanakkale Boğazı",
 		"İtilaf donanması boğazı geçip İstanbul'a ulaşmak için saldırıyor. Rumeli Mecidiye Tabyası'ndaki topu sen yönetiyorsun. Erenköy Koyu'ndaki mayınlar (%d adet) Nusret'in döşediği yerde bekliyor." % mines.size(),
-		["Sürükle ya da W/A/S/D: nişan al · Boşluk ya da ATEŞ: atış · Z ya da DÜRBÜN: yakınlaştır",
+		["Sürükle ya da W/A/S/D: nişan al · Boşluk ya da ATEŞ: atış · Z ya da DÜRBÜN: dürbün · Fare tekerleği ya da +/-: yakınlaştır",
 		"HARİTA: taktik görünüm. Bir gemiye dokunarak diğer bataryaların ateşini yoğunlaştır.",
 		"Cephane azalınca SEYİT düğmesi: Seyit Onbaşı 215 kg'lık mermiyi sırtında taşır.",
 		"Hedef: en az %d gemi batsın, %d gemi Nara'yı geçmesin. Yıldızlar: kendi topunla 2 gemi batır, tabyanı sağlam tut." % [SINK_TARGET, PASS_LIMIT],
 		"Komutanlar: Cevat Paşa (Osmanlı Devleti, İttifak Devletleri; Çanakkale Müstahkem Mevki), Amiral de Robeck ve Amiral Guépratte (İtilaf Devletleri)."])
 	mission_started.connect(func() -> void:
-		banner("ÇANAKKALE GEÇİLMEZ", "İtilaf donanması boğaza giriyor", 4.0))
+		banner("ÇANAKKALE GEÇİLMEZ", "İtilaf donanması boğaza giriyor", 4.0)
+		Voice.shout("canakkale_gecilmez"))
 
 
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
 	super._exit_tree()
+
+
+func intro_cards() -> Array:
+	return [
+		["18 Mart 1915", "Dünyanın en güçlü donanmalarından biri, on altı zırhlıyla Çanakkale Boğazı'na giriyor. Amaç, tabyaları susturup İstanbul'a ulaşmak."],
+		["Tabyalardaki Mehmetçik", "Rumeli Mecidiye, Anadolu Hamidiye, Kilitbahir... Eski toplar ve az cephaneyle kıyıdaki topçular saatlerce düşman ateşi altında görev yapacak."],
+		["Seyit Onbaşı", "Rumeli Mecidiye Tabyası'nda topun mermi kaldıran vinci bozulunca, Seyit Onbaşı 215 kiloluk mermiyi sırtlanıp topa taşıdı."],
+		["Çanakkale Geçilmez", "Günün sonunda üç zırhlı battı, üçü ağır yaralandı. İtilaf Devletleri Boğaz'ı denizden geçemeyeceğini anladı. 18 Mart bugün Şehitleri Anma Günü ve Çanakkale Deniz Zaferi olarak anılmaktadır."],
+	]
 
 
 # ------------------------------------------------------------------ kurulum
@@ -412,6 +422,13 @@ func _unhandled_input(event: InputEvent) -> void:
 				toggle_tactical()
 			KEY_R:
 				_call_seyit()
+			KEY_EQUAL, KEY_PLUS, KEY_KP_ADD:
+				zoom(1.0)
+			KEY_MINUS, KEY_KP_SUBTRACT:
+				zoom(-1.0)
+	if event is InputEventMouseButton and event.pressed and event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
+		zoom(1.0 if event.button_index == MOUSE_BUTTON_WHEEL_UP else -1.0)
+		return
 	# Dokunmatikte her parmak ayrı işlenir; dokunuştan üretilen sahte fare olayları yok sayılır.
 	if event is InputEventScreenTouch and event.pressed and tactical:
 		_tactical_pick(event.position)
@@ -470,6 +487,17 @@ func toggle_tactical() -> void:
 	Sfx.listener = tactical_cam if tactical else cam
 
 
+## Kademesiz yakınlaştırma: top başında dürbün açısı, haritada kamera yüksekliği.
+func zoom(step: float) -> void:
+	if tactical:
+		var next := tactical_cam.global_position + (-tactical_cam.global_basis.z) * step * 80.0
+		if next.y > 150.0 and next.y < 1800.0:
+			tactical_cam.global_position = next
+		return
+	cam.fov = clampf(cam.fov - step * 6.0, 14.0, 70.0)
+	zoomed = cam.fov < 45.0
+
+
 func toggle_zoom() -> void:
 	zoomed = not zoomed
 	var tw := create_tween()
@@ -514,6 +542,7 @@ func _call_seyit() -> void:
 	seyit_time = BASE_SEYIT * (1.0 - 0.2 * GameState.upgrade_level("seyit"))
 	seyit_node.visible = true
 	banner("SEYİT ONBAŞI", "215 kiloluk mermiyi sırtına aldı", 2.5)
+	Voice.shout("seyit")
 
 
 func _update_player(delta: float) -> void:

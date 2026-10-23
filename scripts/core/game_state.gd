@@ -34,9 +34,9 @@ const MISSIONS := [
 		"id": "conkbayiri",
 		"title": "Conkbayırı",
 		"date": "8-10 Ağustos 1915",
-		"scene": "",
+		"scene": "res://scenes/missions/conkbayiri.tscn",
 		"requires": "ariburnu",
-		"summary": "Anafartalar Grubu Komutanı Mustafa Kemal'in Conkbayırı taarruzu. (Yapım aşamasında)",
+		"summary": "Albay Mustafa Kemal'in kamçı işaretiyle başlayan şafak süngü hücumu. Conkbayırı tepesini, Şahin Sırtı'nı ve Çiftlik'i İngiliz birliklerinden geri al.",
 	},
 ]
 

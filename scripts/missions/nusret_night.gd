@@ -25,6 +25,7 @@ var detection := 0.0
 var max_detection := 0.0
 var patrols: Array = []
 var _cam_yaw_offset := 0.0
+var cam_dist := 55.0
 
 var _joy: TouchStick
 var _drop_btn: Button
@@ -52,7 +53,7 @@ func _ready() -> void:
 	set_objective("Brifing")
 	show_briefing("Nusret'in Gecesi", "7-8 Mart 1915 · Erenköy Koyu",
 		"İtilaf gemileri her gece boğazı ışıldaklarla tarıyor. Nusret mayın gemisi tüm ışıklarını söndürerek Erenköy Koyu'na süzülecek ve kıyıya paralel %d mayın döşeyecek. Bu mayınlar 18 Mart'ta düşman zırhlılarının kaderini belirleyecek." % MINE_COUNT,
-		["W/S ya da sol kol: hız · A/D: dümen · Boşluk ya da MAYIN: mayın bırak",
+		["W/S ya da yön tuşları: hız · A/D: dümen · Boşluk ya da MAYIN: mayın bırak · Fare tekerleği: kamera mesafesi",
 		"Işıldak huzmesine yakalanırsan tespit çubuğu dolar; dolarsa görev başarısız olur.",
 		"Altın çember içindeki koya en az %d mayın bırak, sonra Çanakkale'ye (yeşil çember) dön." % MIN_MINES,
 		"Bu görevde bıraktığın mayınlar 18 Mart görevinde aynı yerde olacak.",
@@ -60,6 +61,15 @@ func _ready() -> void:
 	mission_started.connect(func() -> void:
 		Sfx.start_loop("engine", -14.0)
 		banner("IŞIKLAR SÖNDÜRÜLDÜ", "Nusret Erenköy Koyu'na doğru", 3.5))
+
+
+func intro_cards() -> Array:
+	return [
+		["Mart 1915", "İtilaf Devletleri'nin donanması Çanakkale Boğazı'nın önünde. Hedef İstanbul: Osmanlı Devleti'ni savaş dışı bırakmak ve Rusya'ya yardım yolunu açmak."],
+		["Boğaz'ın Savunması", "Kıyı tabyaları ve mayın hatları Boğaz'ın kilididir. Ancak İtilaf mayın tarama gemileri hatları birer birer temizlemektedir."],
+		["Nusret", "Küçük mayın gemisi Nusret, 7-8 Mart gecesi ışıklarını söndürüp düşmanın hiç beklemediği bir yere, Erenköy Koyu'na 26 mayın döşer."],
+		["Tarihteki Yeri", "Bu gizli hat 18 Mart'ta üç zırhlıyı batıracak, Boğaz'ı denizden geçme umudunu bitirecektir. Nusret bugün Çanakkale'de müze gemisi olarak yaşamaktadır."],
+	]
 
 
 func _build_boat() -> void:
@@ -178,6 +188,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_SPACE:
 		drop_mine()
+	if event is InputEventMouseButton and event.pressed and event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
+		cam_dist = clampf(cam_dist + (-6.0 if event.button_index == MOUSE_BUTTON_WHEEL_UP else 6.0), 18.0, 140.0)
+	if event is InputEventKey and event.pressed and event.keycode in [KEY_EQUAL, KEY_PLUS, KEY_KP_ADD, KEY_MINUS, KEY_KP_SUBTRACT]:
+		cam_dist = clampf(cam_dist + (-6.0 if event.keycode in [KEY_EQUAL, KEY_PLUS, KEY_KP_ADD] else 6.0), 18.0, 140.0)
 	if event is InputEventMouseMotion and event.button_mask & MOUSE_BUTTON_MASK_RIGHT:
 		_cam_yaw_offset -= event.relative.x * 0.004
 
@@ -326,7 +340,7 @@ func _update_detection(delta: float) -> void:
 
 func _update_camera(delta: float) -> void:
 	var back := Vector3(-cos(heading + _cam_yaw_offset), 0, sin(heading + _cam_yaw_offset))
-	var want := boat.global_position + back * 55.0 + Vector3(0, 20.0, 0)
+	var want := boat.global_position + back * cam_dist + Vector3(0, cam_dist * 0.36, 0)
 	cam.global_position = cam.global_position.lerp(want, clampf(delta * 3.0, 0.0, 1.0))
 	cam.look_at(boat.global_position + Vector3(0, 6, 0) - back * 30.0)
 

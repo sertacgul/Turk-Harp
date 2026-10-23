@@ -27,6 +27,9 @@ func _ready() -> void:
 	_streams["rifle"] = _make(0.5, 0.7, 14.0, 120.0, 25.0, 0.8, 0.001)
 	_streams["far_rifle"] = _make(0.6, 0.2, 9.0, 0.0, 0.0, 0.6, 0.002)
 	_streams["bugle"] = _bugle()
+	_streams["crowd"] = _crowd(2.6)
+	_streams["intro"] = _intro_pad(14.0)
+	_streams["grenade_pin"] = _tone(0.12, 2400.0, 30.0)
 	for i in POOL_SIZE:
 		var p := AudioStreamPlayer.new()
 		add_child(p)
@@ -104,6 +107,55 @@ func _bugle() -> AudioStreamWAV:
 			var saw := 2.0 * (phase - floorf(phase + 0.5))
 			var env := minf(t / 0.02, 1.0) * minf((dur - t) / 0.04, 1.0)
 			out.append((saw * 0.6 + sin(TAU * phase) * 0.4) * env * 0.35)
+	return _write(out)
+
+
+## Kalabalık haykırışı: birçok sesin "aaa" ünlüsünü taklit eden, formant süzgeçli gürültü.
+func _crowd(dur: float) -> AudioStreamWAV:
+	var n := int(dur * RATE)
+	var out := PackedFloat32Array()
+	out.resize(n)
+	var voices := []
+	for v in 14:
+		voices.append([_rng.randf_range(95.0, 170.0), _rng.randf() * TAU, _rng.randf_range(0.0, 0.4)])
+	var y1 := 0.0
+	var y2 := 0.0
+	for i in n:
+		var t := float(i) / RATE
+		var s := 0.0
+		for v in voices:
+			if t < v[2]:
+				continue
+			var f: float = v[0] * (1.0 + 0.04 * sin(TAU * 0.7 * t + v[1]))
+			var ph: float = TAU * f * t + v[1]
+			# Ses tellerinin darbeli dalgası (zengin harmonik)
+			s += pow(absf(sin(ph * 0.5)), 8.0) - 0.15
+		s /= voices.size()
+		s += _rng.randf_range(-0.3, 0.3)
+		# "a" ünlüsünün formantları (~700 Hz ve ~1200 Hz) için iki aşamalı süzgeç
+		y1 += 0.18 * (s - y1)
+		y2 += 0.35 * (y1 - y2)
+		var env := minf(t / 0.25, 1.0) * minf((dur - t) / 0.6, 1.0) * (0.75 + 0.25 * sin(TAU * 1.3 * t))
+		out[i] = (y1 * 1.6 - y2 * 0.6) * env * 1.4
+	return _write(out)
+
+
+## Intro için ağır, minör bir müzik yatağı (yavaş açılan akorlar).
+func _intro_pad(dur: float) -> AudioStreamWAV:
+	var n := int(dur * RATE)
+	var out := PackedFloat32Array()
+	out.resize(n)
+	var chords := [[146.83, 174.61, 220.0], [130.81, 164.81, 196.0], [116.54, 146.83, 174.61], [110.0, 138.59, 164.81]]
+	var seg := dur / chords.size()
+	for i in n:
+		var t := float(i) / RATE
+		var ci := mini(int(t / seg), chords.size() - 1)
+		var lt := t - ci * seg
+		var env := minf(lt / 1.2, 1.0) * minf((seg - lt) / 1.0 + 0.2, 1.0)
+		var s := 0.0
+		for f in chords[ci]:
+			s += sin(TAU * f * t) * 0.5 + sin(TAU * f * 2.0 * t + 0.3) * 0.12
+		out[i] = s * env * 0.12 * minf(t / 2.0, 1.0) * minf((dur - t) / 2.0, 1.0)
 	return _write(out)
 
 

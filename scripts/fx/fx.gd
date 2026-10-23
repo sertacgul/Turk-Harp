@@ -4,6 +4,7 @@ extends RefCounted
 ## Tek seferlik efektler kendi kendini siler.
 
 static var _soft_tex: Texture2D
+static var _smoke_tex: Texture2D
 static var _materials := {}
 
 
@@ -28,8 +29,30 @@ static func soft_texture() -> Texture2D:
 	return _soft_tex
 
 
-static func _billboard(additive: bool) -> StandardMaterial3D:
-	var key := "add" if additive else "alpha"
+## Duman bulutu: fbm gürültüsüyle bozulmuş yuvarlak, kıvrımlı kenarlı leke.
+static func smoke_texture() -> Texture2D:
+	if _smoke_tex == null:
+		var n := 128
+		var img := Image.create(n, n, true, Image.FORMAT_RGBA8)
+		var noise := FastNoiseLite.new()
+		noise.seed = 31
+		noise.frequency = 0.045
+		noise.fractal_octaves = 5
+		for y in n:
+			for x in n:
+				var p := Vector2(x, y) / n * 2.0 - Vector2.ONE
+				var r := p.length()
+				var nz := noise.get_noise_2d(x, y) * 0.5 + 0.5
+				var a := clampf((1.0 - r) * 1.6 - (1.0 - nz) * 0.9, 0.0, 1.0)
+				var shade := 0.75 + nz * 0.25
+				img.set_pixel(x, y, Color(shade, shade, shade, a * a))
+		img.generate_mipmaps()
+		_smoke_tex = ImageTexture.create_from_image(img)
+	return _smoke_tex
+
+
+static func _billboard(additive: bool, smoky := false) -> StandardMaterial3D:
+	var key := "add" if additive else ("smoke" if smoky else "alpha")
 	if _materials.has(key):
 		return _materials[key]
 	var m := StandardMaterial3D.new()
@@ -39,7 +62,7 @@ static func _billboard(additive: bool) -> StandardMaterial3D:
 	m.vertex_color_use_as_albedo = true
 	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	m.albedo_texture = soft_texture()
+	m.albedo_texture = smoke_texture() if smoky else soft_texture()
 	m.disable_receive_shadows = true
 	if additive:
 		m.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
@@ -66,14 +89,14 @@ static func _curve(points: Array) -> CurveTexture:
 	return t
 
 
-static func _particles(amount: int, lifetime: float, additive: bool, size: float) -> GPUParticles3D:
+static func _particles(amount: int, lifetime: float, additive: bool, size: float, smoky := false) -> GPUParticles3D:
 	var p := GPUParticles3D.new()
 	p.amount = maxi(1, int(amount * quality()))
 	p.lifetime = lifetime
 	p.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	var q := QuadMesh.new()
 	q.size = Vector2(size, size)
-	q.material = _billboard(additive)
+	q.material = _billboard(additive, smoky)
 	p.draw_pass_1 = q
 	p.visibility_aabb = AABB(Vector3(-200, -50, -200), Vector3(400, 300, 400))
 	return p
@@ -121,7 +144,7 @@ static func explosion(parent: Node, pos: Vector3, s := 1.0) -> void:
 	pm.color_ramp = _ramp([Color(1, 0.75, 0.35, 0.75), Color(0.95, 0.42, 0.08, 0.6), Color(0.5, 0.12, 0.03, 0.35), Color(0.1, 0.05, 0.03, 0)], [0.0, 0.25, 0.6, 1.0])
 	_one_shot(parent, pos, fire, pm)
 	# Duman
-	var smoke := _particles(22, 5.0, false, 1.0)
+	var smoke := _particles(22, 5.0, false, 1.0, true)
 	var sm := ParticleProcessMaterial.new()
 	sm.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_SPHERE
 	sm.emission_sphere_radius = 3.0 * s
@@ -202,7 +225,7 @@ static func muzzle_flash(parent: Node, pos: Vector3, dir: Vector3, s := 1.0) -> 
 	pm.scale_max = 4.5 * s
 	pm.color_ramp = _ramp([Color(1, 0.95, 0.75, 1), Color(1, 0.5, 0.1, 0)], [0.0, 1.0])
 	_one_shot(parent, pos, fire, pm)
-	var smoke := _particles(14, 3.5, false, 1.0)
+	var smoke := _particles(14, 3.5, false, 1.0, true)
 	var sm := ParticleProcessMaterial.new()
 	sm.direction = dir.normalized()
 	sm.spread = 25.0
@@ -221,7 +244,7 @@ static func muzzle_flash(parent: Node, pos: Vector3, dir: Vector3, s := 1.0) -> 
 
 ## Sürekli duman (baca ya da yanan gemi). Döndürülen düğüm hedefe eklenir.
 static func smoke_column(target: Node3D, offset: Vector3, dark := 0.15, s := 1.0, amount := 30) -> GPUParticles3D:
-	var p := _particles(amount, 7.0, false, 1.0)
+	var p := _particles(amount, 7.0, false, 1.0, true)
 	var pm := ParticleProcessMaterial.new()
 	pm.direction = Vector3.UP
 	pm.spread = 8.0
@@ -232,6 +255,8 @@ static func smoke_column(target: Node3D, offset: Vector3, dark := 0.15, s := 1.0
 	pm.scale_max = 5.0 * s
 	pm.scale_curve = _curve([Vector2(0, 0.6), Vector2(1, 3.5)])
 	pm.color_ramp = _ramp([Color(dark, dark, dark, 0.0), Color(dark, dark, dark, 0.8), Color(dark + 0.3, dark + 0.3, dark + 0.3, 0.0)], [0.0, 0.06, 1.0])
+	pm.angle_min = -180.0
+	pm.angle_max = 180.0
 	p.process_material = pm
 	p.local_coords = false
 	p.position = offset
