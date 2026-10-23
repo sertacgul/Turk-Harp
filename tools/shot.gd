@@ -1,7 +1,7 @@
 extends Node
 ## Geliştirme aracı: bir sahneyi yükler, zamanlanmış komutları çalıştırır ve ekran görüntüsü alır.
 ## Kullanım: godot --path . res://tools/shot.tscn -- scene=res://... cmds=1:start_mission,5:shot,8:quit out=/tmp/x
-## Komutlar: shot (PNG kaydet), quit, ya da sahne kökünde çağrılacak bir metot adı.
+## Komutlar: shot (PNG kaydet), quit, press_<TUŞ>/release_<TUŞ>, ya da sahne kökünde çağrılacak bir metot adı.
 ## "speed=4" ile oyun hızlandırılabilir.
 
 var _target: Node
@@ -38,6 +38,14 @@ func _process(delta: float) -> void:
 				print("SHOT ", path)
 			"quit":
 				get_tree().quit()
+			_ when cmd.begins_with("press_") or cmd.begins_with("release_"):
+				# ör. press_UP, release_W: klavye olayı gönderir
+				var ev := InputEventKey.new()
+				var name := cmd.split("_", true, 1)[1]
+				ev.keycode = OS.find_keycode_from_string(name)
+				ev.physical_keycode = ev.keycode
+				ev.pressed = cmd.begins_with("press_")
+				Input.parse_input_event(ev)
 			_:
 				if _target.has_method(cmd):
 					_target.call(cmd)

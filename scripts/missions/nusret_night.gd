@@ -254,14 +254,13 @@ func _update_boat(delta: float) -> void:
 		var a := _autopilot()
 		r = -a.x
 		t = -a.y
-	if Input.is_key_pressed(KEY_W) or Input.is_key_pressed(KEY_UP):
+	var keys := move_axis()
+	if keys.y > 0.0:
 		t = 1.0
-	if Input.is_key_pressed(KEY_S) or Input.is_key_pressed(KEY_DOWN):
+	elif keys.y < 0.0:
 		t = -0.4
-	if Input.is_key_pressed(KEY_A) or Input.is_key_pressed(KEY_LEFT):
-		r = 1.0
-	if Input.is_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT):
-		r = -1.0
+	if keys.x != 0.0:
+		r = -keys.x
 	throttle = move_toward(throttle, clampf(t, -0.4, 1.0), delta * 0.8)
 	speed = move_toward(speed, throttle * MAX_SPEED, delta * 3.0)
 	heading += r * TURN_RATE * delta * clampf(absf(speed) / 6.0, 0.15, 1.0) * signf(speed if absf(speed) > 0.1 else 1.0)

@@ -151,7 +151,7 @@ func _ready() -> void:
 	set_objective("Brifing")
 	show_briefing("Arıburnu: 57. Alay", "25 Nisan 1915 · Arıburnu, Conkbayırı",
 		"Şafakta İtilaf Devletleri'nin ANZAC birlikleri Arıburnu'na çıktı ve sırtlara tırmanıyor. 19. Tümen Komutanı Yarbay Mustafa Kemal, 57. Alay'ı Conkbayırı'na yetiştiriyor. Sen alayın bir subayısın: önce Conkbayırı'nı tut, sonra taarruz emriyle Cesaret Tepe ve Kırmızı Sırt'ı geri al.",
-		["Hareket: W/A/S/D ya da sol kol · Bakış: fare ya da ekranı sürükle · Koşu: Shift",
+		["Hareket: W/A/S/D, yön tuşları ya da sol kol · Bakış: fare ya da ekranı sürükle · Koşu: Shift",
 		"Ateş: sol tık ya da ATEŞ · Nişan: sağ tık ya da NİŞAN · Doldur: R · Süngü: F (yakın dövüş)",
 		"Bölük seç: 1-6 · Q: beni izle · E: nişan aldığın yerde mevzi tut · M ya da HARİTA: haritadan emir ver",
 		"Conkbayırı düşerse görev başarısız olur. Canın: %d." % lives,
@@ -785,18 +785,12 @@ func _update_player(delta: float) -> void:
 	var input := Vector2.ZERO
 	if _stick:
 		input = _stick.output
-	if Input.is_key_pressed(KEY_W):
-		input.y -= 1.0
-	if Input.is_key_pressed(KEY_S):
-		input.y += 1.0
-	if Input.is_key_pressed(KEY_A):
-		input.x -= 1.0
-	if Input.is_key_pressed(KEY_D):
-		input.x += 1.0
+	var keys := move_axis()
+	input += Vector2(keys.x, -keys.y)
 	input = input.limit_length(1.0)
 	var fwd := Vector3(-sin(yaw), 0, -cos(yaw))
 	var right := Vector3(cos(yaw), 0, -sin(yaw))
-	var spd := PLAYER_RUN if Input.is_key_pressed(KEY_SHIFT) and not aiming else PLAYER_SPEED
+	var spd := PLAYER_RUN if key(KEY_SHIFT) and not aiming else PLAYER_SPEED
 	if aiming:
 		spd *= 0.5
 	var move := (fwd * -input.y + right * input.x) * spd * delta
@@ -1078,6 +1072,7 @@ func debug_status() -> void:
 	for s in anzacs:
 		if s.alive():
 			alive_a += 1
+	print("player_pos=", player.pos().round())
 	print("t=%d phase=%d ottoman=%d anzac=%d kills=%d lives=%d hp=%d %s finished=%s" % [elapsed, phase, alive_o, alive_a, kills, lives, player.hp, " ".join(own), finished])
 
 

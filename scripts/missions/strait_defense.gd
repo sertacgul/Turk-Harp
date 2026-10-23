@@ -517,14 +517,9 @@ func _call_seyit() -> void:
 
 
 func _update_player(delta: float) -> void:
-	if Input.is_key_pressed(KEY_A) or Input.is_key_pressed(KEY_LEFT):
-		aim_yaw += delta * 0.5 * (0.35 if zoomed else 1.0)
-	if Input.is_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT):
-		aim_yaw -= delta * 0.5 * (0.35 if zoomed else 1.0)
-	if Input.is_key_pressed(KEY_W) or Input.is_key_pressed(KEY_UP):
-		aim_pitch = minf(aim_pitch + delta * 0.25, deg_to_rad(32.0))
-	if Input.is_key_pressed(KEY_S) or Input.is_key_pressed(KEY_DOWN):
-		aim_pitch = maxf(aim_pitch - delta * 0.25, 0.0)
+	var keys := move_axis()
+	aim_yaw -= keys.x * delta * 0.5 * (0.35 if zoomed else 1.0)
+	aim_pitch = clampf(aim_pitch + keys.y * delta * 0.25, 0.0, deg_to_rad(32.0))
 	player.yaw.rotation.y = aim_yaw
 	player.pitch.rotation.x = aim_pitch
 	cam.rotation.x = deg_to_rad(-6.0) + (aim_pitch * 0.6 if zoomed else aim_pitch * 0.15)

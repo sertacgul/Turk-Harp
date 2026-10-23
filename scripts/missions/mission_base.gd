@@ -247,6 +247,26 @@ func _process(delta: float) -> void:
 	mission_process(delta)
 
 
+## Tuş basılı mı? Hem tuşun üzerindeki harfe hem de klavyedeki yerine bakar;
+## böylece W/A/S/D Türkçe F klavyede de aynı yerden çalışır.
+func key(code: Key) -> bool:
+	return Input.is_key_pressed(code) or Input.is_physical_key_pressed(code)
+
+
+## İleri/geri ve sol/sağ: W/A/S/D ya da yön tuşları. x: sağ +, y: ileri +.
+func move_axis() -> Vector2:
+	var v := Vector2.ZERO
+	if key(KEY_W) or key(KEY_UP):
+		v.y += 1.0
+	if key(KEY_S) or key(KEY_DOWN):
+		v.y -= 1.0
+	if key(KEY_D) or key(KEY_RIGHT):
+		v.x += 1.0
+	if key(KEY_A) or key(KEY_LEFT):
+		v.x -= 1.0
+	return v
+
+
 ## Alt sınıflar bunu uygular.
 func mission_process(_delta: float) -> void:
 	pass

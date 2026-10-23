@@ -2,6 +2,8 @@ extends Node
 ## Kampanya ilerlemesi, yükseltmeler ve ayarlar. user://save.json dosyasına kaydedilir.
 
 const SAVE_PATH := "user://save.json"
+## Test için bütün görevler açık. Yayın öncesi false yapılacak.
+const UNLOCK_ALL := true
 
 const MISSIONS := [
 	{
@@ -92,6 +94,8 @@ func mission(id: String) -> Dictionary:
 
 
 func is_unlocked(id: String) -> bool:
+	if UNLOCK_ALL:
+		return true
 	var req: String = mission(id).get("requires", "")
 	return req == "" or stars.get(req, 0) > 0
 
