@@ -5,112 +5,579 @@
   "summary": "İngilizler 8 Ağustos'ta Conkbayırı'nın tepesine ulaştı. Albay Mustafa Kemal şafakta kamçısıyla işaret verip süngü hücumunu başlatacak. Conkbayırı'nı ve Çiftlik'i geri al.",
   "requires": "ariburnu_1915",
   "map": "gelibolu",
-  "region": [40.236, 26.276, 40.284, 26.344],
+  "region": [
+    40.236,
+    26.276,
+    40.284,
+    26.344
+  ],
   "hex_m": 260,
   "exaggeration": 2.0,
   "start": "1915-08-10T04:00:00",
   "minutes_per_turn": 30,
   "turns": 13,
   "player_side": "ottoman",
-  "focus": [40.254, 26.308, 0.6],
+  "focus": [
+    40.254,
+    26.308,
+    0.6
+  ],
   "intro": [
-    ["Ağustos 1915", "Nisan çıkarmalarından beri cephe durgundu. 6 Ağustos gecesi İtilaf Devletleri Suvla'ya yeni bir çıkarma yaptı ve Arıburnu'ndan Sarıbayır sırtlarına büyük bir taarruz başlattı."],
-    ["Conkbayırı düşüyor", "8 Ağustos sabahı Yeni Zelandalılar Conkbayırı'nın tepesine ulaştı. Sırtlar düşerse Boğaz'a giden yol açılacaktı. Liman von Sanders, bütün Anafartalar cephesinin komutasını Albay Mustafa Kemal'e verdi."],
-    ["Kamçı işareti", "Mustafa Kemal 10 Ağustos şafağında askerlerinin önüne geçti: \"Siz acele etmeyiniz. Evvela ben ileri atılacağım. Siz kamçımla verdiğim işareti görünce hep birlikte atılırsınız.\""],
-    ["Anafartalar", "Bu hücumla kazanılan Anafartalar zaferi, Çanakkale'de kara harbinin kaderini belirledi ve Mustafa Kemal'in adını bütün dünyaya duyurdu."]
+    [
+      "Ağustos 1915",
+      "Nisan çıkarmalarından beri cephe durgundu. 6 Ağustos gecesi İtilaf Devletleri Suvla'ya yeni bir çıkarma yaptı ve Arıburnu'ndan Sarıbayır sırtlarına büyük bir taarruz başlattı."
+    ],
+    [
+      "Conkbayırı düşüyor",
+      "8 Ağustos sabahı Yeni Zelandalılar Conkbayırı'nın tepesine ulaştı. Sırtlar düşerse Boğaz'a giden yol açılacaktı. Liman von Sanders, bütün Anafartalar cephesinin komutasını Albay Mustafa Kemal'e verdi."
+    ],
+    [
+      "Kamçı işareti",
+      "Mustafa Kemal 10 Ağustos şafağında askerlerinin önüne geçti: \"Siz acele etmeyiniz. Evvela ben ileri atılacağım. Siz kamçımla verdiğim işareti görünce hep birlikte atılırsınız.\""
+    ],
+    [
+      "Anafartalar",
+      "Bu hücumla kazanılan Anafartalar zaferi, Çanakkale'de kara harbinin kaderini belirledi ve Mustafa Kemal'in adını bütün dünyaya duyurdu."
+    ]
   ],
   "briefing": "Conkbayırı'nın tepesini gece 6. Loyal North Lancashire Taburu devraldı; 5. Wiltshire Taburu hemen aşağıdaki Sazlıdere yamacında dinleniyor. Çiftlik'te ve Şahinsırtı'nda başka İngiliz taburları var. 8. Tümen'in alayları Kocaçimen ve Conkbayırı'nın doğu yamaçlarında hücum için hazır. Kamçı işareti 04:30'da verilecek: o tur süngü hücumları çok daha güçlüdür. Mustafa Kemal'in karargâhını ateş hattının hemen gerisinde tut.",
-  "goals": [
-    "Conkbayırı'nı geri al ve 10:00'a kadar elde tut; Kocaçimen'i kaybetme (zorunlu).",
-    "Çiftlik'i de geri al (yıldız).",
-    "İtilaf kuvvetlerine en az 2.000 kayıp verdir (yıldız)."
+  "objectives": [
+    {
+      "type": "hold",
+      "places": [
+        "Conkbayırı",
+        "Kocaçimen"
+      ],
+      "required": true,
+      "text": "Conkbayırı'nı geri al; Kocaçimen ile birlikte 10:00'a kadar tut"
+    },
+    {
+      "type": "capture",
+      "places": [
+        "Çiftlik"
+      ],
+      "text": "Çiftlik'i geri al"
+    },
+    {
+      "type": "losses",
+      "count": 2000,
+      "text": "Düşmana en az 2.000 ölü, yaralı ve esir verdir"
+    }
   ],
+  "hints": {
+    "1": "Taburlarını sessizce Conkbayırı'nın doğu yamacına, düşmana komşu hücrelere yaklaştır ama henüz saldırma: kamçı işareti bir sonraki tur verilecek. 'Taarruz' emri ve 'Alayın tümüne' ile alayları birlikte yönetebilirsin.",
+    "2": "Kamçı işareti verildi! Bu tur bütün taburlar süngü hücumu yapsın (birliği seç, B, sonra kırmızı hücre). Süngü bu tur çok daha güçlü.",
+    "3": "Tepeyi aldıysan Çiftlik'e in; düşmanı toparlanmadan sür.",
+    "4": "İngiliz takviyesi Ağıl Dere'den geliyor. Çiftlik'in kuzeyini tutan bir tabur bırak.",
+    "7": "Ele geçirdiğin tepeleri 'Savun' emriyle tut; siperdeki birlik çok daha dayanıklıdır."
+  },
   "places": [
-    {"name": "Conkbayırı", "lat": 40.2520, "lon": 26.3086, "vp": 3, "owner": "entente"},
-    {"name": "Kocaçimen", "lat": 40.2593, "lon": 26.3199, "vp": 2, "owner": "ottoman"},
-    {"name": "Çiftlik", "lat": 40.2543, "lon": 26.3020, "vp": 2, "owner": "entente"},
-    {"name": "Şahinsırtı", "lat": 40.2500, "lon": 26.2975, "vp": 1, "owner": "entente"},
-    {"name": "Q Tepesi", "lat": 40.2569, "lon": 26.3133},
-    {"name": "Düz Tepe", "lat": 40.2461, "lon": 26.3011, "vp": 1, "owner": "ottoman"},
-    {"name": "Masa Tepe", "lat": 40.2524, "lon": 26.2920},
-    {"name": "Ağıl Dere", "lat": 40.2634, "lon": 26.2836},
-    {"name": "Damakçılık Bayırı", "lat": 40.2682, "lon": 26.2867},
-    {"name": "Büyükanafarta", "lat": 40.2816, "lon": 26.3292}
+    {
+      "name": "Conkbayırı",
+      "lat": 40.252,
+      "lon": 26.3086,
+      "vp": 3,
+      "owner": "entente"
+    },
+    {
+      "name": "Kocaçimen",
+      "lat": 40.2593,
+      "lon": 26.3199,
+      "vp": 2,
+      "owner": "ottoman"
+    },
+    {
+      "name": "Çiftlik",
+      "lat": 40.2543,
+      "lon": 26.302,
+      "vp": 2,
+      "owner": "entente"
+    },
+    {
+      "name": "Şahinsırtı",
+      "lat": 40.25,
+      "lon": 26.2975,
+      "vp": 1,
+      "owner": "entente"
+    },
+    {
+      "name": "Q Tepesi",
+      "lat": 40.2569,
+      "lon": 26.3133
+    },
+    {
+      "name": "Düz Tepe",
+      "lat": 40.2461,
+      "lon": 26.3011,
+      "vp": 1,
+      "owner": "ottoman"
+    },
+    {
+      "name": "Masa Tepe",
+      "lat": 40.2524,
+      "lon": 26.292
+    },
+    {
+      "name": "Ağıl Dere",
+      "lat": 40.2634,
+      "lon": 26.2836
+    },
+    {
+      "name": "Damakçılık Bayırı",
+      "lat": 40.2682,
+      "lon": 26.2867
+    },
+    {
+      "name": "Büyükanafarta",
+      "lat": 40.2816,
+      "lon": 26.3292
+    }
   ],
   "units": [
-    {"id": "hq_af", "auto_goal": "Q Tepesi", "name": "Anafartalar Grubu Karargâhı", "short": "M. Kemal", "side": "ottoman", "kind": "hq", "size": "tümen",
-     "commander": "Albay Mustafa Kemal", "men": 50, "equipment": {"mauser_1903": 40}, "morale": 100, "mp": 5,
-     "lat": 40.2605, "lon": 26.3240, "vision": 4,
-     "note": "Karargâhın 2 hücre yakınındaki birliklerin morali her tur yükselir. Karargâh vurulursa bütün birliklerin morali sarsılır."},
-    {"id": "a23_1", "auto_goal": "Conkbayırı", "name": "23. Alay 1. Tabur", "short": "1/23", "side": "ottoman", "kind": "infantry", "men": 720,
-     "equipment": {"mauser_1903": 700, "maxim_1909": 1}, "morale": 90, "lat": 40.2545, "lon": 26.3150},
-    {"id": "a23_2", "auto_goal": "Conkbayırı", "name": "23. Alay 2. Tabur", "short": "2/23", "side": "ottoman", "kind": "infantry", "men": 700,
-     "equipment": {"mauser_1903": 690}, "morale": 90, "lat": 40.2510, "lon": 26.3160},
-    {"id": "a24_1", "auto_goal": "Çiftlik", "name": "24. Alay 1. Tabur", "short": "1/24", "side": "ottoman", "kind": "infantry", "men": 700,
-     "equipment": {"mauser_1903": 690}, "morale": 88, "lat": 40.2575, "lon": 26.3120},
-    {"id": "a24_2", "auto_goal": "Çiftlik", "name": "24. Alay 2. Tabur", "short": "2/24", "side": "ottoman", "kind": "infantry", "men": 680,
-     "equipment": {"mauser_1903": 670}, "morale": 88, "lat": 40.2590, "lon": 26.3160},
-    {"id": "a28_1", "auto_goal": "Şahinsırtı", "name": "28. Alay 1. Tabur", "short": "1/28", "side": "ottoman", "kind": "infantry", "men": 690,
-     "equipment": {"mauser_1903": 680}, "morale": 86, "lat": 40.2480, "lon": 26.3100},
-    {"id": "a28_2", "auto_goal": "Conkbayırı", "name": "28. Alay 2. Tabur", "short": "2/28", "side": "ottoman", "kind": "infantry", "men": 680,
-     "equipment": {"mauser_1903": 670}, "morale": 86, "lat": 40.2470, "lon": 26.3140},
-    {"id": "mg_8", "auto_goal": "Conkbayırı", "name": "8. Tümen Makineli Tüfek Bölüğü", "short": "MG/8", "side": "ottoman", "kind": "mg", "size": "bölük",
-     "men": 120, "equipment": {"maxim_1909": 4, "mauser_1903": 60}, "morale": 90, "lat": 40.2560, "lon": 26.3190},
-    {"id": "bt_8", "name": "8. Tümen Sahra Bataryası", "short": "8 Bt", "side": "ottoman", "kind": "artillery", "size": "batarya",
-     "men": 100, "equipment": {"krupp_75_sahra": 4}, "morale": 85, "mp": 2, "lat": 40.2560, "lon": 26.3330},
-    {"id": "obus_8", "name": "Obüs Bataryası (15 cm)", "short": "Obüs", "side": "ottoman", "kind": "artillery", "size": "batarya",
-     "men": 110, "equipment": {"krupp_150_obus": 4}, "morale": 85, "mp": 1, "lat": 40.2500, "lon": 26.3350},
-    {"id": "a33_1", "auto_goal": "Düz Tepe", "name": "33. Alay 1. Tabur", "short": "1/33", "side": "ottoman", "kind": "infantry", "men": 650,
-     "equipment": {"mauser_1903": 640}, "morale": 82, "lat": 40.2520, "lon": 26.3300, "arrive": 5},
-
-    {"id": "lnl6", "name": "6. Loyal North Lancashire Taburu", "short": "6 LNL", "side": "entente", "nation": "uk", "kind": "infantry",
-     "men": 650, "equipment": {"smle_mk3": 630, "maxim_303": 2}, "morale": 55, "entrench": 1, "lat": 40.2520, "lon": 26.3086, "role": "hold",
-     "note": "Gece Yeni Zelandalıları değiştirip tepeye çıktı; siperleri sığ ve yorgundu."},
-    {"id": "wilts5", "name": "5. Wiltshire Taburu", "short": "5 Wilts", "side": "entente", "nation": "uk", "kind": "infantry",
-     "men": 720, "equipment": {"smle_mk3": 700, "maxim_303": 2}, "morale": 50, "entrench": 0, "lat": 40.2555, "lon": 26.3045, "role": "hold",
-     "note": "Tarihte tüfeklerini çatıp dinlenirken baskına uğradı ve neredeyse tamamen yok oldu."},
-    {"id": "elancs6", "name": "6. East Lancashire Taburu", "short": "6 ELan", "side": "entente", "nation": "uk", "kind": "infantry",
-     "men": 620, "equipment": {"smle_mk3": 600, "maxim_303": 2}, "morale": 58, "entrench": 1, "lat": 40.2543, "lon": 26.3010, "role": "hold"},
-    {"id": "worc9", "name": "9. Worcestershire Taburu", "short": "9 Worc", "side": "entente", "nation": "uk", "kind": "infantry",
-     "men": 600, "equipment": {"smle_mk3": 580, "maxim_303": 2}, "morale": 58, "entrench": 0, "lat": 40.2570, "lon": 26.2990, "role": "hold"},
-    {"id": "slancs6", "name": "6. South Lancashire Taburu", "short": "6 SLan", "side": "entente", "nation": "uk", "kind": "infantry",
-     "men": 580, "equipment": {"smle_mk3": 560, "maxim_303": 2}, "morale": 60, "entrench": 1, "lat": 40.2500, "lon": 26.2975, "role": "hold"},
-    {"id": "gurkha", "name": "1/6. Gurkha Tüfekçileri", "short": "1/6 GR", "side": "entente", "nation": "uk", "kind": "infantry",
-     "men": 380, "equipment": {"smle_mk3": 370}, "morale": 45, "entrench": 0, "lat": 40.2580, "lon": 26.3070, "role": "hold",
-     "note": "9 Ağustos'ta Q Tepesi'ne ulaşmış, ardından geri çekilmişti."},
-    {"id": "otago", "name": "Otago ve Wellington artçıları (NZ)", "short": "NZ", "side": "entente", "nation": "anzac", "kind": "infantry",
-     "men": 420, "equipment": {"smle_mk3": 400, "maxim_303": 2}, "morale": 50, "entrench": 1, "lat": 40.2524, "lon": 26.2920, "role": "hold",
-     "note": "8 Ağustos'ta Conkbayırı'nı alan Wellington Taburu'nun 760 askerinden yalnızca 70'i ayakta kalmıştı."},
-    {"id": "rfa", "name": "Anzak Sahra Bataryası", "short": "18pdr", "side": "entente", "nation": "anzac", "kind": "artillery", "size": "batarya",
-     "men": 110, "equipment": {"qf_18pdr": 4}, "morale": 75, "mp": 1, "lat": 40.2440, "lon": 26.2860},
-    {"id": "warw9", "name": "9. Royal Warwickshire Taburu", "short": "9 RWar", "side": "entente", "nation": "uk", "kind": "infantry",
-     "men": 650, "equipment": {"smle_mk3": 630, "maxim_303": 2}, "morale": 60, "lat": 40.2640, "lon": 26.2860, "arrive": 4, "role": "attack", "goal": "Çiftlik"}
+    {
+      "id": "hq_af",
+      "auto_goal": "Q Tepesi",
+      "name": "Anafartalar Grubu Karargâhı",
+      "short": "M. Kemal",
+      "side": "ottoman",
+      "kind": "hq",
+      "size": "tümen",
+      "commander": "Albay Mustafa Kemal",
+      "men": 50,
+      "equipment": {
+        "mauser_1903": 40
+      },
+      "morale": 100,
+      "mp": 5,
+      "lat": 40.2605,
+      "lon": 26.324,
+      "vision": 4,
+      "note": "Karargâhın 2 hücre yakınındaki birliklerin morali her tur yükselir. Karargâh vurulursa bütün birliklerin morali sarsılır."
+    },
+    {
+      "id": "a23_1",
+      "auto_goal": "Conkbayırı",
+      "name": "23. Alay 1. Tabur",
+      "short": "1/23",
+      "side": "ottoman",
+      "kind": "infantry",
+      "men": 720,
+      "equipment": {
+        "mauser_1903": 700,
+        "maxim_1909": 1
+      },
+      "morale": 90,
+      "lat": 40.2545,
+      "lon": 26.315
+    },
+    {
+      "id": "a23_2",
+      "auto_goal": "Conkbayırı",
+      "name": "23. Alay 2. Tabur",
+      "short": "2/23",
+      "side": "ottoman",
+      "kind": "infantry",
+      "men": 700,
+      "equipment": {
+        "mauser_1903": 690
+      },
+      "morale": 90,
+      "lat": 40.251,
+      "lon": 26.316
+    },
+    {
+      "id": "a24_1",
+      "auto_goal": "Çiftlik",
+      "name": "24. Alay 1. Tabur",
+      "short": "1/24",
+      "side": "ottoman",
+      "kind": "infantry",
+      "men": 700,
+      "equipment": {
+        "mauser_1903": 690
+      },
+      "morale": 88,
+      "lat": 40.2575,
+      "lon": 26.312
+    },
+    {
+      "id": "a24_2",
+      "auto_goal": "Çiftlik",
+      "name": "24. Alay 2. Tabur",
+      "short": "2/24",
+      "side": "ottoman",
+      "kind": "infantry",
+      "men": 680,
+      "equipment": {
+        "mauser_1903": 670
+      },
+      "morale": 88,
+      "lat": 40.259,
+      "lon": 26.316
+    },
+    {
+      "id": "a28_1",
+      "auto_goal": "Şahinsırtı",
+      "name": "28. Alay 1. Tabur",
+      "short": "1/28",
+      "side": "ottoman",
+      "kind": "infantry",
+      "men": 690,
+      "equipment": {
+        "mauser_1903": 680
+      },
+      "morale": 86,
+      "lat": 40.248,
+      "lon": 26.31
+    },
+    {
+      "id": "a28_2",
+      "auto_goal": "Conkbayırı",
+      "name": "28. Alay 2. Tabur",
+      "short": "2/28",
+      "side": "ottoman",
+      "kind": "infantry",
+      "men": 680,
+      "equipment": {
+        "mauser_1903": 670
+      },
+      "morale": 86,
+      "lat": 40.247,
+      "lon": 26.314
+    },
+    {
+      "id": "mg_8",
+      "auto_goal": "Conkbayırı",
+      "name": "8. Tümen Makineli Tüfek Bölüğü",
+      "short": "MG/8",
+      "side": "ottoman",
+      "kind": "mg",
+      "size": "bölük",
+      "men": 120,
+      "equipment": {
+        "maxim_1909": 4,
+        "mauser_1903": 60
+      },
+      "morale": 90,
+      "lat": 40.256,
+      "lon": 26.319
+    },
+    {
+      "id": "bt_8",
+      "name": "8. Tümen Sahra Bataryası",
+      "short": "8 Bt",
+      "side": "ottoman",
+      "kind": "artillery",
+      "size": "batarya",
+      "men": 100,
+      "equipment": {
+        "krupp_75_sahra": 4
+      },
+      "morale": 85,
+      "mp": 2,
+      "lat": 40.256,
+      "lon": 26.333
+    },
+    {
+      "id": "obus_8",
+      "name": "Obüs Bataryası (15 cm)",
+      "short": "Obüs",
+      "side": "ottoman",
+      "kind": "artillery",
+      "size": "batarya",
+      "men": 110,
+      "equipment": {
+        "krupp_150_obus": 4
+      },
+      "morale": 85,
+      "mp": 1,
+      "lat": 40.25,
+      "lon": 26.335
+    },
+    {
+      "id": "a33_1",
+      "auto_goal": "Düz Tepe",
+      "name": "33. Alay 1. Tabur",
+      "short": "1/33",
+      "side": "ottoman",
+      "kind": "infantry",
+      "men": 650,
+      "equipment": {
+        "mauser_1903": 640
+      },
+      "morale": 82,
+      "lat": 40.252,
+      "lon": 26.33,
+      "arrive": 5
+    },
+    {
+      "id": "lnl6",
+      "name": "6. Loyal North Lancashire Taburu",
+      "short": "6 LNL",
+      "side": "entente",
+      "nation": "uk",
+      "kind": "infantry",
+      "men": 650,
+      "equipment": {
+        "smle_mk3": 630,
+        "maxim_303": 2
+      },
+      "morale": 55,
+      "entrench": 1,
+      "lat": 40.252,
+      "lon": 26.3086,
+      "role": "hold",
+      "note": "Gece Yeni Zelandalıları değiştirip tepeye çıktı; siperleri sığ ve yorgundu."
+    },
+    {
+      "id": "wilts5",
+      "name": "5. Wiltshire Taburu",
+      "short": "5 Wilts",
+      "side": "entente",
+      "nation": "uk",
+      "kind": "infantry",
+      "men": 720,
+      "equipment": {
+        "smle_mk3": 700,
+        "maxim_303": 2
+      },
+      "morale": 50,
+      "entrench": 0,
+      "lat": 40.2555,
+      "lon": 26.3045,
+      "role": "hold",
+      "note": "Tarihte tüfeklerini çatıp dinlenirken baskına uğradı ve neredeyse tamamen yok oldu."
+    },
+    {
+      "id": "elancs6",
+      "name": "6. East Lancashire Taburu",
+      "short": "6 ELan",
+      "side": "entente",
+      "nation": "uk",
+      "kind": "infantry",
+      "men": 620,
+      "equipment": {
+        "smle_mk3": 600,
+        "maxim_303": 2
+      },
+      "morale": 58,
+      "entrench": 1,
+      "lat": 40.2543,
+      "lon": 26.301,
+      "role": "hold"
+    },
+    {
+      "id": "worc9",
+      "name": "9. Worcestershire Taburu",
+      "short": "9 Worc",
+      "side": "entente",
+      "nation": "uk",
+      "kind": "infantry",
+      "men": 600,
+      "equipment": {
+        "smle_mk3": 580,
+        "maxim_303": 2
+      },
+      "morale": 58,
+      "entrench": 0,
+      "lat": 40.257,
+      "lon": 26.299,
+      "role": "hold"
+    },
+    {
+      "id": "slancs6",
+      "name": "6. South Lancashire Taburu",
+      "short": "6 SLan",
+      "side": "entente",
+      "nation": "uk",
+      "kind": "infantry",
+      "men": 580,
+      "equipment": {
+        "smle_mk3": 560,
+        "maxim_303": 2
+      },
+      "morale": 60,
+      "entrench": 1,
+      "lat": 40.25,
+      "lon": 26.2975,
+      "role": "hold"
+    },
+    {
+      "id": "gurkha",
+      "name": "1/6. Gurkha Tüfekçileri",
+      "short": "1/6 GR",
+      "side": "entente",
+      "nation": "uk",
+      "kind": "infantry",
+      "men": 380,
+      "equipment": {
+        "smle_mk3": 370
+      },
+      "morale": 45,
+      "entrench": 0,
+      "lat": 40.258,
+      "lon": 26.307,
+      "role": "hold",
+      "note": "9 Ağustos'ta Q Tepesi'ne ulaşmış, ardından geri çekilmişti."
+    },
+    {
+      "id": "otago",
+      "name": "Otago ve Wellington artçıları (NZ)",
+      "short": "NZ",
+      "side": "entente",
+      "nation": "nz",
+      "kind": "infantry",
+      "men": 420,
+      "equipment": {
+        "smle_mk3": 400,
+        "maxim_303": 2
+      },
+      "morale": 50,
+      "entrench": 1,
+      "lat": 40.2524,
+      "lon": 26.292,
+      "role": "hold",
+      "note": "8 Ağustos'ta Conkbayırı'nı alan Wellington Taburu'nun 760 askerinden yalnızca 70'i ayakta kalmıştı."
+    },
+    {
+      "id": "rfa",
+      "name": "Anzak Sahra Bataryası",
+      "short": "18pdr",
+      "side": "entente",
+      "nation": "au",
+      "kind": "artillery",
+      "size": "batarya",
+      "men": 110,
+      "equipment": {
+        "qf_18pdr": 4
+      },
+      "morale": 75,
+      "mp": 1,
+      "lat": 40.244,
+      "lon": 26.286
+    },
+    {
+      "id": "warw9",
+      "name": "9. Royal Warwickshire Taburu",
+      "short": "9 RWar",
+      "side": "entente",
+      "nation": "uk",
+      "kind": "infantry",
+      "men": 650,
+      "equipment": {
+        "smle_mk3": 630,
+        "maxim_303": 2
+      },
+      "morale": 60,
+      "lat": 40.264,
+      "lon": 26.286,
+      "arrive": 4,
+      "role": "attack",
+      "goal": "Çiftlik"
+    }
   ],
   "events": [
-    {"turn": 1, "type": "message", "popup": true, "who": "Albay Mustafa Kemal", "title": "\"Askerler!\"",
-     "text": "\"Karşımızdaki düşmanı mağlup edeceğimize asla şüphe yoktur. Siz acele etmeyiniz; evvela ben ileri atılacağım. Siz kamçımla verdiğim işareti görünce hep birlikte atılırsınız.\" Birliklerini düşman hatlarının yakınına sessizce yaklaştır. Kamçı işareti bir sonraki tur verilecek.", "voice": true},
-    {"turn": 2, "type": "message", "popup": true, "who": "Conkbayırı, 04:30", "title": "Kamçı işareti!",
-     "text": "Mustafa Kemal kamçısını kaldırdı. Alaylar sessizce, süngü takılı olarak ileri atıldı. Bu tur süngü hücumu (B) yapan birlikler çok daha etkili."},
-    {"turn": 2, "type": "morale", "side": "ottoman", "add": 20},
-    {"turn": 2, "type": "morale", "side": "entente", "add": -12},
-    {"turn": 2, "type": "sound", "sound": "bugle"},
-    {"turn": 2, "type": "bayonet_bonus", "mult": 1.35},
-    {"turn": 2, "type": "shout", "key": "allah_allah"},
-    {"turn": 4, "type": "message", "who": "Gözcüler", "text": "Ağıl Dere'den İngiliz takviyesi geliyor. Denizdeki gemiler sırtları dövmeye başladı."},
-    {"turn": 6, "type": "message", "popup": true, "who": "Conkbayırı, 06:30", "title": "Cep saati",
-     "text": "Bir şarapnel parçası Mustafa Kemal'in göğsüne isabet etti; cebindeki saat parçalandı ama onu kurtardı. Mustafa Kemal hücumu yönetmeye devam ediyor. (Bu saati daha sonra Liman von Sanders'e hediye etti.)"},
-    {"turn": 6, "type": "morale", "side": "ottoman", "add": 6}
+    {
+      "turn": 1,
+      "type": "message",
+      "popup": true,
+      "who": "Albay Mustafa Kemal",
+      "title": "\"Askerler!\"",
+      "text": "\"Karşımızdaki düşmanı mağlup edeceğimize asla şüphe yoktur. Siz acele etmeyiniz; evvela ben ileri atılacağım. Siz kamçımla verdiğim işareti görünce hep birlikte atılırsınız.\" Birliklerini düşman hatlarının yakınına sessizce yaklaştır. Kamçı işareti bir sonraki tur verilecek.",
+      "voice": true
+    },
+    {
+      "turn": 2,
+      "type": "message",
+      "popup": true,
+      "who": "Conkbayırı, 04:30",
+      "title": "Kamçı işareti!",
+      "text": "Mustafa Kemal kamçısını kaldırdı. Alaylar sessizce, süngü takılı olarak ileri atıldı. Bu tur süngü hücumu (B) yapan birlikler çok daha etkili."
+    },
+    {
+      "turn": 2,
+      "type": "morale",
+      "side": "ottoman",
+      "add": 20
+    },
+    {
+      "turn": 2,
+      "type": "morale",
+      "side": "entente",
+      "add": -12
+    },
+    {
+      "turn": 2,
+      "type": "sound",
+      "sound": "bugle"
+    },
+    {
+      "turn": 2,
+      "type": "bayonet_bonus",
+      "mult": 1.35
+    },
+    {
+      "turn": 2,
+      "type": "shout",
+      "key": "allah_allah"
+    },
+    {
+      "turn": 4,
+      "type": "message",
+      "who": "Gözcüler",
+      "text": "Ağıl Dere'den İngiliz takviyesi geliyor. Denizdeki gemiler sırtları dövmeye başladı."
+    },
+    {
+      "turn": 6,
+      "type": "message",
+      "popup": true,
+      "who": "Conkbayırı, 06:30",
+      "title": "Cep saati",
+      "text": "Bir şarapnel parçası Mustafa Kemal'in göğsüne isabet etti; cebindeki saat parçalandı ama onu kurtardı. Mustafa Kemal hücumu yönetmeye devam ediyor. (Bu saati daha sonra Liman von Sanders'e hediye etti.)"
+    },
+    {
+      "turn": 6,
+      "type": "morale",
+      "side": "ottoman",
+      "add": 6
+    }
   ],
   "triggers": [
-    {"when": {"owner": ["Conkbayırı", "ottoman"]}, "do": [{"type": "message", "popup": true, "who": "8. Tümen", "title": "Conkbayırı geri alındı!", "text": "Süngü hücumu tepeyi temizledi. Şimdi tepeyi tut ve Çiftlik'e in!"}, {"type": "shout", "key": "allah_allah"}]},
-    {"when": {"dead": "hq_af"}, "do": [{"type": "message", "popup": true, "who": "Karargâh", "title": "Karargâh vuruldu", "text": "Anafartalar Grubu karargâhı ağır ateş altında dağıldı; birliklerin morali sarsıldı."}]}
+    {
+      "when": {
+        "owner": [
+          "Conkbayırı",
+          "ottoman"
+        ]
+      },
+      "do": [
+        {
+          "type": "message",
+          "popup": true,
+          "who": "8. Tümen",
+          "title": "Conkbayırı geri alındı!",
+          "text": "Süngü hücumu tepeyi temizledi. Şimdi tepeyi tut ve Çiftlik'e in!"
+        },
+        {
+          "type": "shout",
+          "key": "allah_allah"
+        }
+      ]
+    },
+    {
+      "when": {
+        "dead": "hq_af"
+      },
+      "do": [
+        {
+          "type": "message",
+          "popup": true,
+          "who": "Karargâh",
+          "title": "Karargâh vuruldu",
+          "text": "Anafartalar Grubu karargâhı ağır ateş altında dağıldı; birliklerin morali sarsıldı."
+        }
+      ]
+    }
   ],
-  "victory": {
-    "lose_if_lost": ["Conkbayırı", "Kocaçimen"],
-    "stars": [
-      {"text": "Çiftlik geri alındı", "hold": ["Çiftlik"]},
-      {"text": "İtilaf kuvvetlerine en az 2.000 kayıp", "enemy_losses": 2000}
-    ]
-  },
   "history": "10 Ağustos sabahı 04:30'da Mustafa Kemal'in kamçısıyla başlayan süngü hücumu Conkbayırı'nı geri aldı. Tepedeki 6. Loyal North Lancashire ve aşağıdaki 5. Wiltshire taburları neredeyse tamamen yok oldu; Türk birlikleri Çiftlik'e kadar indi. İtilaf kuvvetleri Sarıbayır sırtlarına bir daha çıkamadı. Anafartalar zaferi Çanakkale kara harbinin dönüm noktası oldu; İtilaf Devletleri Aralık 1915 - Ocak 1916'da yarımadayı tahliye etti."
 }

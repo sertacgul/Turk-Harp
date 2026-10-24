@@ -34,7 +34,8 @@ var targets: Array[Vector2i] = []
 var bayonet := false
 var busy := false
 var seen := {Unit.OTTOMAN: {}, Unit.ENTENTE: {}}
-var losses := {Unit.OTTOMAN: 0, Unit.ENTENTE: 0}
+## Kayıplar: ölü (Osmanlı için şehit), yaralı, esir
+var cas := {Unit.OTTOMAN: {"dead": 0, "wounded": 0, "captured": 0}, Unit.ENTENTE: {"dead": 0, "wounded": 0, "captured": 0}}
 var sunk: Array[String] = []
 var mine_budget := 0
 var mine_per_hex := 5
@@ -49,6 +50,20 @@ var _fired := {}
 var has_ships := false
 var _mine_nodes := {}
 var _fx: Node3D
+## Emir verme kipi: "" ya da "attack" (hedef hücre bekleniyor)
+var order_mode := ""
+## Emir alayın bütün birliklerine mi verilsin
+var order_group := false
+var _arrows: Node3D
+var _path_node: Node3D
+var _enemy_moves: Array = []
+var _obj_markers := {}
+## Bu tur gelen birlikler ve yeni görülen düşmanlar (kurmay raporu için)
+var arrivals: Array[String] = []
+var _seen_enemy_ids := {}
+var report: Array = []
+var follow_enemy := true
+static var _soft_tex: GradientTexture2D
 
 
 func _ready() -> void:
@@ -73,6 +88,7 @@ func _ready() -> void:
 	update_vision(ai_side)
 	_refresh_map()
 	Sfx.start_loop("sea", -26.0)
+	Sfx.start_loop("battle_amb", -20.0)
 	ui.play_intro(scenario.get("intro", []), _after_intro)
 
 
@@ -94,6 +110,10 @@ func _build_world() -> void:
 	hex_world = hex_m * map.s
 	_fx = Node3D.new()
 	add_child(_fx)
+	_arrows = Node3D.new()
+	add_child(_arrows)
+	_path_node = Node3D.new()
+	add_child(_path_node)
 	minutes = int(scenario.get("minutes_per_turn", 60))
 	hours = minutes / 60.0
 	turns = int(scenario.get("turns", 12))
@@ -109,8 +129,8 @@ func _build_world() -> void:
 		cell.place = p["name"]
 		cell.vp = vp
 		cell.owner = p.get("owner", "")
-		map.add_place_label(p["name"], lp, 1.15 if vp > 0 else 0.9,
-			Color(0.45, 0.05, 0.05) if vp > 0 else Color(0.16, 0.1, 0.06))
+		if vp == 0:
+			map.add_place_label(p["name"], lp, 0.95, Color(0.16, 0.1, 0.06), p.get("minor", false))
 	for m: Dictionary in scenario.get("minefields", []):
 		var c := grid.nearest(geo.local(m["lat"], m["lon"]))
 		grid.cell(c).mines = int(m.get("mines", 5))
@@ -138,6 +158,9 @@ func _build_world() -> void:
 			mcam._t_dist = mcam.dist
 	for k: Vector2i in grid.cells:
 		_update_mine_marker(k)
+	for n: String in places:
+		if places[n]["objective"]:
+			_build_objective_marker(n)
 
 
 func _build_units() -> void:
@@ -153,6 +176,8 @@ func _build_units() -> void:
 			u.set_meta("plan", d["plan"])
 		if d.has("auto_goal"):
 			u.set_meta("auto_goal", d["auto_goal"])
+		if u.side == player_side and (u.is_fort() or u.is_artillery()):
+			u.order = "fire"
 		units.append(u)
 		if u.is_naval() and u.side != player_side:
 			has_ships = true
@@ -194,10 +219,13 @@ func _place(u: Unit, c: Vector2i) -> void:
 	u.cell = best
 	u.state = "active"
 	by_cell[best] = u
-	var ctr := UnitCounter.new()
+	var ctr := UnitMini.new()
 	add_child(ctr)
 	ctr.setup(u, hex_world)
 	ctr.position = map.cell_world(best)
+	# Birlik hedefine ya da haritanın ortasına dönük dursun.
+	var look := map.cell_world(u.goal) if u.goal != Vector2i(-1, -1) else Vector3.ZERO
+	ctr.face(Vector3(look.x - ctr.position.x, 0, look.z - ctr.position.z))
 	u.counter = ctr
 
 
@@ -214,6 +242,32 @@ func unit_at(c: Vector2i) -> Unit:
 
 func enemy_of(side: String) -> String:
 	return Unit.ENTENTE if side == Unit.OTTOMAN else Unit.OTTOMAN
+
+
+## n kişilik zayiatı ölü ve yaralı olarak ayırır (Birinci Dünya Savaşı'nda yaklaşık 1'e 2,3).
+## Döndürülen: (ölü, yaralı).
+func add_cas(side: String, n: int, captured := false, dead_ratio := 0.3) -> Vector2i:
+	if n <= 0:
+		return Vector2i.ZERO
+	if captured:
+		cas[side]["captured"] += n
+		return Vector2i.ZERO
+	var d := int(round(n * dead_ratio))
+	cas[side]["dead"] += d
+	cas[side]["wounded"] += n - d
+	return Vector2i(d, n - d)
+
+
+func losses_of(side: String) -> int:
+	var c: Dictionary = cas[side]
+	return int(c["dead"]) + int(c["wounded"]) + int(c["captured"])
+
+
+## "12 şehit, 30 yaralı" (Osmanlı) ya da "12 ölü, 30 yaralı" (İtilaf)
+static func cas_words(side: String, v: Vector2i) -> String:
+	if v == Vector2i.ZERO:
+		return "zayiat yok"
+	return "%d %s, %d yaralı" % [v.x, "şehit" if side == Unit.OTTOMAN else "ölü", v.y]
 
 
 ## Zorluk: oyuncunun ve düşmanın ateş gücü çarpanı.
@@ -354,24 +408,37 @@ func move_unit(u: Unit, path: Array[Vector2i]) -> void:
 	by_cell.erase(u.cell)
 	var spent := 0.0
 	var prev := u.cell
+	var start := u.cell
+	if not instant and (u.side == player_side or seen[player_side].has(start)):
+		if u.is_naval():
+			Sfx.play("horn", -16.0, 1.0)
+		else:
+			Sfx.play("march", -8.0)
 	for c in path:
 		spent += move_cost(u, prev, c)
 		# Oyuncunun görmediği düşman hareketleri beklemeden yapılır.
 		var hidden: bool = u.side != player_side and not seen[player_side].has(c) and not seen[player_side].has(prev)
+		var mini := u.counter as UnitMini
+		mini.face(map.cell_world(c) - map.cell_world(prev))
 		if instant or hidden:
 			u.counter.position = map.cell_world(c)
 		else:
+			var dur := 0.08 if fast_ai and u.side == ai_side else 0.16
+			mini.march(dur)
 			var tw := create_tween()
-			tw.tween_property(u.counter, "position", map.cell_world(c), 0.05 if fast_ai and u.side == ai_side else 0.09)
+			tw.tween_property(u.counter, "position", map.cell_world(c), dur)
 			await tw.finished
 		prev = c
 		u.cell = c
-		if u.is_naval() and _check_mine(u, c):
+		# Mayına çarpan gemi durur (ama başka bir geminin hücresinde duramaz).
+		if u.is_naval() and _check_mine(u, c) and not by_cell.has(c):
 			break
 		if not u.alive():
 			break
 	if u.alive():
 		by_cell[u.cell] = u
+	if u.side == ai_side and u.alive() and (seen[player_side].has(start) or seen[player_side].has(u.cell)) and start != u.cell:
+		_enemy_moves.append([start, u.cell])
 	u.mp = maxf(0.0, u.mp - spent)
 	u.moved = true
 	_update_control(u.cell)
@@ -391,8 +458,13 @@ func _check_mine(u: Unit, c: Vector2i) -> bool:
 	if u.kind == "sweeper":
 		dmg = 100.0
 	u.hp -= dmg
+	var crew := int(u.men * clampf(dmg / maxf(u.hp_max, 1.0), 0.0, 1.0) * 0.25)
+	u.men -= crew
+	if u.hp > 0.0:
+		add_cas(u.side, crew, false, 0.5)
 	var w := map.cell_world(c)
 	fx_burst(w, "mine")
+	float_text(w, "MAYIN!", false)
 	Sfx.play("boom", -2.0)
 	mcam.focus(w)
 	log_line("%s mayına çarptı! (%s)" % [u.name, cell.place if cell.place != "" else "Boğaz"], Color(1.0, 0.6, 0.3))
@@ -408,8 +480,8 @@ func _check_mine(u: Unit, c: Vector2i) -> bool:
 
 func _sink(u: Unit) -> void:
 	sunk.append(u.name)
-	losses[u.side] += u.men
-	log_line("%s battı! Mürettebatından %d kişi kayıp." % [u.name, u.men], UiTheme.GOLD)
+	var v := add_cas(u.side, u.men, false, 0.75)
+	log_line("%s battı! Mürettebatından %d denizci öldü, %d yaralı kurtarıldı." % [u.name, v.x, v.y], UiTheme.GOLD)
 	_kill(u)
 	ui.popup("%s battı" % u.name, u.note if u.note != "" else "İtilaf donanması bir zırhlısını daha kaybetti.", "")
 
@@ -461,12 +533,15 @@ func attack_targets(u: Unit) -> Array[Vector2i]:
 
 
 func is_melee(u: Unit, target: Vector2i) -> bool:
-	return u.can_melee() and HexGrid.distance(u.cell, target) == 1 and not unit_at(target).is_naval()
+	var d := unit_at(target)
+	return d != null and u.can_melee() and HexGrid.distance(u.cell, target) == 1 and not d.is_naval()
 
 
 ## Saldırı tahmini (arayüz için).
 func preview(u: Unit, target: Vector2i) -> Dictionary:
 	var d := unit_at(target)
+	if d == null:
+		return {"odds": 0.0, "cas_att": 0, "cas_def": 0, "retreat": false, "hard": false, "dmg": 0.0, "cas": 0, "mor": 0.0, "dist": 0.0}
 	if is_melee(u, target):
 		return Combat.melee(self, u, d, bayonet and u.side == player_side, false)
 	return Combat.ranged(self, u, d, false)
@@ -480,22 +555,33 @@ func attack(u: Unit, target: Vector2i, use_bayonet := false) -> void:
 	u.attacked = true
 	var aw := map.cell_world(u.cell)
 	var dw := map.cell_world(target)
+	(u.counter as UnitMini).face(dw - aw)
+	if HexGrid.distance(u.cell, target) == 1:
+		(d.counter as UnitMini).face(aw - dw)
+	# Düşman hamlesini oyuncuya göster
+	if u.side == ai_side and follow_enemy and not instant and seen[player_side].has(target):
+		if Vector2(mcam.target.x - dw.x, mcam.target.z - dw.z).length() > WORLD_W * 0.18:
+			mcam.focus(dw)
+			await _pause(0.35)
 	if is_melee(u, target):
 		var res := Combat.melee(self, u, d, use_bayonet)
 		u.mp = 0.0
 		u.men -= res["cas_att"]
 		d.men -= res["cas_def"]
-		losses[u.side] += res["cas_att"]
-		losses[d.side] += res["cas_def"]
+		var ca := add_cas(u.side, res["cas_att"])
+		var cd := add_cas(d.side, res["cas_def"])
 		u.losses += res["cas_att"]
 		d.losses += res["cas_def"]
 		u.morale = clampf(u.morale - res["mor_att"], 0.0, 100.0)
 		d.morale = clampf(d.morale - res["mor_def"], 0.0, 100.0)
 		u.ammo = maxf(0.0, u.ammo - (6.0 if use_bayonet else 16.0))
 		d.ammo = maxf(0.0, d.ammo - 10.0)
-		Sfx.play("rifle", -4.0)
+		Sfx.play("volley", -3.0)
+		if u.equipment.has("maxim_1909") or u.equipment.has("maxim_303") or d.equipment.has("maxim_1909") or d.equipment.has("maxim_303"):
+			Sfx.play("mg", -6.0)
 		if use_bayonet:
-			Sfx.play("bugle", -8.0)
+			Sfx.play("whistle", -6.0)
+			Sfx.play("crowd", -4.0)
 			if u.side == Unit.OTTOMAN:
 				Voice.shout("allah_allah", 6.0)
 		fx_burst(dw, "rifle")
@@ -503,8 +589,10 @@ func attack(u: Unit, target: Vector2i, use_bayonet := false) -> void:
 		if instant:
 			print("  T%d %s -> %s odds=%.2f cas %d/%d ret=%s mor %d/%d" % [turn, u.short, d.short, res["odds"], res["cas_att"], res["cas_def"], res["retreat"], u.morale, d.morale])
 		var verb := "süngü hücumu yaptı" if use_bayonet else "saldırdı"
-		log_line("%s, %s birliğine %s: düşman kaybı %d, kendi kaybı %d." % [u.name, d.name, verb, res["cas_def"], res["cas_att"]],
+		log_line("%s, %s birliğine %s. %s: %s · %s: %s" % [u.name, d.name, verb, u.short, cas_words(u.side, ca), d.short, cas_words(d.side, cd)],
 			UiTheme.TEXT if u.side == player_side else Color(1.0, 0.75, 0.6))
+		float_text(map.cell_world(target), cas_words(d.side, cd), d.side == player_side)
+		float_text(map.cell_world(u.cell), cas_words(u.side, ca), u.side == player_side, 0.35)
 		await _pause(0.2 if fast_ai and u.side == ai_side else 0.4)
 		if d.men <= 0:
 			log_line("%s dağıldı." % d.name, UiTheme.MUTED)
@@ -522,15 +610,21 @@ func attack(u: Unit, target: Vector2i, use_bayonet := false) -> void:
 		if u.is_artillery():
 			u.mp = 0.0
 		Sfx.play("cannon" if u.is_naval() or u.is_fort() else "far_boom", -6.0)
-		await _pause(0.15)
+		fx_burst(aw + Vector3(0, hex_world * 0.25, 0), "muzzle")
+		if not instant:
+			Sfx.play("shell_whistle", -12.0)
+		await shell_flight(aw + Vector3(0, hex_world * 0.3, 0), dw + Vector3(0, hex_world * 0.1, 0), not u.needs_los())
 		if d.is_naval() and rng.randf() < 0.3:
 			fx_burst(dw + Vector3(rng.randf_range(-1, 1), 0, rng.randf_range(-1, 1)) * hex_world * 0.5, "splash")
 		fx_burst(dw, "shell" if not d.is_naval() else "hit")
-		Sfx.play("boom", -10.0)
+		Sfx.play("boom", -8.0)
+		if d.is_naval():
+			Sfx.play("splash", -12.0)
 		if res["hard"]:
 			d.hp -= res["dmg"]
 			d.men -= res["cas"]
-			losses[d.side] += res["cas"]
+			var ch := add_cas(d.side, res["cas"])
+			float_text(dw, "%%%d hasar" % int(round(res["dmg"] / d.hp_max * 100.0)) + ("" if ch == Vector2i.ZERO else " · " + cas_words(d.side, ch)), d.side == player_side)
 			d.morale = clampf(d.morale - res["mor"], 0.0, 100.0)
 			var td := float(d.get_meta("turn_dmg", 0.0)) + float(res["dmg"])
 			d.set_meta("turn_dmg", td)
@@ -544,7 +638,7 @@ func attack(u: Unit, target: Vector2i, use_bayonet := false) -> void:
 					_sink(d)
 				else:
 					log_line("%s tahrip edildi." % d.name, UiTheme.GOLD)
-					losses[d.side] += d.men
+					add_cas(d.side, d.men, false, 0.4)
 					_kill(d)
 			elif d.is_naval() and d.retire_hp > 0.0 and d.hp < d.retire_hp and d.role != "retire":
 				d.role = "retire"
@@ -552,10 +646,11 @@ func attack(u: Unit, target: Vector2i, use_bayonet := false) -> void:
 		else:
 			d.men -= res["cas"]
 			d.losses += res["cas"]
-			losses[d.side] += res["cas"]
+			var cs := add_cas(d.side, res["cas"])
 			d.morale = clampf(d.morale - res["mor"], 0.0, 100.0)
-			log_line("%s, %s birliğini ateş altına aldı: %d kayıp." % [u.name, d.name, res["cas"]],
+			log_line("%s, %s birliğini ateş altına aldı: %s." % [u.name, d.name, cas_words(d.side, cs)],
 				UiTheme.TEXT if u.side == player_side else Color(1.0, 0.75, 0.6))
+			float_text(dw, cas_words(d.side, cs), d.side == player_side)
 			if d.men <= 0:
 				_kill(d)
 			elif d.morale < 15.0 and d.can_move():
@@ -595,7 +690,8 @@ func _retreat(d: Unit, from: Vector2i) -> bool:
 			best = n
 	if best == Vector2i(-1, -1) or bs < 0.0:
 		log_line("%s kuşatıldı ve esir düştü (%d asker)." % [d.name, d.men], UiTheme.GOLD)
-		losses[d.side] += d.men
+		add_cas(d.side, d.men, true)
+		float_text(map.cell_world(d.cell), "%d esir" % d.men, d.side == player_side)
 		_kill(d)
 		return true
 	log_line("%s geri çekildi." % d.name, UiTheme.MUTED)
@@ -676,11 +772,13 @@ func _start() -> void:
 
 
 func _begin_turn() -> void:
+	arrivals.clear()
 	for u in units:
 		if u.state == "reserve" and u.arrive_turn <= turn:
 			_place(u, u.arrive_cell)
 			if u.alive() and u.side == player_side:
 				log_line("%s harekât alanına ulaştı." % u.name, UiTheme.GOLD)
+				arrivals.append(u.name)
 	for u in units:
 		if not u.alive():
 			continue
@@ -713,9 +811,14 @@ func _begin_turn() -> void:
 	_update_all_control()
 	phase = "player"
 	select(null)
+	_build_report()
 	_refresh_map()
+	_draw_orders()
 	ui.refresh()
+	ui.show_report(report)
 	ui.turn_banner(turn, turns, time_text())
+	if not instant:
+		Sfx.play("bell", -8.0)
 	if fast_ai:
 		debug_status()
 	_check_end(false)
@@ -725,8 +828,16 @@ func end_turn() -> void:
 	if phase != "player" or busy:
 		return
 	select(null)
+	order_mode = ""
+	_clear_path()
+	phase = "orders"
+	ui.refresh()
+	await _execute_orders()
+	if phase == "over":
+		return
 	_end_side(player_side)
 	phase = "ai"
+	_enemy_moves.clear()
 	ui.refresh()
 	await BattleAI.play(self, ai_side)
 	_end_side(ai_side)
@@ -851,22 +962,90 @@ func _update_all_control() -> void:
 		_update_control(k)
 
 
+## Hedefin şu anki durumu: ok (sağlanıyor), risk (tehlikede), text (ilerleme), fail_now (anında yenilgi).
+func obj_eval(o: Dictionary) -> Dictionary:
+	var t: String = o.get("type", "hold")
+	var out := {"ok": false, "risk": false, "text": "", "fail_now": false}
+	match t:
+		"hold", "capture":
+			var all_ok := true
+			var risk := false
+			var parts: Array[String] = []
+			for n in o.get("places", []):
+				if not places.has(n):
+					continue
+				var mine: bool = places[n]["owner"] == player_side
+				all_ok = all_ok and mine
+				var c: Vector2i = places[n]["cell"]
+				for k in grid.within(c, 1):
+					var e := unit_at(k)
+					if e and e.side == ai_side and e.is_land() and visible_to(e, player_side):
+						risk = true
+				parts.append("%s %s" % [n, "elimizde" if mine else ("düşmanda" if places[n]["owner"] == ai_side else "boş")])
+			out["ok"] = all_ok
+			out["risk"] = risk or not all_ok
+			out["text"] = ", ".join(parts)
+		"losses":
+			var n_ := losses_of(ai_side)
+			out["ok"] = n_ >= int(o["count"])
+			out["text"] = "%s / %s" % [BattleUI.num(n_), BattleUI.num(int(o["count"]))]
+		"own_losses_below":
+			var m_ := losses_of(player_side)
+			out["ok"] = m_ < int(o["count"])
+			out["risk"] = m_ > int(o["count"]) * 0.7
+			out["text"] = "%s / %s" % [BattleUI.num(m_), BattleUI.num(int(o["count"]))]
+		"sink":
+			out["ok"] = sunk.size() >= int(o["count"])
+			out["text"] = "%d / %d" % [sunk.size(), int(o["count"])]
+		"alive":
+			var ok := true
+			var risk2 := false
+			for id_ in o.get("units", []):
+				var u := find_unit(id_)
+				if u == null or not u.alive():
+					ok = false
+				elif u.uses_hp() and u.hp < u.hp_max * 0.5:
+					risk2 = true
+			out["ok"] = ok
+			out["risk"] = risk2
+			out["text"] = "ayakta" if ok else "kaybedildi"
+			out["fail_now"] = not ok
+		"deny":
+			var ok2 := true
+			var near := false
+			for n in o.get("places", []):
+				var c2 := place_cell(n)
+				for k in grid.within(c2, int(o.get("radius", 1)) + 3):
+					var e2 := unit_at(k)
+					if e2 and e2.side == ai_side:
+						if HexGrid.distance(k, c2) <= int(o.get("radius", 1)):
+							ok2 = false
+						else:
+							near = true
+			out["ok"] = ok2
+			out["risk"] = near
+			out["text"] = "geçit kapalı" if ok2 else "düşman geçti!"
+			out["fail_now"] = not ok2
+	return out
+
+
+## Tur ve saat sınırı metni (ör. "19:00'a kadar · 8 tur kaldı")
+func deadline_text() -> String:
+	var d := Time.get_datetime_dict_from_unix_time(start_unix + (turns - 1) * minutes * 60)
+	return "Son tur %02d:%02d · %d tur kaldı" % [d["hour"], d["minute"], maxi(0, turns - turn + 1)]
+
+
 ## Bitiş denetimi. final: son tur bitti mi?
 func _check_end(final: bool) -> bool:
 	if phase == "over":
 		return true
-	var v: Dictionary = scenario.get("victory", {})
 	var reason := ""
-	for name_ in v.get("lose_if_enemy_reaches", []):
-		var c := place_cell(name_)
-		for k in grid.within(c, int(v.get("reach_radius", 0))):
-			var u := unit_at(k)
-			if u and u.side == ai_side:
-				reason = "%s %s'na ulaştı." % [u.name, name_]
-	if reason == "" and final:
-		for name_ in v.get("lose_if_lost", []):
-			if places.has(name_) and places[name_]["owner"] == ai_side:
-				reason = "%s düşman eline geçti." % name_
+	for o: Dictionary in scenario.get("objectives", []):
+		if not o.get("required", false):
+			continue
+		var ev := obj_eval(o)
+		if ev["fail_now"] or (final and not ev["ok"]):
+			reason = "Zorunlu hedef sağlanamadı: %s" % o["text"]
 	var alive_player := false
 	for u in units:
 		if u.side == player_side and (u.alive() or u.state == "reserve"):
@@ -879,38 +1058,17 @@ func _check_end(final: bool) -> bool:
 	var won := reason == ""
 	var stars := 0
 	var lines: Array[String] = []
+	for o: Dictionary in scenario.get("objectives", []):
+		var ok: bool = obj_eval(o)["ok"]
+		lines.append(("✔ " if ok else "✘ ") + String(o["text"]) + ("" if o.get("required", false) else "  (yıldız)"))
+		if won and ok and not o.get("required", false):
+			stars += 1
 	if won:
-		stars = 1
-		for st: Dictionary in v.get("stars", []):
-			var ok := _star_ok(st)
-			lines.append(("✔ " if ok else "✘ ") + String(st["text"]))
-			if ok:
-				stars += 1
-		stars = mini(stars, 3)
+		stars = mini(stars + 1, 3)
 		GameState.complete(scenario["id"], stars)
+	_clear_arrows()
 	ui.show_result(won, stars, reason, lines, scenario.get("history", ""))
 	return true
-
-
-func _star_ok(st: Dictionary) -> bool:
-	if st.has("hold"):
-		for n in st["hold"]:
-			if not places.has(n) or places[n]["owner"] != player_side:
-				return false
-		return true
-	if st.has("enemy_losses"):
-		return losses[ai_side] >= int(st["enemy_losses"])
-	if st.has("own_losses_below"):
-		return losses[player_side] < int(st["own_losses_below"])
-	if st.has("sunk"):
-		return sunk.size() >= int(st["sunk"])
-	if st.has("alive"):
-		for id_ in st["alive"]:
-			var u := find_unit(id_)
-			if u == null or not u.alive():
-				return false
-		return true
-	return false
 
 
 # --------------------------------------------------------------------- Seçim ve tıklama
@@ -921,6 +1079,8 @@ func select(u: Unit) -> void:
 	selected = u
 	reach = {}
 	targets = []
+	if u and not instant and phase in ["player", "deploy"]:
+		Sfx.play("select" if u.side == player_side else "paper", -6.0)
 	if u:
 		if is_instance_valid(u.counter):
 			u.counter.set_selected(true)
@@ -949,6 +1109,10 @@ func _on_click(screen_pos: Vector2) -> void:
 		return
 	if phase != "player":
 		return
+	if order_mode == "attack" and selected:
+		_apply_order(selected, "attack", c)
+		return
+	_clear_path()
 	var u := unit_at(c)
 	if selected and selected.side == player_side and targets.has(c):
 		var me := selected
@@ -981,8 +1145,21 @@ func _on_hover(screen_pos: Vector2) -> void:
 	var c := _pick(screen_pos)
 	if not grid.has(c):
 		ui.hover(null, null)
+		_clear_path()
 		return
 	ui.hover(grid.cell(c), unit_at(c) if unit_at(c) and visible_to(unit_at(c), player_side) else null)
+	if phase != "player" or selected == null or selected.side != player_side:
+		return
+	if order_mode == "attack":
+		_show_path([selected.cell, c] as Array[Vector2i], Color(0.8, 0.1, 0.06, 0.6))
+	elif targets.has(c):
+		_show_path([selected.cell, c] as Array[Vector2i], Color(0.95, 0.15, 0.1, 0.8))
+	elif reach.has(c) and c != selected.cell and not by_cell.has(c):
+		var p: Array[Vector2i] = [selected.cell]
+		p.append_array(path_from(reach, c))
+		_show_path(p, Color(1.0, 0.82, 0.3, 0.85))
+	else:
+		_clear_path()
 
 
 ## Birliği seçip sıradaki hareket edebilecek birliğe geçer.
@@ -1036,6 +1213,7 @@ func _refresh_map() -> void:
 	for u in units:
 		if u.alive() and is_instance_valid(u.counter):
 			u.counter.visible = visible_to(u, player_side)
+	_refresh_objectives()
 
 
 func _update_mine_marker(c: Vector2i) -> void:
@@ -1065,31 +1243,33 @@ func _update_mine_marker(c: Vector2i) -> void:
 	_mine_nodes[c] = root
 
 
-## Basit patlama/duman efekti.
+## Patlama, duman, su sütunu ve tüfek ateşi efektleri (parçacıklarla).
 func fx_burst(at: Vector3, kind: String) -> void:
-	var m := MeshInstance3D.new()
-	var sm := SphereMesh.new()
-	var r: float = hex_world * {"rifle": 0.12, "shell": 0.28, "hit": 0.22, "splash": 0.18, "mine": 0.6}.get(kind, 0.2)
-	sm.radius = r
-	sm.height = r * 2.0
-	m.mesh = sm
-	var mat := StandardMaterial3D.new()
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	var col: Color = {"rifle": Color(0.9, 0.88, 0.8, 0.7), "shell": Color(0.45, 0.36, 0.26, 0.85), "hit": Color(1.0, 0.6, 0.2, 0.9),
-		"splash": Color(0.92, 0.96, 1.0, 0.85), "mine": Color(1.0, 0.55, 0.15, 0.95)}.get(kind, Color.WHITE)
-	mat.albedo_color = col
-	m.material_override = mat
-	_fx.add_child(m)
-	m.position = at + Vector3(0, r * 0.6, 0)
-	m.scale = Vector3.ONE * 0.2
-	if kind == "splash":
-		m.scale = Vector3(0.3, 0.3, 0.3)
-	var tw := create_tween().set_parallel(true)
-	var grow := Vector3(1, 2.6, 1) if kind in ["splash", "mine"] else Vector3.ONE * 1.4
-	tw.tween_property(m, "scale", grow, 0.45).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
-	tw.tween_property(mat, "albedo_color:a", 0.0, 0.9).set_delay(0.2)
-	tw.chain().tween_callback(m.queue_free)
+	if instant:
+		return
+	var w := hex_world
+	match kind:
+		"rifle":
+			# Bir hat boyunca çakan namlu ışıkları ve barut dumanı
+			for i in 5:
+				var o := Vector3(rng.randf_range(-0.3, 0.3), 0.15, rng.randf_range(-0.3, 0.3)) * w
+				_particles(at + o, Color(1.0, 0.8, 0.4, 0.9), 2, w * 0.06, 0.15, 30.0, w * 0.1, true)
+			_particles(at + Vector3(0, w * 0.1, 0), Color(0.86, 0.84, 0.78, 0.55), 10, w * 0.22, 1.6, 50.0, w * 0.25)
+		"shell":
+			_particles(at + Vector3(0, w * 0.05, 0), Color(1.0, 0.6, 0.2, 1.0), 8, w * 0.25, 0.35, 70.0, w * 0.6, true)
+			_particles(at + Vector3(0, w * 0.1, 0), Color(0.36, 0.3, 0.24, 0.8), 16, w * 0.35, 2.4, 40.0, w * 0.8)
+		"hit":
+			_particles(at + Vector3(0, w * 0.15, 0), Color(1.0, 0.55, 0.15, 1.0), 10, w * 0.25, 0.4, 60.0, w * 0.5, true)
+			_particles(at + Vector3(0, w * 0.2, 0), Color(0.12, 0.11, 0.1, 0.8), 18, w * 0.35, 3.0, 25.0, w * 0.9)
+		"splash":
+			_particles(at, Color(0.95, 0.97, 1.0, 0.9), 14, w * 0.14, 1.0, 12.0, w * 1.6)
+		"mine":
+			_particles(at, Color(0.95, 0.97, 1.0, 0.95), 30, w * 0.25, 1.6, 15.0, w * 2.6)
+			_particles(at + Vector3(0, w * 0.2, 0), Color(1.0, 0.5, 0.15, 1.0), 12, w * 0.4, 0.5, 70.0, w * 0.8, true)
+			_particles(at + Vector3(0, w * 0.3, 0), Color(0.15, 0.14, 0.13, 0.85), 24, w * 0.5, 4.0, 30.0, w * 1.2)
+		"muzzle":
+			_particles(at, Color(1.0, 0.8, 0.45, 1.0), 4, w * 0.18, 0.18, 25.0, w * 0.3, true)
+			_particles(at, Color(0.82, 0.8, 0.76, 0.6), 8, w * 0.28, 1.8, 35.0, w * 0.4)
 
 
 func log_line(text: String, color := UiTheme.TEXT) -> void:
@@ -1148,7 +1328,7 @@ func debug_status() -> void:
 	for n: String in places:
 		if places[n]["objective"]:
 			ps.append("%s=%s" % [n, places[n]["owner"]])
-	print("STATUS turn=%d phase=%s losses=%s units own=%d enemy=%d sunk=%s places=%s" % [turn, phase, losses, own, en, sunk, ", ".join(ps)])
+	print("STATUS turn=%d phase=%s losses=%s units own=%d enemy=%d sunk=%s places=%s" % [turn, phase, {"tr": losses_of(Unit.OTTOMAN), "en": losses_of(Unit.ENTENTE)}, own, en, sunk, ", ".join(ps)])
 
 
 func debug_focus(name_: String) -> void:
@@ -1209,3 +1389,474 @@ func debug_auto_turns() -> void:
 			break
 	select(first)
 	mcam.focus(map.cell_world(first.cell), WORLD_W * 0.5)
+
+
+# --------------------------------------------------------------------- Emirler
+
+## Arayüzden: "attack" hedef seçme kipini açar; diğerleri hemen uygulanır.
+func give_order(kind: String) -> void:
+	if selected == null or selected.side != player_side:
+		return
+	if kind == "attack":
+		order_mode = "attack"
+		ui.set_hint("Taarruz hedefini seç: haritada bir hücreye tıkla (Esc: vazgeç)")
+		return
+	_apply_order(selected, kind, Vector2i(-1, -1))
+
+
+func _apply_order(u: Unit, kind: String, c: Vector2i) -> void:
+	var group: Array[Unit] = [u]
+	if order_group and u.regiment() != "":
+		group = []
+		for o in units:
+			if o.alive() and o.side == player_side and o.regiment() == u.regiment() and not o.is_artillery():
+				group.append(o)
+	for o in group:
+		o.order = kind
+		o.order_cell = c
+		o.order_name = ""
+		if c != Vector2i(-1, -1):
+			var cell := grid.cell(c)
+			o.order_name = cell.place if cell.place != "" else "%.1f km ileri" % (Combat.dist_m(self, o.cell, c) / 1000.0)
+	order_mode = ""
+	ui.set_hint("")
+	Sfx.play("paper", -6.0)
+	Sfx.play("stamp", -4.0)
+	if kind == "attack":
+		Sfx.play("bugle", -14.0)
+	log_line("%s: %s" % [u.regiment() + " (bütün birlikler)" if group.size() > 1 else u.name, u.order_title()], UiTheme.GOLD)
+	_draw_orders()
+	select(u)
+
+
+## Tur sonunda, bu tur elle yönetilmemiş birlikler emirlerini uygular.
+func _execute_orders() -> void:
+	var list: Array[Unit] = []
+	for u in units:
+		if u.alive() and u.side == player_side and u.order != "" and not u.attacked:
+			list.append(u)
+	# Önce topçu ateşi, sonra piyade
+	list.sort_custom(func(a: Unit, b: Unit) -> bool: return a.order == "fire" and b.order != "fire")
+	for u in list:
+		if not u.alive() or phase == "over":
+			continue
+		match u.order:
+			"fire":
+				if not (u.is_artillery() and u.moved):
+					await BattleAI._fire_best(self, u)
+			"attack":
+				if u.cell == u.order_cell or (by_cell.has(u.order_cell) and by_cell[u.order_cell].side == player_side and HexGrid.distance(u.cell, u.order_cell) <= 1):
+					u.order = "defend"
+					log_line("%s hedefine ulaştı; mevziyi savunuyor." % u.name, UiTheme.GOLD)
+					continue
+				var keep_role := u.role
+				var keep_goal := u.goal
+				u.role = "attack"
+				u.goal = u.order_cell
+				if u.moved:
+					var t := BattleAI._melee_choice(self, u, 0.9)
+					if t != Vector2i(-1, -1):
+						await attack(u, t)
+				else:
+					await BattleAI._land(self, u)
+				u.role = keep_role
+				u.goal = keep_goal
+			"defend":
+				var t2 := BattleAI._melee_choice(self, u, 1.6)
+				if t2 != Vector2i(-1, -1):
+					await attack(u, t2)
+	update_vision(player_side)
+	_draw_orders()
+
+
+# --------------------------------------------------------------------- Oklar
+
+func _clear_arrows() -> void:
+	for c in _arrows.get_children():
+		c.queue_free()
+
+
+func _clear_path() -> void:
+	for c in _path_node.get_children():
+		c.queue_free()
+
+
+## Oyuncu emirleri (kırmızı taarruz okları) ve düşmanın son hareketleri (mavi oklar).
+func _draw_orders() -> void:
+	if _arrows == null:
+		return
+	_clear_arrows()
+	for u in units:
+		if u.alive() and u.side == player_side and u.order == "attack" and u.order_cell != Vector2i(-1, -1):
+			_arrows.add_child(_arrow([map.cell_world(u.cell), map.cell_world(u.order_cell)], Color(0.75, 0.07, 0.05, 0.72), hex_world * 0.085, true))
+	for mv in _enemy_moves:
+		_arrows.add_child(_arrow([map.cell_world(mv[0]), map.cell_world(mv[1])], Color(0.12, 0.25, 0.65, 0.7), hex_world * 0.07, true))
+
+
+## Yol önizlemesi (altın) ya da saldırı çizgisi (kırmızı)
+func _show_path(cells: Array[Vector2i], col: Color) -> void:
+	_clear_path()
+	if cells.size() < 2:
+		return
+	var pts: Array[Vector3] = []
+	for c in cells:
+		pts.append(map.cell_world(c))
+	_path_node.add_child(_arrow(pts, col, hex_world * 0.07, cells.size() == 2))
+
+
+## Arazinin üstünden geçen şerit ok. curve: iki nokta arası kavisli (harekât oku) çizilsin mi.
+func _arrow(pts: Array[Vector3], col: Color, w: float, curve: bool) -> MeshInstance3D:
+	var samples: Array[Vector3] = []
+	if curve and pts.size() == 2:
+		var a := pts[0]
+		var b := pts[1]
+		var mid := (a + b) * 0.5
+		var side := Vector3(-(b - a).z, 0, (b - a).x).normalized() * a.distance_to(b) * 0.12
+		var ctrl := mid + side
+		for i in 25:
+			var t := i / 24.0
+			samples.append(a.lerp(ctrl, t).lerp(ctrl.lerp(b, t), t))
+	else:
+		for i in pts.size() - 1:
+			for j in 6:
+				samples.append(pts[i].lerp(pts[i + 1], j / 6.0))
+		samples.append(pts[-1])
+	# Arazi yüksekliğine otur
+	for i in samples.size():
+		var lp := map.world_to_local(samples[i])
+		samples[i] = map.to_world(lp, hex_world * 0.12)
+	# Başlangıç ve uçta pulun altında kalmasın diye kısalt
+	var total := 0.0
+	for i in samples.size() - 1:
+		total += samples[i].distance_to(samples[i + 1])
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var head := minf(w * 3.5, total * 0.4)
+	var acc := 0.0
+	var left: Array[Vector3] = []
+	var right: Array[Vector3] = []
+	var cut := samples.size() - 1
+	for i in samples.size():
+		var dir := (samples[mini(i + 1, samples.size() - 1)] - samples[maxi(i - 1, 0)])
+		dir.y = 0.0
+		dir = dir.normalized()
+		var n := Vector3(-dir.z, 0, dir.x)
+		var wi := w * (0.55 + 0.45 * clampf(acc / maxf(total * 0.3, 0.01), 0.0, 1.0))
+		left.append(samples[i] + n * wi * 0.5)
+		right.append(samples[i] - n * wi * 0.5)
+		if i < samples.size() - 1:
+			acc += samples[i].distance_to(samples[i + 1])
+			if acc > total - head and cut == samples.size() - 1:
+				cut = i + 1
+	for i in cut:
+		st.add_vertex(left[i])
+		st.add_vertex(right[i])
+		st.add_vertex(left[i + 1])
+		st.add_vertex(right[i])
+		st.add_vertex(right[i + 1])
+		st.add_vertex(left[i + 1])
+	# Ok ucu
+	var tip := samples[-1]
+	var base := samples[cut]
+	var d2 := (tip - base)
+	d2.y = 0.0
+	var n2 := Vector3(-d2.normalized().z, 0, d2.normalized().x)
+	st.add_vertex(base + n2 * w * 1.6)
+	st.add_vertex(base - n2 * w * 1.6)
+	st.add_vertex(tip)
+	var mi := MeshInstance3D.new()
+	mi.mesh = st.commit()
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.cull_mode = BaseMaterial3D.CULL_DISABLED
+	m.albedo_color = col
+	m.render_priority = 1
+	mi.material_override = m
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	return mi
+
+
+# --------------------------------------------------------------------- Hedef işaretleri
+
+## Hedef tepeye dikilen direk: sahibinin bayrağı, büyük ad ve tehlike halkası.
+func _build_objective_marker(n: String) -> void:
+	var root := Node3D.new()
+	add_child(root)
+	var c: Vector2i = places[n]["cell"]
+	root.position = map.cell_world(c)
+	var h := hex_world * 1.1
+	var pole := MeshInstance3D.new()
+	var pc := CylinderMesh.new()
+	pc.top_radius = hex_world * 0.018
+	pc.bottom_radius = hex_world * 0.025
+	pc.height = h
+	pole.mesh = pc
+	pole.position = Vector3(hex_world * 0.3, h * 0.5, -hex_world * 0.2)
+	var gm := StandardMaterial3D.new()
+	gm.albedo_color = Color(0.85, 0.66, 0.25)
+	gm.metallic = 0.7
+	gm.roughness = 0.35
+	pole.material_override = gm
+	root.add_child(pole)
+	var fw := hex_world * 0.42
+	var q := QuadMesh.new()
+	q.size = Vector2(fw, fw * 2.0 / 3.0)
+	q.subdivide_width = 10
+	var fm := ShaderMaterial.new()
+	fm.shader = load("res://shaders/flag.gdshader")
+	fm.set_shader_parameter("amp", fw * 0.07)
+	var flag := MeshInstance3D.new()
+	flag.mesh = q
+	flag.material_override = fm
+	flag.position = pole.position + Vector3(fw * 0.5, h * 0.5 - fw / 3.0, 0)
+	root.add_child(flag)
+	var ring := MeshInstance3D.new()
+	var tm := TorusMesh.new()
+	tm.inner_radius = hex_world * 0.5
+	tm.outer_radius = hex_world * 0.58
+	ring.mesh = tm
+	ring.scale = Vector3(1, 0.2, 1)
+	var rm := StandardMaterial3D.new()
+	rm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	rm.albedo_color = Color(1.0, 0.2, 0.15)
+	rm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	ring.material_override = rm
+	ring.position.y = hex_world * 0.05
+	ring.visible = false
+	root.add_child(ring)
+	var l := Label3D.new()
+	l.text = "★ " + n
+	l.font = UiTheme.font("map_bold")
+	l.font_size = 50
+	l.fixed_size = true
+	l.pixel_size = 0.00045
+	l.outline_size = 16
+	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	l.no_depth_test = true
+	l.render_priority = 3
+	l.outline_modulate = Color(0.98, 0.94, 0.84, 0.97)
+	l.position = pole.position + Vector3(0, h * 0.62, 0)
+	root.add_child(l)
+	_obj_markers[n] = {"root": root, "flag": fm, "ring": ring, "label": l}
+
+
+func _refresh_objectives() -> void:
+	for n: String in _obj_markers:
+		var mk: Dictionary = _obj_markers[n]
+		var owner: String = places[n]["owner"]
+		var nation := "tr" if owner == Unit.OTTOMAN else "uk"
+		var occ := unit_at(places[n]["cell"])
+		if owner == Unit.ENTENTE and occ and occ.side == Unit.ENTENTE:
+			nation = (occ.counter as UnitMini).nation_key() if is_instance_valid(occ.counter) else "uk"
+		(mk["flag"] as ShaderMaterial).set_shader_parameter("flag_texture", Flags.texture(nation) if owner != "" else Flags.texture("none"))
+		var lbl: Label3D = mk["label"]
+		lbl.modulate = Color(0.6, 0.04, 0.05) if owner == Unit.OTTOMAN else (Color(0.1, 0.18, 0.5) if owner == Unit.ENTENTE else Color(0.25, 0.22, 0.18))
+		var threat := false
+		for k in grid.within(places[n]["cell"], 1):
+			var e := unit_at(k)
+			if e and e.side != owner and owner != "" and e.is_land() and visible_to(e, player_side):
+				threat = true
+		(mk["ring"] as MeshInstance3D).visible = threat
+
+
+func _process(_delta: float) -> void:
+	# Tehlikedeki hedeflerin halkası nabız gibi atar.
+	var a := 0.35 + 0.35 * sin(Time.get_ticks_msec() / 220.0)
+	for n: String in _obj_markers:
+		var ring: MeshInstance3D = _obj_markers[n]["ring"]
+		if ring.visible:
+			(ring.material_override as StandardMaterial3D).albedo_color.a = a
+	if map and mcam:
+		map.update_labels(mcam.dist)
+
+
+# --------------------------------------------------------------------- Kurmay raporu
+
+func _build_report() -> void:
+	report = []
+	var hints: Dictionary = scenario.get("hints", {})
+	if hints.has(str(turn)):
+		report.append(["Kurmay önerisi", String(hints[str(turn)]), UiTheme.GOLD])
+	if not arrivals.is_empty():
+		report.append(["Takviye", ", ".join(arrivals) + " cepheye ulaştı.", Color(0.7, 0.95, 0.7)])
+	var new_enemy := 0
+	for u in units:
+		if u.alive() and u.side == ai_side and visible_to(u, player_side) and not _seen_enemy_ids.has(u.id):
+			_seen_enemy_ids[u.id] = true
+			new_enemy += 1
+	if new_enemy > 0:
+		report.append(["İstihbarat", "%d yeni düşman birliği görüldü. Mavi oklar düşmanın son hareketlerini gösterir." % new_enemy if turn > 1 else "%d düşman birliği görülüyor." % new_enemy, Color(0.65, 0.78, 1.0)])
+	for o: Dictionary in scenario.get("objectives", []):
+		var ev := obj_eval(o)
+		if ev["risk"] and o.get("type", "") in ["hold", "capture", "deny", "alive"] and (o.get("required", false) or ev["ok"]):
+			report.append(["Tehlike", "%s: %s" % [o["text"], ev["text"]], Color(1.0, 0.55, 0.45)])
+	var idle := 0
+	var low_ammo: Array[String] = []
+	for u in units:
+		if u.alive() and u.side == player_side:
+			if u.order == "" and u.can_move() and not u.is_hq():
+				idle += 1
+			if u.ammo < 25.0 and not u.uses_hp():
+				low_ammo.append(u.short)
+	if idle > 0:
+		report.append(["Emir bekleyen", "%d birliğin emri yok. Birliği seçip Taarruz, Savun ya da Yedek emri ver; emirler tur sonunda kendiliğinden uygulanır." % idle, UiTheme.MUTED])
+	if not low_ammo.is_empty():
+		report.append(["Cephane", "Cephanesi azalan: %s. Geri çek ya da süngüyle saldır." % ", ".join(low_ammo), Color(1.0, 0.8, 0.45)])
+
+
+# --------------------------------------------------------------------- Uçan yazılar ve efektler
+
+func float_text(at: Vector3, text: String, own: bool, delay := 0.0) -> void:
+	if instant or text == "" or text == "zayiat yok":
+		return
+	var l := Label3D.new()
+	l.text = text
+	l.font = UiTheme.font("bold")
+	l.font_size = 34
+	l.fixed_size = true
+	l.pixel_size = 0.00045
+	l.outline_size = 12
+	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	l.no_depth_test = true
+	l.render_priority = 4
+	l.modulate = Color(1.0, 0.42, 0.36) if own else Color(1.0, 0.93, 0.75)
+	l.outline_modulate = Color(0.05, 0.03, 0.02, 0.95)
+	l.position = at + Vector3(0, hex_world * 0.8, 0)
+	l.modulate.a = 0.0
+	_fx.add_child(l)
+	var tw := create_tween()
+	tw.tween_interval(delay)
+	tw.tween_property(l, "modulate:a", 1.0, 0.15)
+	tw.parallel().tween_property(l, "position:y", l.position.y + hex_world * 0.7, 1.8)
+	tw.tween_property(l, "modulate:a", 0.0, 0.5)
+	tw.tween_callback(l.queue_free)
+
+
+static func soft_texture() -> GradientTexture2D:
+	if _soft_tex:
+		return _soft_tex
+	var g := Gradient.new()
+	g.set_color(0, Color(1, 1, 1, 1))
+	g.set_color(1, Color(1, 1, 1, 0))
+	_soft_tex = GradientTexture2D.new()
+	_soft_tex.gradient = g
+	_soft_tex.fill = GradientTexture2D.FILL_RADIAL
+	_soft_tex.fill_from = Vector2(0.5, 0.5)
+	_soft_tex.fill_to = Vector2(1.0, 0.5)
+	_soft_tex.width = 64
+	_soft_tex.height = 64
+	return _soft_tex
+
+
+## Duman ve alev parçacıkları
+func _particles(at: Vector3, col: Color, amount: int, size: float, life: float, spread: float, rise: float, additive := false) -> void:
+	var p := CPUParticles3D.new()
+	p.one_shot = true
+	p.amount = amount
+	p.lifetime = life
+	p.explosiveness = 0.85
+	var q := QuadMesh.new()
+	q.size = Vector2(size, size)
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	m.billboard_keep_scale = true
+	m.vertex_color_use_as_albedo = true
+	m.albedo_texture = soft_texture()
+	if additive:
+		m.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	q.material = m
+	p.mesh = q
+	p.direction = Vector3.UP
+	p.spread = spread
+	p.initial_velocity_min = rise * 0.5
+	p.initial_velocity_max = rise
+	p.gravity = Vector3(0.0, -rise * 0.4, 0.0)
+	p.damping_min = rise * 0.6
+	p.damping_max = rise
+	p.scale_amount_min = 0.6
+	p.scale_amount_max = 1.4
+	var curve := Curve.new()
+	curve.add_point(Vector2(0, 0.4))
+	curve.add_point(Vector2(1, 1.6))
+	p.scale_amount_curve = curve
+	var ramp := Gradient.new()
+	ramp.set_color(0, col)
+	ramp.set_color(1, Color(col.r, col.g, col.b, 0.0))
+	p.color_ramp = ramp
+	p.position = at
+	_fx.add_child(p)
+	p.emitting = true
+	get_tree().create_timer(life + 0.5).timeout.connect(p.queue_free)
+
+
+## Topçu mermisi: atan birlikten hedefe kavisli uçuş (iz bırakan parlak nokta).
+func shell_flight(from: Vector3, to: Vector3, high: bool) -> void:
+	if instant:
+		return
+	var s := MeshInstance3D.new()
+	var sm := SphereMesh.new()
+	sm.radius = hex_world * 0.04
+	sm.height = sm.radius * 2.0
+	s.mesh = sm
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.albedo_color = Color(1.0, 0.85, 0.5)
+	s.material_override = m
+	_fx.add_child(s)
+	var peak := from.distance_to(to) * (0.35 if high else 0.12)
+	var dur := clampf(from.distance_to(to) / (hex_world * 12.0), 0.25, 0.7)
+	var tw := create_tween()
+	tw.tween_method(func(t: float) -> void:
+		var p := from.lerp(to, t)
+		p.y += sin(t * PI) * peak
+		s.position = p, 0.0, 1.0, dur)
+	await tw.finished
+	s.queue_free()
+
+
+func debug_orders_demo() -> void:
+	ui._popups.clear()
+	if ui._overlay:
+		ui._overlay.queue_free()
+		ui._overlay = null
+	var u := find_unit("t1_57")
+	order_group = true
+	select(u)
+	_apply_order(u, "attack", place_cell("Cesaret Tepe"))
+	order_group = false
+	var h := find_unit("hq19")
+	_apply_order(h, "attack", place_cell("Kocaçimen"))
+	select(u)
+	mcam.focus(map.cell_world(place_cell("Conkbayırı")) + Vector3(8, 0, 4), WORLD_W * 0.5)
+
+
+func debug_closeup() -> void:
+	var u := find_unit("t1_27") if find_unit("t1_27") and find_unit("t1_27").alive() else find_unit("mecidiye")
+	select(u)
+	mcam.focus(map.cell_world(u.cell), WORLD_W * 0.16)
+
+
+func debug_ships() -> void:
+	ui._popups.clear()
+	if ui._overlay:
+		ui._overlay.queue_free()
+		ui._overlay = null
+	var u := find_unit("bouvet") if find_unit("bouvet").alive() else find_unit("qe")
+	if not u.alive():
+		for o in units:
+			if o.alive() and o.is_naval():
+				u = o
+	select(u)
+	mcam.focus(map.cell_world(u.cell), WORLD_W * 0.22)
+
+
+func debug_tutorial() -> void:
+	Voice.stop()
+	for c in ui.get_children():
+		if c is ColorRect and c != ui.get_child(0):
+			c.queue_free()
+	ui._overlay = null
+	ui.show_tutorial(_start)

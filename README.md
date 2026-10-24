@@ -2,7 +2,9 @@
 
 Türk tarihinin kuruluşundan günümüze uzanan gerçek savaşlarını **gerçek haritalar** üzerinde canlandıran; **ücretsiz**, **açık kaynak**, **sıra tabanlı** bir strateji oyunu. Bilgisayar (Mac, Windows, Linux), iOS ve Android için Godot 4 ile geliştirilir.
 
-> Durum: v0.5. Oyun sıra tabanlı bir harekât oyununa dönüştü. Gelibolu Yarımadası ve Çanakkale Boğazı, gerçek uydu yükseklik verisinden (SRTM) 3B kabartma bir kurmay masası olarak çizilir. Senaryolar: *18 Mart 1915: Boğaz Savunması* (Nusret'in mayınlarıyla), *Arıburnu: 25 Nisan 1915* ve *Conkbayırı: 10 Ağustos 1915*. Gerçek birlikler (57. Alay, ANZAC taburları, zırhlılar), gerçek teçhizat (Mauser, Krupp topları, 15 inçlik gemi topları), görüş hattı, siper, süngü hücumu, mayınlar ve tarihî olaylar vardır.
+> Durum: v0.6. Hedefler paneli, emirler ve harekât okları, kurmay raporu, bayraklı minyatür birlikler ve yeni ses efektleri eklendi.
+>
+> v0.5: Oyun sıra tabanlı bir harekât oyununa dönüştü. Gelibolu Yarımadası ve Çanakkale Boğazı, gerçek uydu yükseklik verisinden (SRTM) 3B kabartma bir kurmay masası olarak çizilir. Senaryolar: *18 Mart 1915: Boğaz Savunması* (Nusret'in mayınlarıyla), *Arıburnu: 25 Nisan 1915* ve *Conkbayırı: 10 Ağustos 1915*. Gerçek birlikler (57. Alay, ANZAC taburları, zırhlılar), gerçek teçhizat (Mauser, Krupp topları, 15 inçlik gemi topları), görüş hattı, siper, süngü hücumu, mayınlar ve tarihî olaylar vardır.
 
 ## Hemen oyna
 

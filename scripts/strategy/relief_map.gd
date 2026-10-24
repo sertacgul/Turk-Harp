@@ -40,6 +40,10 @@ func build(a_geo: GeoMap, a_grid: HexGrid, world_width := 120.0, exaggeration :=
 	mat.set_shader_parameter("hex_radius", grid.radius)
 	mat.set_shader_parameter("hex_origin", grid.origin)
 	mat.set_shader_parameter("hex_count", Vector2(grid.cols, grid.rows))
+	mat.set_shader_parameter("relief_scale", exaggeration)
+	mat.set_shader_parameter("height_texel", Vector2(1.0 / tex_res.x, 1.0 / tex_res.y))
+	mat.set_shader_parameter("geo_bounds", Vector4(geo.lat0, geo.lon0, geo.lat1, geo.lon1))
+	mat.set_shader_parameter("graticule_step", 1.0 / 60.0 if geo.width_m < 15000.0 else 5.0 / 60.0)
 	var relief := 0.0
 	for c: HexGrid.Cell in grid.cells.values():
 		relief = maxf(relief, c.top)
@@ -232,20 +236,33 @@ func commit() -> void:
 	hex_tex.update(hex_img)
 
 
-## Haritaya yer adı yazar (yere yakın, kameraya dönük).
-func add_place_label(text: String, p: Vector2, size := 1.0, color := Color(0.16, 0.1, 0.06)) -> Label3D:
+## Haritaya yer adı yazar. Yazı ekranda sabit boyuttadır (uzaklaşınca küçülüp okunmaz hale gelmez).
+## size: 1 normal yer adı, >1 önemli yer. minor: uzaktan bakınca gizlenir.
+func add_place_label(text: String, p: Vector2, size := 1.0, color := Color(0.16, 0.1, 0.06), minor := false) -> Label3D:
 	var l := Label3D.new()
 	l.text = text
-	l.font_size = int(54 * size)
-	l.pixel_size = world_size.x / 7500.0
+	l.font = UiTheme.font("map_bold" if size > 1.05 else "map")
+	l.font_size = int(40 * size)
+	l.fixed_size = true
+	l.pixel_size = 0.00045
 	l.modulate = color
-	l.outline_modulate = Color(0.96, 0.92, 0.8, 0.85)
-	l.outline_size = 10
+	l.outline_modulate = Color(0.98, 0.95, 0.86, 0.95)
+	l.outline_size = 14
 	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	l.no_depth_test = false
-	l.position = to_world(p, world_size.x * 0.012)
+	l.no_depth_test = true
+	l.render_priority = 1
+	l.position = to_world(p, world_size.x * 0.01)
+	l.set_meta("minor", minor)
 	_labels.add_child(l)
 	return l
+
+
+## Kamera uzaklığına göre küçük yer adlarını gizler.
+func update_labels(cam_dist: float) -> void:
+	var far := cam_dist > world_size.x * 0.75
+	for l in _labels.get_children():
+		if l.get_meta("minor", false):
+			(l as Label3D).visible = not far
 
 
 ## Harekât odası ışığı: kuzeybatıdan (haritacılık geleneği) gelen ışık, sıcak ortam ve koyu arka plan.

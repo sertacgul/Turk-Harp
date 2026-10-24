@@ -31,9 +31,9 @@ static func _best_target(b: Battle, u: Unit) -> Vector2i:
 	var best := Vector2i(-1, -1)
 	var bs := 0.0
 	for t in b.attack_targets(u):
-		if b.is_melee(u, t):
-			continue
 		var d := b.unit_at(t)
+		if d == null or b.is_melee(u, t):
+			continue
 		var pr := b.preview(u, t)
 		var sc := float(pr["dmg"]) * 3.0 + float(pr["cas"]) if pr["hard"] else float(pr["cas"]) + float(pr["mor"]) * 0.5
 		# Tabya topları önce gemileri hedef alsın

@@ -9,6 +9,20 @@ const TEXT := Color(0.94, 0.92, 0.87)
 const MUTED := Color(0.68, 0.7, 0.72)
 
 static var _theme: Theme
+static var _fonts := {}
+
+
+## Yazı tipleri (OFL): gövde Noto Sans, başlık Oswald, harita yer adları Noto Serif.
+static func font(kind := "body") -> Font:
+	if _fonts.has(kind):
+		return _fonts[kind]
+	var file: String = {"body": "NotoSans", "bold": "NotoSans", "title": "Oswald", "map": "NotoSerif", "map_bold": "NotoSerif"}.get(kind, "NotoSans")
+	var weight: int = {"body": 500, "bold": 700, "title": 600, "map": 600, "map_bold": 800}.get(kind, 500)
+	var fv := FontVariation.new()
+	fv.base_font = load("res://assets/fonts/%s.ttf" % file)
+	fv.variation_opentype = {"wght": weight}
+	_fonts[kind] = fv
+	return fv
 
 
 static func _box(bg: Color, border: Color, width := 2, radius := 6) -> StyleBoxFlat:
@@ -30,7 +44,9 @@ static func get_theme() -> Theme:
 	if _theme:
 		return _theme
 	var t := Theme.new()
+	t.default_font = font("body")
 	t.default_font_size = 20
+	t.set_font("font", "Button", font("bold"))
 	t.set_stylebox("panel", "PanelContainer", _box(PANEL, GOLD.darkened(0.35), 2, 10))
 	t.set_stylebox("panel", "Panel", _box(PANEL, GOLD.darkened(0.35), 2, 10))
 	t.set_stylebox("normal", "Button", _box(RED, GOLD.darkened(0.2)))
@@ -51,6 +67,13 @@ static func get_theme() -> Theme:
 	t.set_font_size("font_size", "ProgressBar", 1)
 	_theme = t
 	return t
+
+
+## Oswald başlık yazısı
+static func title(text: String, size := 34, color := GOLD, align := HORIZONTAL_ALIGNMENT_LEFT) -> Label:
+	var l := label(text, size, color, align)
+	l.add_theme_font_override("font", font("title"))
+	return l
 
 
 static func label(text: String, size := 20, color := TEXT, align := HORIZONTAL_ALIGNMENT_LEFT) -> Label:

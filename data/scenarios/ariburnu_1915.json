@@ -5,161 +5,961 @@
   "summary": "ANZAC birlikleri şafakta Arıburnu'na çıktı ve sırtlara tırmanıyor. Yarbay Mustafa Kemal, emir beklemeden 57. Alay'ı Bigalı'dan Conkbayırı'na yürütür. Sırtları tut, düşmanı denize dök.",
   "requires": "18mart_1915",
   "map": "gelibolu",
-  "region": [40.198, 26.250, 40.292, 26.372],
+  "region": [
+    40.198,
+    26.25,
+    40.292,
+    26.372
+  ],
   "hex_m": 400,
   "exaggeration": 2.6,
   "start": "1915-04-25T06:00:00",
   "minutes_per_turn": 60,
   "turns": 14,
   "player_side": "ottoman",
-  "focus": [40.245, 26.300, 0.62],
+  "focus": [
+    40.245,
+    26.3,
+    0.62
+  ],
   "intro": [
-    ["25 Nisan 1915, şafak", "18 Mart'ta denizden geçemeyen İtilaf Devletleri, Gelibolu Yarımadası'nı karadan almaya karar verdi. Şafak sökerken Avustralya ve Yeni Zelanda kolordusu (ANZAC) Arıburnu kıyısına çıktı."],
-    ["Sırtların önemi", "Conkbayırı ve Kocaçimen, Sarıbayır sırtlarının en yüksek noktalarıdır. Bu tepeleri alan, Boğaz'ı ve Maydos'u (Eceabat) görür. Sırtlar düşerse Çanakkale'nin kara savunması çöker."],
-    ["Mustafa Kemal ve 57. Alay", "19. Tümen Komutanı Yarbay Mustafa Kemal, kendisinden yalnızca bir tabur istenmesine rağmen durumun ciddiyetini gördü ve emir beklemeden bütün 57. Alay'ı cepheye sürdü."],
-    ["Bir milletin uyanışı", "O gün bu sırtlarda verilen mücadele, yıllar sonra Kurtuluş Savaşı'nı yönetecek komutanı Türk milletine tanıttı."]
+    [
+      "25 Nisan 1915, şafak",
+      "18 Mart'ta denizden geçemeyen İtilaf Devletleri, Gelibolu Yarımadası'nı karadan almaya karar verdi. Şafak sökerken Avustralya ve Yeni Zelanda kolordusu (ANZAC) Arıburnu kıyısına çıktı."
+    ],
+    [
+      "Sırtların önemi",
+      "Conkbayırı ve Kocaçimen, Sarıbayır sırtlarının en yüksek noktalarıdır. Bu tepeleri alan, Boğaz'ı ve Maydos'u (Eceabat) görür. Sırtlar düşerse Çanakkale'nin kara savunması çöker."
+    ],
+    [
+      "Mustafa Kemal ve 57. Alay",
+      "19. Tümen Komutanı Yarbay Mustafa Kemal, kendisinden yalnızca bir tabur istenmesine rağmen durumun ciddiyetini gördü ve emir beklemeden bütün 57. Alay'ı cepheye sürdü."
+    ],
+    [
+      "Bir milletin uyanışı",
+      "O gün bu sırtlarda verilen mücadele, yıllar sonra Kurtuluş Savaşı'nı yönetecek komutanı Türk milletine tanıttı."
+    ]
   ],
   "briefing": "ANZAC'ın 3. Tugayı şafakta Arıburnu'na çıktı; kıyıyı savunan 27. Alay'ın tek bölüğü sırtlara doğru çekiliyor. Sen 19. Tümen'i yönetiyorsun. 57. Alay Bigalı'da, 27. Alay Maydos yönünden geliyor. ANZAC her saat yeni taburlar çıkaracak ve denizdeki zırhlılar sırtları dövecek. Gemi topları düz atışlıdır: sırtların arka yamaçları seni korur.",
-  "goals": [
-    "Conkbayırı ve Kocaçimen'i 19:00'a kadar elde tut (zorunlu).",
-    "Cesaret Tepe ve Kemalyeri'ni de elde tut (yıldız).",
-    "İtilaf kuvvetlerine en az 2.500 kayıp verdir (yıldız)."
+  "objectives": [
+    {
+      "type": "hold",
+      "places": [
+        "Conkbayırı",
+        "Kocaçimen"
+      ],
+      "required": true,
+      "text": "Conkbayırı ve Kocaçimen'i 19:00'a kadar elde tut"
+    },
+    {
+      "type": "capture",
+      "places": [
+        "Cesaret Tepe",
+        "Kemalyeri"
+      ],
+      "text": "Cesaret Tepe ve Kemalyeri'ni ele geçir ve tut"
+    },
+    {
+      "type": "losses",
+      "count": 2500,
+      "text": "Düşmana en az 2.500 ölü, yaralı ve esir verdir"
+    }
   ],
+  "hints": {
+    "1": "Düşman Arıburnu'ndan sırtlara tırmanıyor. 57. Alay'ın taburlarını seç, 'Taarruz' düğmesine bas ve haritada Conkbayırı'na ya da Cesaret Tepe'ye tıkla: taburlar her tur kendiliğinden o yöne yürür. 'Alayın tümüne' ile üç taburu birden yönetebilirsin. Karargâhı (Mustafa Kemal) taburların arkasından getir; yakındaki birliklerin morali yükselir.",
+    "2": "27. Alay Maydos yönünden geldi. 1/27'yi Kemalyeri'ne gönder: Topçu Sırtı düşerse düşman sırtları yandan sarar.",
+    "3": "Cesaret Tepe'deki 8. Bölük'ün cephanesi bitti ama süngüsü var. Geri çekilmesin; 57. Alay yetişiyor.",
+    "4": "Taarruz zamanı! Düşmana komşu birliğini seç, B ile süngüyü aç ve kırmızı hücreye tıkla. Saldırmadan önce fareyi düşmanın üzerinde tut: güç oranı 1'in üzerindeyse saldır, altındaysa yanına destek getir.",
+    "6": "Düşman yeni taburlar çıkarıyor. Tuttuğun tepelerdeki birlikleri 'Savun' emrine al: kımıldamayan birlik siper kazar ve çok daha zor yerinden edilir.",
+    "8": "77. Alay geldi. Yorgun ya da cephanesi azalan taburların yerine sür; yorgun taburu geride dinlendir (moral ve cephane her tur yenilenir).",
+    "11": "ANZAC taburları yoruldu ve siper kazmaya başladı. Cesaret Tepe ve Kemalyeri'ni almak için son fırsat.",
+    "13": "Gece çöküyor. Hedef tepelerdeki birlikler yerlerinden ayrılmasın."
+  },
   "places": [
-    {"name": "Conkbayırı", "lat": 40.2520, "lon": 26.3086, "vp": 3, "owner": "ottoman"},
-    {"name": "Kocaçimen", "lat": 40.2593, "lon": 26.3199, "vp": 3, "owner": "ottoman"},
-    {"name": "Cesaret Tepe", "lat": 40.2429, "lon": 26.2945, "vp": 2, "owner": ""},
-    {"name": "Kemalyeri", "lat": 40.2353, "lon": 26.3047, "vp": 2, "owner": "ottoman"},
-    {"name": "Kanlısırt", "lat": 40.2304, "lon": 26.2871, "vp": 1, "owner": ""},
-    {"name": "Arıburnu", "lat": 40.2462, "lon": 26.2770},
-    {"name": "Anzak Koyu", "lat": 40.2359, "lon": 26.2768},
-    {"name": "Kabatepe", "lat": 40.2067, "lon": 26.2680},
-    {"name": "Bigalı", "lat": 40.2357, "lon": 26.3597},
-    {"name": "Büyükanafarta", "lat": 40.2816, "lon": 26.3292},
-    {"name": "Düz Tepe", "lat": 40.2461, "lon": 26.3011},
-    {"name": "Topçu Sırtı", "lat": 40.2235, "lon": 26.3080},
-    {"name": "Kıyı", "lat": 40.2400, "lon": 26.2600}
+    {
+      "name": "Conkbayırı",
+      "lat": 40.252,
+      "lon": 26.3086,
+      "vp": 3,
+      "owner": "ottoman"
+    },
+    {
+      "name": "Kocaçimen",
+      "lat": 40.2593,
+      "lon": 26.3199,
+      "vp": 3,
+      "owner": "ottoman"
+    },
+    {
+      "name": "Cesaret Tepe",
+      "lat": 40.2429,
+      "lon": 26.2945,
+      "vp": 2,
+      "owner": ""
+    },
+    {
+      "name": "Kemalyeri",
+      "lat": 40.2353,
+      "lon": 26.3047,
+      "vp": 2,
+      "owner": "ottoman"
+    },
+    {
+      "name": "Kanlısırt",
+      "lat": 40.2304,
+      "lon": 26.2871,
+      "vp": 1,
+      "owner": ""
+    },
+    {
+      "name": "Arıburnu",
+      "lat": 40.2462,
+      "lon": 26.277
+    },
+    {
+      "name": "Anzak Koyu",
+      "lat": 40.2359,
+      "lon": 26.2768
+    },
+    {
+      "name": "Kabatepe",
+      "lat": 40.2067,
+      "lon": 26.268
+    },
+    {
+      "name": "Bigalı",
+      "lat": 40.2357,
+      "lon": 26.3597
+    },
+    {
+      "name": "Büyükanafarta",
+      "lat": 40.2816,
+      "lon": 26.3292
+    },
+    {
+      "name": "Düz Tepe",
+      "lat": 40.2461,
+      "lon": 26.3011
+    },
+    {
+      "name": "Topçu Sırtı",
+      "lat": 40.2235,
+      "lon": 26.308
+    },
+    {
+      "name": "Kıyı",
+      "lat": 40.24,
+      "lon": 26.26
+    }
   ],
   "units": [
-    {"id": "hq19", "auto_goal": "Kocaçimen", "name": "19. Tümen Karargâhı", "short": "M. Kemal", "side": "ottoman", "kind": "hq", "size": "tümen",
-     "commander": "Yarbay Mustafa Kemal", "men": 60, "equipment": {"mauser_1903": 50}, "morale": 100, "mp": 5,
-     "lat": 40.2357, "lon": 26.3560, "vision": 4,
-     "note": "Karargâhın 2 hücre yakınındaki birliklerin morali her tur yükselir. Karargâh vurulursa bütün birliklerin morali sarsılır."},
-    {"id": "b8_27", "name": "27. Alay 8. Bölük", "short": "8/27", "side": "ottoman", "kind": "infantry", "size": "bölük",
-     "men": 140, "men_max": 220, "equipment": {"mauser_1903": 140}, "morale": 45, "ammo": 10,
-     "lat": 40.2460, "lon": 26.2930, "entrench": 0,
-     "note": "Arıburnu kıyısını savunan tek bölük. Şafaktan beri çarpışıyor; cephanesi tükenmek üzere."},
-    {"id": "t2_27", "name": "27. Alay 2. Tabur", "short": "2/27", "side": "ottoman", "kind": "infantry", "size": "tabur",
-     "men": 560, "men_max": 800, "equipment": {"mauser_1903": 560}, "morale": 70,
-     "lat": 40.2160, "lon": 26.2820, "entrench": 1,
-     "note": "Kabatepe-Arıburnu kıyısına dağılmış taburun geri kalanı."},
-    {"id": "bat_kabatepe", "name": "Kabatepe Sahra Bataryası", "short": "Kbt Bt", "side": "ottoman", "kind": "artillery", "size": "batarya",
-     "men": 90, "equipment": {"krupp_75_sahra": 4}, "morale": 80, "mp": 2, "lat": 40.2130, "lon": 26.2930, "entrench": 1},
-    {"id": "t1_27", "auto_goal": "Kemalyeri", "name": "27. Alay 1. Tabur", "short": "1/27", "side": "ottoman", "kind": "infantry", "size": "tabur",
-     "commander": "Yarbay Mehmet Şefik (Alay K.)", "men": 820, "equipment": {"mauser_1903": 800, "maxim_1909": 2}, "morale": 85,
-     "lat": 40.2230, "lon": 26.3300, "arrive": 2,
-     "note": "Yarbay Mehmet Şefik (Aker) 27. Alay'ı kendi inisiyatifiyle Maydos'tan Arıburnu'na yürüttü."},
-    {"id": "t3_27", "auto_goal": "Kanlısırt", "name": "27. Alay 3. Tabur", "short": "3/27", "side": "ottoman", "kind": "infantry", "size": "tabur",
-     "men": 800, "equipment": {"mauser_1903": 790}, "morale": 82, "lat": 40.2180, "lon": 26.3330, "arrive": 3},
-    {"id": "t1_57", "auto_goal": "Conkbayırı", "name": "57. Alay 1. Tabur", "short": "1/57", "side": "ottoman", "kind": "infantry", "size": "tabur",
-     "commander": "Binbaşı Hüseyin Avni (Alay K.)", "men": 880, "equipment": {"mauser_1903": 870}, "morale": 95,
-     "lat": 40.2390, "lon": 26.3540, "mp": 4},
-    {"id": "t2_57", "auto_goal": "Cesaret Tepe", "name": "57. Alay 2. Tabur", "short": "2/57", "side": "ottoman", "kind": "infantry", "size": "tabur",
-     "men": 880, "equipment": {"mauser_1903": 870}, "morale": 95, "lat": 40.2330, "lon": 26.3530, "mp": 4},
-    {"id": "t3_57", "auto_goal": "Düz Tepe", "name": "57. Alay 3. Tabur", "short": "3/57", "side": "ottoman", "kind": "infantry", "size": "tabur",
-     "men": 880, "equipment": {"mauser_1903": 870}, "morale": 95, "lat": 40.2370, "lon": 26.3620, "mp": 4},
-    {"id": "mg_57", "auto_goal": "Conkbayırı", "name": "57. Alay Makineli Tüfek Bölüğü", "short": "MG/57", "side": "ottoman", "kind": "mg", "size": "bölük",
-     "men": 110, "equipment": {"maxim_1909": 4, "mauser_1903": 60}, "morale": 95, "lat": 40.2340, "lon": 26.3600, "mp": 4},
-    {"id": "dag_57", "name": "Dağ Bataryası (Krupp)", "short": "Dağ Bt", "side": "ottoman", "kind": "artillery", "size": "batarya",
-     "men": 100, "equipment": {"krupp_75_dag": 4}, "morale": 90, "mp": 3, "lat": 40.2310, "lon": 26.3580,
-     "note": "Mustafa Kemal 57. Alay'la birlikte bir dağ bataryasını da yürüttü."},
-    {"id": "top_19", "name": "39. Topçu Alayı Bataryası", "short": "39 Top", "side": "ottoman", "kind": "artillery", "size": "batarya",
-     "men": 110, "equipment": {"krupp_75_sahra": 4}, "morale": 85, "mp": 2, "lat": 40.2250, "lon": 26.3350, "arrive": 5},
-    {"id": "t1_77", "auto_goal": "Kocaçimen", "name": "77. Alay 1. Tabur", "short": "1/77", "side": "ottoman", "kind": "infantry", "size": "tabur",
-     "men": 750, "equipment": {"mauser_1890": 740}, "morale": 65, "lat": 40.2560, "lon": 26.3450, "arrive": 8},
-    {"id": "t2_77", "auto_goal": "Düz Tepe", "name": "77. Alay 2. Tabur", "short": "2/77", "side": "ottoman", "kind": "infantry", "size": "tabur",
-     "men": 750, "equipment": {"mauser_1890": 740}, "morale": 65, "lat": 40.2620, "lon": 26.3420, "arrive": 8},
-    {"id": "t1_72", "auto_goal": "Conkbayırı", "name": "72. Alay 1. Tabur", "short": "1/72", "side": "ottoman", "kind": "infantry", "size": "tabur",
-     "men": 780, "equipment": {"mauser_1903": 770}, "morale": 75, "lat": 40.2680, "lon": 26.3500, "arrive": 10},
-
-    {"id": "aif9", "name": "9. Tabur (AIF)", "short": "9 AIF", "side": "entente", "nation": "anzac", "kind": "infantry",
-     "men": 880, "men_max": 1000, "equipment": {"smle_mk3": 860, "maxim_303": 2}, "morale": 75,
-     "lat": 40.2320, "lon": 26.2830, "role": "attack", "goal": "Kemalyeri"},
-    {"id": "aif10", "name": "10. Tabur (AIF)", "short": "10 AIF", "side": "entente", "nation": "anzac", "kind": "infantry",
-     "men": 870, "men_max": 1000, "equipment": {"smle_mk3": 850, "maxim_303": 2}, "morale": 75,
-     "lat": 40.2370, "lon": 26.2860, "role": "attack", "goal": "Kemalyeri"},
-    {"id": "aif11", "name": "11. Tabur (AIF)", "short": "11 AIF", "side": "entente", "nation": "anzac", "kind": "infantry",
-     "men": 860, "men_max": 1000, "equipment": {"smle_mk3": 840, "maxim_303": 2}, "morale": 72,
-     "lat": 40.2430, "lon": 26.2820, "role": "attack", "goal": "Cesaret Tepe"},
-    {"id": "aif12", "name": "12. Tabur (AIF)", "short": "12 AIF", "side": "entente", "nation": "anzac", "kind": "infantry",
-     "men": 900, "men_max": 1000, "equipment": {"smle_mk3": 880, "maxim_303": 2}, "morale": 75,
-     "lat": 40.2400, "lon": 26.2790, "role": "attack", "goal": "Cesaret Tepe"},
-    {"id": "aif5", "name": "5. Tabur (AIF)", "short": "5 AIF", "side": "entente", "nation": "anzac", "kind": "infantry",
-     "men": 980, "equipment": {"smle_mk3": 960, "maxim_303": 2}, "morale": 78, "lat": 40.2330, "lon": 26.2780, "arrive": 2, "role": "attack", "goal": "Kanlısırt"},
-    {"id": "aif6", "name": "6. Tabur (AIF)", "short": "6 AIF", "side": "entente", "nation": "anzac", "kind": "infantry",
-     "men": 980, "equipment": {"smle_mk3": 960, "maxim_303": 2}, "morale": 78, "lat": 40.2300, "lon": 26.2790, "arrive": 2, "role": "attack", "goal": "Topçu Sırtı"},
-    {"id": "aif7", "name": "7. Tabur (AIF)", "short": "7 AIF", "side": "entente", "nation": "anzac", "kind": "infantry",
-     "men": 980, "equipment": {"smle_mk3": 960, "maxim_303": 2}, "morale": 78, "lat": 40.2360, "lon": 26.2775, "arrive": 3, "role": "attack", "goal": "Kemalyeri"},
-    {"id": "aif8", "name": "8. Tabur (AIF)", "short": "8 AIF", "side": "entente", "nation": "anzac", "kind": "infantry",
-     "men": 980, "equipment": {"smle_mk3": 960, "maxim_303": 2}, "morale": 78, "lat": 40.2280, "lon": 26.2790, "arrive": 3, "role": "attack", "goal": "Kanlısırt"},
-    {"id": "aif1", "name": "1. Tabur (AIF)", "short": "1 AIF", "side": "entente", "nation": "anzac", "kind": "infantry",
-     "men": 970, "equipment": {"smle_mk3": 950, "maxim_303": 2}, "morale": 76, "lat": 40.2390, "lon": 26.2770, "arrive": 4, "role": "attack", "goal": "Cesaret Tepe"},
-    {"id": "aif2", "name": "2. Tabur (AIF)", "short": "2 AIF", "side": "entente", "nation": "anzac", "kind": "infantry",
-     "men": 970, "equipment": {"smle_mk3": 950, "maxim_303": 2}, "morale": 76, "lat": 40.2370, "lon": 26.2770, "arrive": 4, "role": "attack", "goal": "Conkbayırı"},
-    {"id": "aif3", "name": "3. Tabur (AIF)", "short": "3 AIF", "side": "entente", "nation": "anzac", "kind": "infantry",
-     "men": 970, "equipment": {"smle_mk3": 950, "maxim_303": 2}, "morale": 76, "lat": 40.2340, "lon": 26.2775, "arrive": 5, "role": "attack", "goal": "Kanlısırt"},
-    {"id": "aif4", "name": "4. Tabur (AIF)", "short": "4 AIF", "side": "entente", "nation": "anzac", "kind": "infantry",
-     "men": 970, "equipment": {"smle_mk3": 950, "maxim_303": 2}, "morale": 76, "lat": 40.2360, "lon": 26.2775, "arrive": 5, "role": "attack", "goal": "Kemalyeri"},
-    {"id": "nz_auck", "name": "Auckland Taburu (NZ)", "short": "Auckl.", "side": "entente", "nation": "anzac", "kind": "infantry",
-     "men": 950, "equipment": {"smle_mk3": 930, "maxim_303": 2}, "morale": 78, "lat": 40.2440, "lon": 26.2780, "arrive": 6, "role": "attack", "goal": "Conkbayırı"},
-    {"id": "nz_canty", "name": "Canterbury Taburu (NZ)", "short": "Cant.", "side": "entente", "nation": "anzac", "kind": "infantry",
-     "men": 950, "equipment": {"smle_mk3": 930, "maxim_303": 2}, "morale": 78, "lat": 40.2460, "lon": 26.2790, "arrive": 7, "role": "attack", "goal": "Cesaret Tepe"},
-    {"id": "nz_well", "name": "Wellington Taburu (NZ)", "short": "Well.", "side": "entente", "nation": "anzac", "kind": "infantry",
-     "men": 950, "equipment": {"smle_mk3": 930, "maxim_303": 2}, "morale": 78, "lat": 40.2420, "lon": 26.2775, "arrive": 8, "role": "attack", "goal": "Conkbayırı"},
-    {"id": "nz_otago", "name": "Otago Taburu (NZ)", "short": "Otago", "side": "entente", "nation": "anzac", "kind": "infantry",
-     "men": 950, "equipment": {"smle_mk3": 930, "maxim_303": 2}, "morale": 78, "lat": 40.2400, "lon": 26.2775, "arrive": 9, "role": "attack", "goal": "Cesaret Tepe"},
-    {"id": "kohat", "name": "21. Kohat Dağ Bataryası (Hint)", "short": "Kohat", "side": "entente", "nation": "uk", "kind": "artillery", "size": "batarya",
-     "men": 120, "equipment": {"bl_10pdr_dag": 6}, "morale": 75, "mp": 2, "lat": 40.2380, "lon": 26.2790, "arrive": 6},
-    {"id": "triumph", "name": "HMS Triumph", "short": "Triumph", "side": "entente", "nation": "uk", "kind": "ship", "size": "gemi",
-     "men": 700, "hp": 100, "equipment": {"bl_10in": 4, "bl_6in": 14}, "morale": 90, "mp": 2, "vision": 6,
-     "lat": 40.2380, "lon": 26.2560, "role": "naval"},
-    {"id": "bacchante", "name": "HMS Bacchante", "short": "Bacch.", "side": "entente", "nation": "uk", "kind": "ship", "size": "gemi",
-     "men": 700, "hp": 90, "equipment": {"bl_92in": 2, "bl_6in": 12}, "morale": 90, "mp": 2, "vision": 6,
-     "lat": 40.2200, "lon": 26.2560, "role": "naval",
-     "note": "Kabatepe açıklarında ANZAC'ın sağ kanadını destekledi."},
-    {"id": "london", "name": "HMS London", "short": "London", "side": "entente", "nation": "uk", "kind": "ship", "size": "gemi",
-     "men": 750, "hp": 100, "equipment": {"bl_12in": 4, "bl_6in": 12}, "morale": 90, "mp": 2, "vision": 6,
-     "lat": 40.2560, "lon": 26.2580, "role": "naval"}
+    {
+      "id": "hq19",
+      "auto_goal": "Kocaçimen",
+      "name": "19. Tümen Karargâhı",
+      "short": "M. Kemal",
+      "side": "ottoman",
+      "kind": "hq",
+      "size": "tümen",
+      "commander": "Yarbay Mustafa Kemal",
+      "men": 60,
+      "equipment": {
+        "mauser_1903": 50
+      },
+      "morale": 100,
+      "mp": 5,
+      "lat": 40.2357,
+      "lon": 26.356,
+      "vision": 4,
+      "note": "Karargâhın 2 hücre yakınındaki birliklerin morali her tur yükselir. Karargâh vurulursa bütün birliklerin morali sarsılır."
+    },
+    {
+      "id": "b8_27",
+      "name": "27. Alay 8. Bölük",
+      "short": "8/27",
+      "side": "ottoman",
+      "kind": "infantry",
+      "size": "bölük",
+      "men": 140,
+      "men_max": 220,
+      "equipment": {
+        "mauser_1903": 140
+      },
+      "morale": 45,
+      "ammo": 10,
+      "lat": 40.246,
+      "lon": 26.293,
+      "entrench": 0,
+      "note": "Arıburnu kıyısını savunan tek bölük. Şafaktan beri çarpışıyor; cephanesi tükenmek üzere."
+    },
+    {
+      "id": "t2_27",
+      "name": "27. Alay 2. Tabur",
+      "short": "2/27",
+      "side": "ottoman",
+      "kind": "infantry",
+      "size": "tabur",
+      "men": 560,
+      "men_max": 800,
+      "equipment": {
+        "mauser_1903": 560
+      },
+      "morale": 70,
+      "lat": 40.216,
+      "lon": 26.282,
+      "entrench": 1,
+      "note": "Kabatepe-Arıburnu kıyısına dağılmış taburun geri kalanı."
+    },
+    {
+      "id": "bat_kabatepe",
+      "name": "Kabatepe Sahra Bataryası",
+      "short": "Kbt Bt",
+      "side": "ottoman",
+      "kind": "artillery",
+      "size": "batarya",
+      "men": 90,
+      "equipment": {
+        "krupp_75_sahra": 4
+      },
+      "morale": 80,
+      "mp": 2,
+      "lat": 40.213,
+      "lon": 26.293,
+      "entrench": 1
+    },
+    {
+      "id": "t1_27",
+      "auto_goal": "Kemalyeri",
+      "name": "27. Alay 1. Tabur",
+      "short": "1/27",
+      "side": "ottoman",
+      "kind": "infantry",
+      "size": "tabur",
+      "commander": "Yarbay Mehmet Şefik (Alay K.)",
+      "men": 820,
+      "equipment": {
+        "mauser_1903": 800,
+        "maxim_1909": 2
+      },
+      "morale": 85,
+      "lat": 40.223,
+      "lon": 26.33,
+      "arrive": 2,
+      "note": "Yarbay Mehmet Şefik (Aker) 27. Alay'ı kendi inisiyatifiyle Maydos'tan Arıburnu'na yürüttü."
+    },
+    {
+      "id": "t3_27",
+      "auto_goal": "Kanlısırt",
+      "name": "27. Alay 3. Tabur",
+      "short": "3/27",
+      "side": "ottoman",
+      "kind": "infantry",
+      "size": "tabur",
+      "men": 800,
+      "equipment": {
+        "mauser_1903": 790
+      },
+      "morale": 82,
+      "lat": 40.218,
+      "lon": 26.333,
+      "arrive": 3
+    },
+    {
+      "id": "t1_57",
+      "auto_goal": "Conkbayırı",
+      "name": "57. Alay 1. Tabur",
+      "short": "1/57",
+      "side": "ottoman",
+      "kind": "infantry",
+      "size": "tabur",
+      "commander": "Binbaşı Hüseyin Avni (Alay K.)",
+      "men": 880,
+      "equipment": {
+        "mauser_1903": 870
+      },
+      "morale": 95,
+      "lat": 40.239,
+      "lon": 26.354,
+      "mp": 4
+    },
+    {
+      "id": "t2_57",
+      "auto_goal": "Cesaret Tepe",
+      "name": "57. Alay 2. Tabur",
+      "short": "2/57",
+      "side": "ottoman",
+      "kind": "infantry",
+      "size": "tabur",
+      "men": 880,
+      "equipment": {
+        "mauser_1903": 870
+      },
+      "morale": 95,
+      "lat": 40.233,
+      "lon": 26.353,
+      "mp": 4
+    },
+    {
+      "id": "t3_57",
+      "auto_goal": "Düz Tepe",
+      "name": "57. Alay 3. Tabur",
+      "short": "3/57",
+      "side": "ottoman",
+      "kind": "infantry",
+      "size": "tabur",
+      "men": 880,
+      "equipment": {
+        "mauser_1903": 870
+      },
+      "morale": 95,
+      "lat": 40.237,
+      "lon": 26.362,
+      "mp": 4
+    },
+    {
+      "id": "mg_57",
+      "auto_goal": "Conkbayırı",
+      "name": "57. Alay Makineli Tüfek Bölüğü",
+      "short": "MG/57",
+      "side": "ottoman",
+      "kind": "mg",
+      "size": "bölük",
+      "men": 110,
+      "equipment": {
+        "maxim_1909": 4,
+        "mauser_1903": 60
+      },
+      "morale": 95,
+      "lat": 40.234,
+      "lon": 26.36,
+      "mp": 4
+    },
+    {
+      "id": "dag_57",
+      "name": "Dağ Bataryası (Krupp)",
+      "short": "Dağ Bt",
+      "side": "ottoman",
+      "kind": "artillery",
+      "size": "batarya",
+      "men": 100,
+      "equipment": {
+        "krupp_75_dag": 4
+      },
+      "morale": 90,
+      "mp": 3,
+      "lat": 40.231,
+      "lon": 26.358,
+      "note": "Mustafa Kemal 57. Alay'la birlikte bir dağ bataryasını da yürüttü."
+    },
+    {
+      "id": "top_19",
+      "name": "39. Topçu Alayı Bataryası",
+      "short": "39 Top",
+      "side": "ottoman",
+      "kind": "artillery",
+      "size": "batarya",
+      "men": 110,
+      "equipment": {
+        "krupp_75_sahra": 4
+      },
+      "morale": 85,
+      "mp": 2,
+      "lat": 40.225,
+      "lon": 26.335,
+      "arrive": 5
+    },
+    {
+      "id": "t1_77",
+      "auto_goal": "Kocaçimen",
+      "name": "77. Alay 1. Tabur",
+      "short": "1/77",
+      "side": "ottoman",
+      "kind": "infantry",
+      "size": "tabur",
+      "men": 750,
+      "equipment": {
+        "mauser_1890": 740
+      },
+      "morale": 65,
+      "lat": 40.256,
+      "lon": 26.345,
+      "arrive": 8
+    },
+    {
+      "id": "t2_77",
+      "auto_goal": "Düz Tepe",
+      "name": "77. Alay 2. Tabur",
+      "short": "2/77",
+      "side": "ottoman",
+      "kind": "infantry",
+      "size": "tabur",
+      "men": 750,
+      "equipment": {
+        "mauser_1890": 740
+      },
+      "morale": 65,
+      "lat": 40.262,
+      "lon": 26.342,
+      "arrive": 8
+    },
+    {
+      "id": "t1_72",
+      "auto_goal": "Conkbayırı",
+      "name": "72. Alay 1. Tabur",
+      "short": "1/72",
+      "side": "ottoman",
+      "kind": "infantry",
+      "size": "tabur",
+      "men": 780,
+      "equipment": {
+        "mauser_1903": 770
+      },
+      "morale": 75,
+      "lat": 40.268,
+      "lon": 26.35,
+      "arrive": 10
+    },
+    {
+      "id": "aif9",
+      "name": "9. Tabur (AIF)",
+      "short": "9 AIF",
+      "side": "entente",
+      "nation": "au",
+      "kind": "infantry",
+      "men": 880,
+      "men_max": 1000,
+      "equipment": {
+        "smle_mk3": 860,
+        "maxim_303": 2
+      },
+      "morale": 75,
+      "lat": 40.232,
+      "lon": 26.283,
+      "role": "attack",
+      "goal": "Kemalyeri"
+    },
+    {
+      "id": "aif10",
+      "name": "10. Tabur (AIF)",
+      "short": "10 AIF",
+      "side": "entente",
+      "nation": "au",
+      "kind": "infantry",
+      "men": 870,
+      "men_max": 1000,
+      "equipment": {
+        "smle_mk3": 850,
+        "maxim_303": 2
+      },
+      "morale": 75,
+      "lat": 40.237,
+      "lon": 26.286,
+      "role": "attack",
+      "goal": "Kemalyeri"
+    },
+    {
+      "id": "aif11",
+      "name": "11. Tabur (AIF)",
+      "short": "11 AIF",
+      "side": "entente",
+      "nation": "au",
+      "kind": "infantry",
+      "men": 860,
+      "men_max": 1000,
+      "equipment": {
+        "smle_mk3": 840,
+        "maxim_303": 2
+      },
+      "morale": 72,
+      "lat": 40.243,
+      "lon": 26.282,
+      "role": "attack",
+      "goal": "Cesaret Tepe"
+    },
+    {
+      "id": "aif12",
+      "name": "12. Tabur (AIF)",
+      "short": "12 AIF",
+      "side": "entente",
+      "nation": "au",
+      "kind": "infantry",
+      "men": 900,
+      "men_max": 1000,
+      "equipment": {
+        "smle_mk3": 880,
+        "maxim_303": 2
+      },
+      "morale": 75,
+      "lat": 40.24,
+      "lon": 26.279,
+      "role": "attack",
+      "goal": "Cesaret Tepe"
+    },
+    {
+      "id": "aif5",
+      "name": "5. Tabur (AIF)",
+      "short": "5 AIF",
+      "side": "entente",
+      "nation": "au",
+      "kind": "infantry",
+      "men": 980,
+      "equipment": {
+        "smle_mk3": 960,
+        "maxim_303": 2
+      },
+      "morale": 78,
+      "lat": 40.233,
+      "lon": 26.278,
+      "arrive": 2,
+      "role": "attack",
+      "goal": "Kanlısırt"
+    },
+    {
+      "id": "aif6",
+      "name": "6. Tabur (AIF)",
+      "short": "6 AIF",
+      "side": "entente",
+      "nation": "au",
+      "kind": "infantry",
+      "men": 980,
+      "equipment": {
+        "smle_mk3": 960,
+        "maxim_303": 2
+      },
+      "morale": 78,
+      "lat": 40.23,
+      "lon": 26.279,
+      "arrive": 2,
+      "role": "attack",
+      "goal": "Topçu Sırtı"
+    },
+    {
+      "id": "aif7",
+      "name": "7. Tabur (AIF)",
+      "short": "7 AIF",
+      "side": "entente",
+      "nation": "au",
+      "kind": "infantry",
+      "men": 980,
+      "equipment": {
+        "smle_mk3": 960,
+        "maxim_303": 2
+      },
+      "morale": 78,
+      "lat": 40.236,
+      "lon": 26.2775,
+      "arrive": 3,
+      "role": "attack",
+      "goal": "Kemalyeri"
+    },
+    {
+      "id": "aif8",
+      "name": "8. Tabur (AIF)",
+      "short": "8 AIF",
+      "side": "entente",
+      "nation": "au",
+      "kind": "infantry",
+      "men": 980,
+      "equipment": {
+        "smle_mk3": 960,
+        "maxim_303": 2
+      },
+      "morale": 78,
+      "lat": 40.228,
+      "lon": 26.279,
+      "arrive": 3,
+      "role": "attack",
+      "goal": "Kanlısırt"
+    },
+    {
+      "id": "aif1",
+      "name": "1. Tabur (AIF)",
+      "short": "1 AIF",
+      "side": "entente",
+      "nation": "au",
+      "kind": "infantry",
+      "men": 970,
+      "equipment": {
+        "smle_mk3": 950,
+        "maxim_303": 2
+      },
+      "morale": 76,
+      "lat": 40.239,
+      "lon": 26.277,
+      "arrive": 4,
+      "role": "attack",
+      "goal": "Cesaret Tepe"
+    },
+    {
+      "id": "aif2",
+      "name": "2. Tabur (AIF)",
+      "short": "2 AIF",
+      "side": "entente",
+      "nation": "au",
+      "kind": "infantry",
+      "men": 970,
+      "equipment": {
+        "smle_mk3": 950,
+        "maxim_303": 2
+      },
+      "morale": 76,
+      "lat": 40.237,
+      "lon": 26.277,
+      "arrive": 4,
+      "role": "attack",
+      "goal": "Conkbayırı"
+    },
+    {
+      "id": "aif3",
+      "name": "3. Tabur (AIF)",
+      "short": "3 AIF",
+      "side": "entente",
+      "nation": "au",
+      "kind": "infantry",
+      "men": 970,
+      "equipment": {
+        "smle_mk3": 950,
+        "maxim_303": 2
+      },
+      "morale": 76,
+      "lat": 40.234,
+      "lon": 26.2775,
+      "arrive": 5,
+      "role": "attack",
+      "goal": "Kanlısırt"
+    },
+    {
+      "id": "aif4",
+      "name": "4. Tabur (AIF)",
+      "short": "4 AIF",
+      "side": "entente",
+      "nation": "au",
+      "kind": "infantry",
+      "men": 970,
+      "equipment": {
+        "smle_mk3": 950,
+        "maxim_303": 2
+      },
+      "morale": 76,
+      "lat": 40.236,
+      "lon": 26.2775,
+      "arrive": 5,
+      "role": "attack",
+      "goal": "Kemalyeri"
+    },
+    {
+      "id": "nz_auck",
+      "name": "Auckland Taburu (NZ)",
+      "short": "Auckl.",
+      "side": "entente",
+      "nation": "nz",
+      "kind": "infantry",
+      "men": 950,
+      "equipment": {
+        "smle_mk3": 930,
+        "maxim_303": 2
+      },
+      "morale": 78,
+      "lat": 40.244,
+      "lon": 26.278,
+      "arrive": 6,
+      "role": "attack",
+      "goal": "Conkbayırı"
+    },
+    {
+      "id": "nz_canty",
+      "name": "Canterbury Taburu (NZ)",
+      "short": "Cant.",
+      "side": "entente",
+      "nation": "nz",
+      "kind": "infantry",
+      "men": 950,
+      "equipment": {
+        "smle_mk3": 930,
+        "maxim_303": 2
+      },
+      "morale": 78,
+      "lat": 40.246,
+      "lon": 26.279,
+      "arrive": 7,
+      "role": "attack",
+      "goal": "Cesaret Tepe"
+    },
+    {
+      "id": "nz_well",
+      "name": "Wellington Taburu (NZ)",
+      "short": "Well.",
+      "side": "entente",
+      "nation": "nz",
+      "kind": "infantry",
+      "men": 950,
+      "equipment": {
+        "smle_mk3": 930,
+        "maxim_303": 2
+      },
+      "morale": 78,
+      "lat": 40.242,
+      "lon": 26.2775,
+      "arrive": 8,
+      "role": "attack",
+      "goal": "Conkbayırı"
+    },
+    {
+      "id": "nz_otago",
+      "name": "Otago Taburu (NZ)",
+      "short": "Otago",
+      "side": "entente",
+      "nation": "nz",
+      "kind": "infantry",
+      "men": 950,
+      "equipment": {
+        "smle_mk3": 930,
+        "maxim_303": 2
+      },
+      "morale": 78,
+      "lat": 40.24,
+      "lon": 26.2775,
+      "arrive": 9,
+      "role": "attack",
+      "goal": "Cesaret Tepe"
+    },
+    {
+      "id": "kohat",
+      "name": "21. Kohat Dağ Bataryası (Hint)",
+      "short": "Kohat",
+      "side": "entente",
+      "nation": "uk",
+      "kind": "artillery",
+      "size": "batarya",
+      "men": 120,
+      "equipment": {
+        "bl_10pdr_dag": 6
+      },
+      "morale": 75,
+      "mp": 2,
+      "lat": 40.238,
+      "lon": 26.279,
+      "arrive": 6
+    },
+    {
+      "id": "triumph",
+      "name": "HMS Triumph",
+      "short": "Triumph",
+      "side": "entente",
+      "nation": "uk",
+      "kind": "ship",
+      "size": "gemi",
+      "men": 700,
+      "hp": 100,
+      "equipment": {
+        "bl_10in": 4,
+        "bl_6in": 14
+      },
+      "morale": 90,
+      "mp": 2,
+      "vision": 6,
+      "lat": 40.238,
+      "lon": 26.256,
+      "role": "naval"
+    },
+    {
+      "id": "bacchante",
+      "name": "HMS Bacchante",
+      "short": "Bacch.",
+      "side": "entente",
+      "nation": "uk",
+      "kind": "ship",
+      "size": "gemi",
+      "men": 700,
+      "hp": 90,
+      "equipment": {
+        "bl_92in": 2,
+        "bl_6in": 12
+      },
+      "morale": 90,
+      "mp": 2,
+      "vision": 6,
+      "lat": 40.22,
+      "lon": 26.256,
+      "role": "naval",
+      "note": "Kabatepe açıklarında ANZAC'ın sağ kanadını destekledi."
+    },
+    {
+      "id": "london",
+      "name": "HMS London",
+      "short": "London",
+      "side": "entente",
+      "nation": "uk",
+      "kind": "ship",
+      "size": "gemi",
+      "men": 750,
+      "hp": 100,
+      "equipment": {
+        "bl_12in": 4,
+        "bl_6in": 12
+      },
+      "morale": 90,
+      "mp": 2,
+      "vision": 6,
+      "lat": 40.256,
+      "lon": 26.258,
+      "role": "naval"
+    }
   ],
   "events": [
-    {"turn": 1, "type": "message", "popup": true, "who": "19. Tümen Karargâhı, Bigalı", "title": "Arıburnu'na çıkarma!",
-     "text": "Kolordu, Kocaçimen'e bir tabur gönderilmesini istiyor. Mustafa Kemal Bey düşmanın ciddi bir kuvvetle çıktığını anlıyor: \"Bir taburla bu iş olmaz.\" Bütün 57. Alay ve dağ bataryası Conkbayırı'na yürüyecek. 57. Alay'ı Bigalı'dan sırtlara sür; 27. Alay Maydos yönünden geliyor."},
-    {"turn": 2, "type": "message", "who": "Mustafa Kemal", "text": "Alay, Conkbayırı'na! Kocaçimen'i ve Conkbayırı'nı düşmana bırakmayacağız."},
-    {"turn": 3, "type": "message", "popup": true, "who": "Mustafa Kemal ve 8. Bölük askerleri", "title": "\"Cephaneniz yoksa süngünüz var!\"",
-     "text": "Conkbayırı'nın güneyinde kıyıdan çekilen askerlere rastlayan Mustafa Kemal sorar: \"Niçin kaçıyorsunuz?\" \"Efendim, düşman!\" \"Nerede?\" \"İşte!\" \"Düşmandan kaçılmaz!\" \"Cephanemiz kalmadı!\" \"Cephaneniz yoksa süngünüz var!\" Askerler süngü takıp yere yattı; düşman da yere yattı. Kazanılan bu zaman, 57. Alay'ın yetişmesini sağladı.", "voice": false},
-    {"turn": 3, "type": "morale", "unit": "b8_27", "add": 45},
-    {"turn": 3, "type": "shout", "key": "sungu_tak"},
-    {"turn": 4, "type": "message", "popup": true, "who": "Mustafa Kemal", "title": "\"Ben size taarruzu emretmiyorum, ölmeyi emrediyorum!\"",
-     "text": "\"Biz ölünceye kadar geçecek zaman zarfında yerimize başka kuvvetler ve kumandanlar gelebilir.\" 57. Alay taarruza kalkıyor. Süngü hücumu (B) ile düşman morali ağır sarsılır.", "voice": true},
-    {"turn": 4, "type": "morale", "side": "ottoman", "add": 10},
-    {"turn": 6, "type": "message", "who": "Gözcüler", "text": "Yeni Zelanda taburları Arıburnu'na çıkıyor; denizdeki zırhlılar sırtları dövüyor."},
-    {"turn": 8, "type": "message", "who": "19. Tümen Karargâhı", "text": "77. Alay Kocaçimen'in kuzeyinden yetişti."},
-    {"turn": 10, "type": "message", "who": "19. Tümen Karargâhı", "text": "72. Alay'dan bir tabur Büyükanafarta yönünden geliyor."},
-    {"turn": 11, "type": "role", "units": ["aif9", "aif10", "aif11", "aif12", "aif5", "aif6", "aif7", "aif8"], "role": "hold"},
-    {"turn": 11, "type": "message", "who": "Gözcüler", "text": "Yorgun düşen ANZAC taburları siper kazmaya başladı. Gece çökmeden önce son bir gayret!"},
-    {"turn": 13, "type": "role", "units": ["aif1", "aif2", "aif3", "aif4", "nz_auck", "nz_canty", "nz_well", "nz_otago"], "role": "hold"}
+    {
+      "turn": 1,
+      "type": "message",
+      "popup": true,
+      "who": "19. Tümen Karargâhı, Bigalı",
+      "title": "Arıburnu'na çıkarma!",
+      "text": "Kolordu, Kocaçimen'e bir tabur gönderilmesini istiyor. Mustafa Kemal Bey düşmanın ciddi bir kuvvetle çıktığını anlıyor: \"Bir taburla bu iş olmaz.\" Bütün 57. Alay ve dağ bataryası Conkbayırı'na yürüyecek. 57. Alay'ı Bigalı'dan sırtlara sür; 27. Alay Maydos yönünden geliyor."
+    },
+    {
+      "turn": 2,
+      "type": "message",
+      "who": "Mustafa Kemal",
+      "text": "Alay, Conkbayırı'na! Kocaçimen'i ve Conkbayırı'nı düşmana bırakmayacağız."
+    },
+    {
+      "turn": 3,
+      "type": "message",
+      "popup": true,
+      "who": "Mustafa Kemal ve 8. Bölük askerleri",
+      "title": "\"Cephaneniz yoksa süngünüz var!\"",
+      "text": "Conkbayırı'nın güneyinde kıyıdan çekilen askerlere rastlayan Mustafa Kemal sorar: \"Niçin kaçıyorsunuz?\" \"Efendim, düşman!\" \"Nerede?\" \"İşte!\" \"Düşmandan kaçılmaz!\" \"Cephanemiz kalmadı!\" \"Cephaneniz yoksa süngünüz var!\" Askerler süngü takıp yere yattı; düşman da yere yattı. Kazanılan bu zaman, 57. Alay'ın yetişmesini sağladı.",
+      "voice": false
+    },
+    {
+      "turn": 3,
+      "type": "morale",
+      "unit": "b8_27",
+      "add": 45
+    },
+    {
+      "turn": 3,
+      "type": "shout",
+      "key": "sungu_tak"
+    },
+    {
+      "turn": 4,
+      "type": "message",
+      "popup": true,
+      "who": "Mustafa Kemal",
+      "title": "\"Ben size taarruzu emretmiyorum, ölmeyi emrediyorum!\"",
+      "text": "\"Biz ölünceye kadar geçecek zaman zarfında yerimize başka kuvvetler ve kumandanlar gelebilir.\" 57. Alay taarruza kalkıyor. Süngü hücumu (B) ile düşman morali ağır sarsılır.",
+      "voice": true
+    },
+    {
+      "turn": 4,
+      "type": "morale",
+      "side": "ottoman",
+      "add": 10
+    },
+    {
+      "turn": 6,
+      "type": "message",
+      "who": "Gözcüler",
+      "text": "Yeni Zelanda taburları Arıburnu'na çıkıyor; denizdeki zırhlılar sırtları dövüyor."
+    },
+    {
+      "turn": 8,
+      "type": "message",
+      "who": "19. Tümen Karargâhı",
+      "text": "77. Alay Kocaçimen'in kuzeyinden yetişti."
+    },
+    {
+      "turn": 10,
+      "type": "message",
+      "who": "19. Tümen Karargâhı",
+      "text": "72. Alay'dan bir tabur Büyükanafarta yönünden geliyor."
+    },
+    {
+      "turn": 11,
+      "type": "role",
+      "units": [
+        "aif9",
+        "aif10",
+        "aif11",
+        "aif12",
+        "aif5",
+        "aif6",
+        "aif7",
+        "aif8"
+      ],
+      "role": "hold"
+    },
+    {
+      "turn": 11,
+      "type": "message",
+      "who": "Gözcüler",
+      "text": "Yorgun düşen ANZAC taburları siper kazmaya başladı. Gece çökmeden önce son bir gayret!"
+    },
+    {
+      "turn": 13,
+      "type": "role",
+      "units": [
+        "aif1",
+        "aif2",
+        "aif3",
+        "aif4",
+        "nz_auck",
+        "nz_canty",
+        "nz_well",
+        "nz_otago"
+      ],
+      "role": "hold"
+    }
   ],
   "triggers": [
-    {"when": {"owner": ["Conkbayırı", "entente"]}, "do": [{"type": "message", "popup": true, "who": "Mustafa Kemal", "title": "Conkbayırı düştü!", "text": "Conkbayırı düşman elinde. Gece çökmeden geri alınmazsa bütün yarımada tehlikeye girer. Süngü hücumu ile tepeyi geri al!"}]},
-    {"when": {"owner": ["Kocaçimen", "entente"]}, "do": [{"type": "message", "popup": true, "who": "19. Tümen Karargâhı", "title": "Kocaçimen tehlikede!", "text": "Düşman Kocaçimen tepesine ulaştı. Buradan bütün Boğaz görülür; derhal geri alınmalı."}]},
-    {"when": {"dead": "hq19"}, "do": [{"type": "message", "popup": true, "who": "Karargâh", "title": "Mustafa Kemal yaralandı", "text": "Komutanımız ağır ateş altında kaldı; karargâh dağıldı. Birliklerin morali sarsıldı. (Karargâhı cephe hattından bir hücre geride tutmak akıllıcadır.)"}]}
+    {
+      "when": {
+        "owner": [
+          "Conkbayırı",
+          "entente"
+        ]
+      },
+      "do": [
+        {
+          "type": "message",
+          "popup": true,
+          "who": "Mustafa Kemal",
+          "title": "Conkbayırı düştü!",
+          "text": "Conkbayırı düşman elinde. Gece çökmeden geri alınmazsa bütün yarımada tehlikeye girer. Süngü hücumu ile tepeyi geri al!"
+        }
+      ]
+    },
+    {
+      "when": {
+        "owner": [
+          "Kocaçimen",
+          "entente"
+        ]
+      },
+      "do": [
+        {
+          "type": "message",
+          "popup": true,
+          "who": "19. Tümen Karargâhı",
+          "title": "Kocaçimen tehlikede!",
+          "text": "Düşman Kocaçimen tepesine ulaştı. Buradan bütün Boğaz görülür; derhal geri alınmalı."
+        }
+      ]
+    },
+    {
+      "when": {
+        "dead": "hq19"
+      },
+      "do": [
+        {
+          "type": "message",
+          "popup": true,
+          "who": "Karargâh",
+          "title": "Mustafa Kemal yaralandı",
+          "text": "Komutanımız ağır ateş altında kaldı; karargâh dağıldı. Birliklerin morali sarsıldı. (Karargâhı cephe hattından bir hücre geride tutmak akıllıcadır.)"
+        }
+      ]
+    }
   ],
-  "victory": {
-    "lose_if_lost": ["Conkbayırı", "Kocaçimen"],
-    "stars": [
-      {"text": "Cesaret Tepe ve Kemalyeri elde", "hold": ["Cesaret Tepe", "Kemalyeri"]},
-      {"text": "İtilaf kuvvetlerine en az 2.500 kayıp", "enemy_losses": 2500}
-    ]
-  },
-  "history": "25 Nisan akşamı ANZAC kıyıdan ancak 1-2 kilometre içeri girebilmişti; Conkbayırı, Kocaçimen ve Kemalyeri (Gun Ridge) hiç düşmedi. ANZAC'ın o günkü kaybı 2.000'i aştı; 57. Alay da ağır kayıp verdi. Gece ANZAC komutanı Birdwood geri çekilmeyi önerdi, ancak Hamilton \"kazın, kazın, kazın\" emrini verdi. Arıburnu cephesi Aralık 1915'teki tahliyeye kadar bu sırtların eteğinde kaldı. 57. Alay'ın anısına bu numara Türk ordusunda bir daha kullanılmadı."
+  "history": "25 Nisan akşamı ANZAC kıyıdan ancak 1-2 kilometre içeri girebilmişti; Conkbayırı, Kocaçimen ve Kemalyeri (Gun Ridge) hiç düşmedi. ANZAC'ın o günkü ölü ve yaralı sayısı 2.000'i aştı; 57. Alay'ın şehit ve yaralı sayısı da çok ağırdı. Gece ANZAC komutanı Birdwood geri çekilmeyi önerdi, ancak Hamilton \"kazın, kazın, kazın\" emrini verdi. Arıburnu cephesi Aralık 1915'teki tahliyeye kadar bu sırtların eteğinde kaldı. 57. Alay'ın anısına bu numara Türk ordusunda bir daha kullanılmadı."
 }

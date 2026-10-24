@@ -16,9 +16,9 @@ func _ready() -> void:
 	add_child(map)
 	map.build(geo, grid, 120.0, 3.2, 180)
 	map.mat.set_shader_parameter("grid_alpha", 0.0)
-	for p in [["Conkbayırı", 40.2520, 26.3086], ["Arıburnu", 40.2462, 26.2770], ["Seddülbahir", 40.0447, 26.1889],
-			["Kilitbahir", 40.1478, 26.3793], ["Çanakkale", 40.1463, 26.4029], ["Anafartalar", 40.2816, 26.3292], ["Alçıtepe", 40.0949, 26.2273]]:
-		map.add_place_label(p[0], geo.local(p[1], p[2]), 2.2)
+	for p in [["Conkbayırı", 40.2520, 26.3086], ["Arıburnu", 40.2400, 26.2680], ["Seddülbahir", 40.0447, 26.1889],
+			["Kilitbahir", 40.1478, 26.3793], ["Çanakkale", 40.1463, 26.4029], ["Alçıtepe", 40.0949, 26.2273]]:
+		map.add_place_label(p[0], geo.local(p[1], p[2]), 1.3)
 	ReliefMap.add_lighting(self, 120.0)
 	cam = Camera3D.new()
 	cam.fov = 40.0
@@ -32,6 +32,7 @@ func _ready() -> void:
 	ui.theme = UiTheme.get_theme()
 	layer.add_child(ui)
 	Sfx.start_loop("sea", -24.0)
+	Sfx.start_loop("wind", -20.0)
 	show_main()
 
 
@@ -69,7 +70,7 @@ func _clear() -> VBoxContainer:
 
 func show_main() -> void:
 	var box := _clear()
-	box.add_child(UiTheme.label("TÜRK HARP", 96, UiTheme.GOLD, HORIZONTAL_ALIGNMENT_CENTER))
+	box.add_child(UiTheme.title("TÜRK HARP", 110, UiTheme.GOLD, HORIZONTAL_ALIGNMENT_CENTER))
 	box.add_child(UiTheme.label("Çanakkale 1915 · Harekât Haritası", 28, UiTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER))
 	var spacer := Control.new()
 	spacer.custom_minimum_size.y = 20
@@ -88,7 +89,7 @@ func show_campaign() -> void:
 	var box := _clear()
 	var head := HBoxContainer.new()
 	head.add_theme_constant_override("separation", 30)
-	head.add_child(UiTheme.label("Çanakkale Seferi · 1915", 40, UiTheme.GOLD))
+	head.add_child(UiTheme.title("Çanakkale Seferi · 1915", 44, UiTheme.GOLD))
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(spacer)
@@ -149,7 +150,7 @@ func _scenario_card(m: Dictionary) -> Control:
 
 func show_settings() -> void:
 	var box := _clear()
-	box.add_child(UiTheme.label("Ayarlar", 42, UiTheme.GOLD, HORIZONTAL_ALIGNMENT_CENTER))
+	box.add_child(UiTheme.title("Ayarlar", 46, UiTheme.GOLD, HORIZONTAL_ALIGNMENT_CENTER))
 	box.add_child(UiTheme.button("Grafik: " + ("Yüksek" if GameState.high_quality() else "Düşük"), func() -> void:
 		GameState.settings["quality"] = "low" if GameState.high_quality() else "high"
 		GameState.save_game()
@@ -178,7 +179,7 @@ func show_settings() -> void:
 
 func show_about() -> void:
 	var box := _clear()
-	box.add_child(UiTheme.label("Türk Harp", 42, UiTheme.GOLD, HORIZONTAL_ALIGNMENT_CENTER))
+	box.add_child(UiTheme.title("Türk Harp", 46, UiTheme.GOLD, HORIZONTAL_ALIGNMENT_CENTER))
 	box.add_child(UiTheme.wrap_label("Türk tarihinin gerçek savaşlarını gerçek haritalar üzerinde canlandıran, ücretsiz ve açık kaynak bir sıra tabanlı strateji oyunu. Kod GPL-3.0, tarihî içerik CC BY-SA 4.0 lisanslıdır.\n\nHarita: SRTM tabanlı yükseklik verisi (AWS Terrain Tiles / Mapzen). Yer adları: OpenStreetMap katkıcıları.\n\nKaynaklar: Genelkurmay Başkanlığı, Birinci Dünya Harbi'nde Türk Harbi, Çanakkale Cephesi Harekâtı; Edward J. Erickson, Gallipoli: The Ottoman Campaign; C. E. W. Bean, Official History of Australia in the War of 1914-1918, Cilt I.\n\ngithub.com/sertacgul/Turk-Harp", 18, UiTheme.TEXT, 760))
 	var cc := CenterContainer.new()
 	cc.add_child(UiTheme.button("Geri", show_main, 220))

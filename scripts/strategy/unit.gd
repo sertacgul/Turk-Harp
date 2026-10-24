@@ -47,6 +47,10 @@ var goal_name := ""
 var waypoints: Array[Vector2i] = []
 var retire_hp := 0.0
 var losses := 0
+## Oyuncu emri: "" (yok), attack (hedefe taarruz), defend (savun), reserve (yedek), fire (otomatik ateş)
+var order := ""
+var order_cell := Vector2i(-1, -1)
+var order_name := ""
 var counter: Node3D
 
 
@@ -145,7 +149,27 @@ func side_title() -> String:
 
 
 func nation_title() -> String:
-	return {"tr": "Osmanlı Devleti", "anzac": "ANZAC (Avustralya ve Yeni Zelanda)", "uk": "Britanya", "fr": "Fransa"}.get(nation, nation)
+	return {"tr": "Osmanlı Devleti", "anzac": "ANZAC", "au": "Avustralya (ANZAC)", "nz": "Yeni Zelanda (ANZAC)", "uk": "Britanya", "fr": "Fransa"}.get(nation, nation)
+
+
+## "57. Alay 1. Tabur" -> "57. Alay" (aynı alaya toplu emir için)
+func regiment() -> String:
+	var i := name.find(" Alay")
+	return name.substr(0, i + 5) if i > 0 else ""
+
+
+func order_title() -> String:
+	match order:
+		"attack":
+			return "Taarruz: " + order_name
+		"defend":
+			return "Savunma"
+		"reserve":
+			return "Yedekte"
+		"fire":
+			return "Serbest ateş"
+	return "Emir yok"
+
 
 
 func kind_title() -> String:

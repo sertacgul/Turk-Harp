@@ -15,6 +15,24 @@ Türk tarihinin gerçek savaşlarını, **gerçek haritalar** üzerinde, **gerç
 - `ReliefMap`: kabartma masa; 1915 kurmay haritası üslubunda yükseklik renkleri, eş yükselti eğrileri, kıyı çizgisi, denizde kıyıya paralel çizgiler.
 - Hücre özellikleri gerçek araziden hesaplanır: ortalama/en yüksek yükseklik, engebe, kara/deniz oranı.
 
+## Oyuncunun görevi ve strateji katmanı
+- **Hedefler paneli:** Her senaryonun zorunlu hedefi (kaybedilirse yenilgi) ve yıldız hedefleri canlı izlenir: sağlanıyor (✔), tehlikede (!), ilerleme (ör. "640 / 2.500"). Hedefe tıklayınca kamera oraya gider.
+- **Haritada hedefler:** Altın direkli bayrak tepeyi kimin tuttuğunu gösterir; düşman komşu hücredeyse kırmızı halka yanıp söner.
+- **Emirler:** Taarruz (hedef hücre seçilir, kırmızı harekât oku çizilir), Savun, Yedekte bekle, Serbest ateş (topçu ve tabyalar). "Emri bütün alaya ver" ile alay birlikte yönetilir. Tur bitince elle oynatılmamış birlikler emirlerini uygular.
+- **Kurmay raporu:** Her tur başında tarihe dayalı öneri, gelen takviyeler, yeni görülen düşman, tehlikedeki hedefler, emir bekleyen ve cephanesi azalan birlikler.
+- **İstihbarat:** Mavi oklar düşmanın görülen son hareketlerini gösterir.
+- **Nasıl oynanır:** İlk oyunda beş adımlık rehber; üst çubuktan yeniden açılabilir.
+
+## Kayıplar
+Zayiat şehit/ölü, yaralı ve esir olarak ayrılır (Birinci Dünya Savaşı'nda yaklaşık bir ölüye iki-üç yaralı). Osmanlı için "şehit", İtilaf için "ölü" denir.
+
+## Görsel ve ses
+- Birlikler minyatürdür: altıgen kaide üzerinde millete göre giyinmiş askerler (Osmanlı kabalağı, Avustralya keçe şapkası, Yeni Zelanda sivri şapkası, İngiliz kasketi); figür sayısı birliğin gücünü gösterir. Toplar, makineli tüfekler, tabyalar, karargâh çadırı ve dönem zırhlıları.
+- Her minyatürde dalgalanan ülke bayrağı: Osmanlı, Britanya, Avustralya, Yeni Zelanda, Fransa (kodla çizilir).
+- Yazı tipleri: Noto Sans/Serif ve Oswald (OFL). Harita yazıları ekranda sabit boyuttadır.
+- Efektler: namlu ışıkları, mermi uçuşu, patlama ve duman parçacıkları, su sütunları, uçan şehit/yaralı yazıları.
+- Sesler (kodla sentezlenir): tüfek yaylım ateşi, makineli tüfek, top, mermi ıslığı, patlama, subay düdüğü, borazan, "Allah Allah" haykırışı, asker adımları, gemi düdüğü, tur çanı, emir mührü, uzak muharebe ve deniz ambiyansı.
+
 ## Kurallar
 - **Hareket:** Hareket puanı; tırmanış ve engebe maliyeti artırır. Düşmana komşu hücreye giren durur (kontrol bölgesi). Gemiler yalnızca denizde.
 - **Görüş:** Her birlik, gerçek arazi üzerinden hesaplanan görüş hattıyla görür; görülmeyen düşman haritada gösterilmez. Sırtların arka yamaçları gizler.
@@ -37,7 +55,7 @@ Türk tarihinin gerçek savaşlarını, **gerçek haritalar** üzerinde, **gerç
 Senaryolar `data/scenarios/*.json`: bölge, altıgen boyutu, başlangıç zamanı, yerler (enlem/boylam, hedef puanı), birlikler (teçhizat, asker sayısı, moral, varış turu, yapay zekâ rolü ve hedefi, gemi rotaları), olaylar (tur), tetikleyiciler (koşul), zafer koşulları ve tarihî özet. Teçhizat veritabanı `scripts/strategy/equipment.gd`.
 
 ## Teknik mimari
-- `scripts/strategy`: `GeoMap` (yükseklik ve coğrafi dönüşüm), `HexGrid`, `ReliefMap` + `shaders/relief_map.gdshader`, `MapCamera`, `Unit`, `Equipment`, `Combat`, `Battle` (tur akışı), `BattleAI`, `BattleUI`, `UnitCounter` (NATO sembollü pullar).
+- `scripts/strategy`: `GeoMap` (yükseklik ve coğrafi dönüşüm), `HexGrid`, `ReliefMap` + `shaders/relief_map.gdshader`, `MapCamera`, `Unit`, `Equipment`, `Combat`, `Battle` (tur akışı), `BattleAI`, `BattleUI`, `UnitMini` (minyatürler), `Flags` (bayraklar), `ShipBuilder` (gemi minyatürleri).
 - `scripts/core`: `GameState` (kayıt, ayarlar), `Sfx` (sentez sesler), `Voice` (kayıt ya da Türkçe TTS).
 
 ## Tarihî doğruluk kuralları

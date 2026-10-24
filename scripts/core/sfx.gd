@@ -30,6 +30,19 @@ func _ready() -> void:
 	_streams["crowd"] = _crowd(2.6)
 	_streams["intro"] = _intro_pad(14.0)
 	_streams["grenade_pin"] = _tone(0.12, 2400.0, 30.0)
+	_streams["volley"] = _volley(1.6, 28, 0.9)
+	_streams["mg"] = _mg(1.4)
+	_streams["march"] = _march(1.4)
+	_streams["whistle"] = _whistle(1.1)
+	_streams["shell_whistle"] = _shell_whistle(0.9)
+	_streams["horn"] = _horn(1.6)
+	_streams["bell"] = _bell()
+	_streams["paper"] = _make(0.28, 0.6, 16.0, 0.0, 0.0, 0.35, 0.01)
+	_streams["stamp"] = _make(0.25, 0.08, 22.0, 70.0, 26.0, 0.8, 0.002)
+	_streams["select"] = _knock()
+	_streams["battle_amb"] = _battle_amb(10.0)
+	_streams["wind"] = _wind(8.0)
+	_streams["defeat"] = _defeat_pad(6.0)
 	for i in POOL_SIZE:
 		var p := AudioStreamPlayer.new()
 		add_child(p)
@@ -156,6 +169,193 @@ func _intro_pad(dur: float) -> AudioStreamWAV:
 		for f in chords[ci]:
 			s += sin(TAU * f * t) * 0.5 + sin(TAU * f * 2.0 * t + 0.3) * 0.12
 		out[i] = s * env * 0.12 * minf(t / 2.0, 1.0) * minf((dur - t) / 2.0, 1.0)
+	return _write(out)
+
+
+## Tüfek yaylım ateşi: rastgele zamanlarda çok sayıda kısa çatırtı.
+func _volley(dur: float, shots: int, gain: float) -> AudioStreamWAV:
+	var n := int(dur * RATE)
+	var out := PackedFloat32Array()
+	out.resize(n)
+	for k in shots:
+		var start := int(pow(_rng.randf(), 1.6) * (dur - 0.3) * RATE)
+		var amp := _rng.randf_range(0.3, 1.0)
+		var lp := _rng.randf_range(0.4, 0.8)
+		var y := 0.0
+		for i in int(0.25 * RATE):
+			if start + i >= n:
+				break
+			var t := float(i) / RATE
+			y += lp * (_rng.randf_range(-1.0, 1.0) - y)
+			out[start + i] += y * exp(-t * 26.0) * amp * 0.9 + sin(TAU * 90.0 * t) * exp(-t * 30.0) * amp * 0.3
+	for i in n:
+		out[i] *= gain
+	return _write(out)
+
+
+## Makineli tüfek: saniyede ~9 atımlık düzenli tarama.
+func _mg(dur: float) -> AudioStreamWAV:
+	var n := int(dur * RATE)
+	var out := PackedFloat32Array()
+	out.resize(n)
+	var period := int(RATE / 9.0)
+	var y := 0.0
+	for i in n:
+		var t := float(i % period) / RATE
+		y += 0.6 * (_rng.randf_range(-1.0, 1.0) - y)
+		out[i] = (y * exp(-t * 40.0) + sin(TAU * 110.0 * t) * exp(-t * 45.0) * 0.4) * 0.8 * minf((dur - float(i) / RATE) * 6.0, 1.0)
+	return _write(out)
+
+
+## Postal sesleri ve teçhizat şıngırtısı (yürüyen birlik).
+func _march(dur: float) -> AudioStreamWAV:
+	var n := int(dur * RATE)
+	var out := PackedFloat32Array()
+	out.resize(n)
+	var y := 0.0
+	for i in n:
+		var t := float(i) / RATE
+		var step := fmod(t * 2.6, 1.0)
+		var step2 := fmod(t * 2.6 + 0.37, 1.0)
+		y += 0.12 * (_rng.randf_range(-1.0, 1.0) - y)
+		var crunch := y * (exp(-step * 9.0) + 0.7 * exp(-step2 * 9.0)) * 3.0
+		var jingle := sin(TAU * 2900.0 * t) * exp(-fmod(t * 5.2, 1.0) * 30.0) * 0.06
+		out[i] = (crunch + jingle) * minf(t / 0.1, 1.0) * minf((dur - t) / 0.3, 1.0) * 0.7
+	return _write(out)
+
+
+## Subay düdüğü (hücum işareti): titreşimli yüksek ton.
+func _whistle(dur: float) -> AudioStreamWAV:
+	var n := int(dur * RATE)
+	var out := PackedFloat32Array()
+	out.resize(n)
+	var phase := 0.0
+	for i in n:
+		var t := float(i) / RATE
+		phase += (2650.0 + 140.0 * sign(sin(TAU * 28.0 * t))) / RATE
+		var env := minf(t / 0.02, 1.0) * minf((dur - t) / 0.08, 1.0)
+		out[i] = (sin(TAU * phase) * 0.8 + _rng.randf_range(-0.08, 0.08)) * env * 0.28
+	return _write(out)
+
+
+## Gelen merminin ıslığı (perdesi düşen).
+func _shell_whistle(dur: float) -> AudioStreamWAV:
+	var n := int(dur * RATE)
+	var out := PackedFloat32Array()
+	out.resize(n)
+	var phase := 0.0
+	for i in n:
+		var t := float(i) / RATE
+		phase += lerpf(1500.0, 450.0, t / dur) / RATE
+		out[i] = (sin(TAU * phase) * 0.6 + _rng.randf_range(-0.15, 0.15)) * minf(t / 0.3, 1.0) * 0.18
+	return _write(out)
+
+
+## Gemi düdüğü: kalın, uzun ton.
+func _horn(dur: float) -> AudioStreamWAV:
+	var n := int(dur * RATE)
+	var out := PackedFloat32Array()
+	out.resize(n)
+	for i in n:
+		var t := float(i) / RATE
+		var env := minf(t / 0.15, 1.0) * minf((dur - t) / 0.3, 1.0)
+		var s := sin(TAU * 98.0 * t) + 0.5 * sin(TAU * 196.0 * t) + 0.25 * sin(TAU * 147.0 * t)
+		out[i] = s * env * 0.22
+	return _write(out)
+
+
+## Tur başı çanı (iki vuruş).
+func _bell() -> AudioStreamWAV:
+	var dur := 2.2
+	var n := int(dur * RATE)
+	var out := PackedFloat32Array()
+	out.resize(n)
+	for strike: float in [0.0, 0.45]:
+		for i in n:
+			var t := float(i) / RATE - strike
+			if t < 0.0:
+				continue
+			var e := exp(-t * 2.2)
+			out[i] += (sin(TAU * 880.0 * t) + 0.6 * sin(TAU * 1760.0 * 1.003 * t) * exp(-t * 4.0) + 0.4 * sin(TAU * 2640.0 * t) * exp(-t * 6.0)) * e * 0.16
+	return _write(out)
+
+
+## Ahşap minyatürün masaya konuşu.
+func _knock() -> AudioStreamWAV:
+	var n := int(0.18 * RATE)
+	var out := PackedFloat32Array()
+	out.resize(n)
+	var y := 0.0
+	for i in n:
+		var t := float(i) / RATE
+		y += 0.3 * (_rng.randf_range(-1.0, 1.0) - y)
+		out[i] = (sin(TAU * 240.0 * t) * 0.6 + sin(TAU * 610.0 * t) * 0.25 + y * 0.4) * exp(-t * 38.0) * 0.6
+	return _write(out)
+
+
+## Uzak muharebe ambiyansı: gümbürtü, ara ara top ve tüfek sesleri (döngü).
+func _battle_amb(dur: float) -> AudioStreamWAV:
+	var n := int(dur * RATE)
+	var out := PackedFloat32Array()
+	out.resize(n)
+	var y := 0.0
+	var y2 := 0.0
+	for i in n:
+		y += 0.01 * (_rng.randf_range(-1.0, 1.0) - y)
+		y2 += 0.01 * (y - y2)
+		out[i] = y2 * 9.0
+	# Uzak top atışları
+	for k in 7:
+		var st := int(_rng.randf_range(0.0, dur - 2.0) * RATE)
+		var a := _rng.randf_range(0.3, 0.8)
+		var yy := 0.0
+		for i in int(1.8 * RATE):
+			var t := float(i) / RATE
+			yy += 0.03 * (_rng.randf_range(-1.0, 1.0) - yy)
+			out[st + i] += (yy * 7.0 + sin(TAU * 34.0 * t) * 0.5) * exp(-t * 2.2) * a
+	# Uzak tüfek çatırtıları
+	for k in 40:
+		var st2 := int(_rng.randf_range(0.0, dur - 0.2) * RATE)
+		var a2 := _rng.randf_range(0.05, 0.18)
+		var y3 := 0.0
+		for i in int(0.12 * RATE):
+			y3 += 0.25 * (_rng.randf_range(-1.0, 1.0) - y3)
+			out[st2 + i] += y3 * exp(-float(i) / RATE * 40.0) * a2
+	# Döngü ekini yumuşat
+	var fade := int(0.3 * RATE)
+	for i in fade:
+		var w := float(i) / fade
+		out[i] = out[i] * w + out[n - fade + i] * (1.0 - w)
+	return _write(out, true)
+
+
+## Masa başı rüzgâr uğultusu (döngü).
+func _wind(dur: float) -> AudioStreamWAV:
+	var n := int(dur * RATE)
+	var out := PackedFloat32Array()
+	out.resize(n)
+	var y := 0.0
+	var y2 := 0.0
+	for i in n:
+		var t := float(i) / RATE
+		y += 0.02 * (_rng.randf_range(-1.0, 1.0) - y)
+		y2 += 0.05 * (y - y2)
+		out[i] = (y - y2) * 6.0 * (0.6 + 0.4 * sin(TAU * t / dur * 2.0))
+	return _write(out, true)
+
+
+## Yenilgi: ağır, alçalan minör akor.
+func _defeat_pad(dur: float) -> AudioStreamWAV:
+	var n := int(dur * RATE)
+	var out := PackedFloat32Array()
+	out.resize(n)
+	for i in n:
+		var t := float(i) / RATE
+		var f := lerpf(1.0, 0.94, t / dur)
+		var s := 0.0
+		for hz in [110.0, 130.81, 164.81, 82.41]:
+			s += sin(TAU * hz * f * t) * 0.5 + sin(TAU * hz * 2.0 * f * t) * 0.1
+		out[i] = s * minf(t / 0.8, 1.0) * minf((dur - t) / 2.0, 1.0) * 0.12
 	return _write(out)
 
 

@@ -16,6 +16,12 @@ uniform vec2 hex_count = vec2(30.0, 30.0);
 uniform float grid_alpha = 0.2;
 uniform float contour_step = 20.0;
 uniform float time_scale = 1.0;
+// Piksel başına kabartma: yüksekliğin dünya ölçeğindeki abartma oranı ve doku adımı
+uniform float relief_scale = 2.5;
+uniform vec2 height_texel = vec2(0.002, 0.002);
+// Enlem/boylam ağı (derece): lat1 kuzey kenar, lon0 batı kenar
+uniform vec4 geo_bounds = vec4(40.0, 26.0, 40.1, 26.1);
+uniform float graticule_step = 0.016666667;
 
 varying vec2 local_m;
 
@@ -131,7 +137,7 @@ void fragment() {
 		col = mix(col, oc, rim * 0.55 + 0.08);
 	}
 	if (mark == 1) {
-		col = mix(col, vec3(1.0, 0.86, 0.35), 0.28 + rim * 0.35);
+		col = mix(col, vec3(1.0, 0.86, 0.35), 0.14 + rim * 0.4);
 	} else if (mark == 2) {
 		col = mix(col, vec3(0.95, 0.15, 0.1), 0.3 + rim * 0.5);
 	} else if (mark == 3) {
@@ -143,6 +149,27 @@ void fragment() {
 	col = mix(col, grid_col, edge * grid_alpha * (inside ? 1.0 : 0.0));
 
 	// Renkler sRGB olarak seçildi; ışık hesabı doğrusal uzayda.
+	// Enlem/boylam ağı (eski haritalardaki gibi ince mavi çizgiler, 1 dakikada bir)
+	float lat = geo_bounds.z - uv.y * (geo_bounds.z - geo_bounds.x);
+	float lon = geo_bounds.y + uv.x * (geo_bounds.w - geo_bounds.y);
+	float grat = max(iso_line(lat, graticule_step, 0.7), iso_line(lon, graticule_step, 0.7));
+	col = mix(col, vec3(0.25, 0.35, 0.55), grat * 0.28);
+
+	// Piksel başına normal: yükseklik dokusunun eğiminden (ağ çözünürlüğünden bağımsız keskin kabartma)
+	float hx1 = texture(height_tex, uv + vec2(height_texel.x, 0.0)).r;
+	float hx0 = texture(height_tex, uv - vec2(height_texel.x, 0.0)).r;
+	float hy1 = texture(height_tex, uv + vec2(0.0, height_texel.y)).r;
+	float hy0 = texture(height_tex, uv - vec2(0.0, height_texel.y)).r;
+	vec2 step_m = height_texel * map_size_m * 2.0;
+	vec3 n_world = normalize(vec3(-(max(hx1, 0.0) - max(hx0, 0.0)) / step_m.x * relief_scale, 1.0,
+		-(max(hy1, 0.0) - max(hy0, 0.0)) / step_m.y * relief_scale));
+	if (h <= 0.4) {
+		// Denizde hafif kıpırdayan yüzey
+		vec2 wp = local_m * 0.02;
+		float t = TIME * 0.4;
+		n_world = normalize(vec3((noise(wp + vec2(t, 0.0)) - 0.5) * 0.12, 1.0, (noise(wp.yx - vec2(0.0, t)) - 0.5) * 0.12));
+	}
+	NORMAL = normalize((VIEW_MATRIX * vec4(n_world, 0.0)).xyz);
 	ALBEDO = pow(col, vec3(2.2));
 	ROUGHNESS = h > 0.4 ? 0.92 : 0.55;
 	SPECULAR = h > 0.4 ? 0.2 : 0.4;
