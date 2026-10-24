@@ -9,6 +9,7 @@ const W_RIGHT := 320.0
 var b: Battle
 var _top_time: Label
 var _top_deadline: Label
+var _top_cp: Label
 var _obj_box: VBoxContainer
 var _cas_label: Label
 var _report_box: VBoxContainer
@@ -105,7 +106,7 @@ func _build_top() -> void:
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", 18)
 	p.add_child(h)
-	h.add_child(UiTheme.title(b.scenario.get("title", ""), 22, UiTheme.GOLD))
+	h.add_child(UiTheme.title(String(b.scenario.get("title", "")).split(":")[0], 22, UiTheme.GOLD))
 	_top_time = UiTheme.label("", 19, UiTheme.TEXT)
 	_top_time.add_theme_font_override("font", UiTheme.font("bold"))
 	h.add_child(_top_time)
@@ -114,9 +115,23 @@ func _build_top() -> void:
 	var sp := Control.new()
 	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	h.add_child(sp)
-	var help := UiTheme.button("Nasıl Oynanır", show_tutorial, 150)
-	help.custom_minimum_size.y = 40
-	help.add_theme_font_size_override("font_size", 16)
+	_top_cp = UiTheme.label("", 18, UiTheme.GOLD)
+	_top_cp.add_theme_font_override("font", UiTheme.font("bold"))
+	_top_cp.tooltip_text = "Emir puanı: elle yönetilen her birlik, verilen her emir ve duruş değişikliği 1 puan harcar\n(karargâh menzili dışındaki birlik için 2). Emirli birlikler tur sonunda puan harcamadan uygular."
+	_top_cp.mouse_filter = Control.MOUSE_FILTER_PASS
+	h.add_child(_top_cp)
+	var sup := UiTheme.button("İkmal", b.toggle_supply, 90)
+	sup.custom_minimum_size.y = 40
+	sup.add_theme_font_size_override("font_size", 16)
+	sup.tooltip_text = "İkmal haritası: yeşil hücrelere cephane ulaşır, kırmızı hücreler ikmal dışıdır."
+	h.add_child(sup)
+	var oob := UiTheme.button("Muharebe Düzeni", show_oob, 170)
+	oob.custom_minimum_size.y = 40
+	oob.add_theme_font_size_override("font_size", 16)
+	h.add_child(oob)
+	var help := UiTheme.button("?", show_tutorial, 44)
+	help.custom_minimum_size = Vector2(44, 40)
+	help.tooltip_text = "Nasıl oynanır"
 	h.add_child(help)
 	var menu := UiTheme.button("☰", _show_menu, 52)
 	menu.custom_minimum_size = Vector2(52, 40)
@@ -253,6 +268,7 @@ func set_hint(text: String) -> void:
 func refresh() -> void:
 	_top_time.text = "%s   Tur %d/%d" % [b.time_text(), mini(b.turn, b.turns), b.turns]
 	_top_deadline.text = b.deadline_text() if b.phase != "deploy" else "Hazırlık"
+	_top_cp.text = "Emir puanı %d/%d" % [b.cp, b.cp_max]
 	for c in _obj_box.get_children():
 		c.queue_free()
 	for o: Dictionary in b.scenario.get("objectives", []):
@@ -359,28 +375,46 @@ func show_unit(u: Unit) -> void:
 	_card_box.add_child(head)
 	if u.commander != "":
 		_card_box.add_child(UiTheme.wrap_label("Komutan: " + u.commander, 15, UiTheme.TEXT, W_RIGHT - 40))
-	if u.uses_hp():
-		_card_box.add_child(_bar_row("Dayanıklılık", u.strength(), Color(0.85, 0.5, 0.3)))
-		_card_box.add_child(UiTheme.label("Mürettebat: %s" % num(u.men), 15))
+	if not mine:
+		_card_box.add_child(UiTheme.label("Güç: " + b.enemy_strength_text(u), 15))
+		_card_box.add_child(UiTheme.label("Duruş: %s · Siper %d" % [u.stance_title(), u.entrench], 14, UiTheme.MUTED))
+		_card_box.add_child(UiTheme.label("Talim: %s" % u.exp_title(), 14, UiTheme.MUTED))
 	else:
-		_card_box.add_child(UiTheme.label("Mevcut: %s / %s asker" % [num(u.men), num(u.men_max)], 15))
-		_card_box.add_child(_bar_row("Güç", u.strength(), Color(0.85, 0.5, 0.3)))
-	_card_box.add_child(_bar_row("Moral", u.morale / 100.0, Color(0.4, 0.75, 0.4)))
-	_card_box.add_child(_bar_row("Cephane", u.ammo / 100.0, UiTheme.GOLD))
-	var st: Array[String] = []
-	if u.entrench > 0:
-		st.append("Siperde (%d)" % u.entrench)
-	if u.suppressed > 0:
-		st.append("Susturuldu")
-	if mine:
-		if u.attacked:
-			st.append("Bu tur hareketini tamamladı")
-		elif u.moved:
-			st.append("Hareket etti")
+		if u.uses_hp():
+			_card_box.add_child(_bar_row("Dayanıklılık", u.strength(), Color(0.85, 0.5, 0.3)))
+			_card_box.add_child(UiTheme.label("Mürettebat: %s" % num(u.men), 15))
+		else:
+			_card_box.add_child(UiTheme.label("Mevcut: %s / %s asker · %s" % [num(u.men), num(u.men_max), u.exp_title()], 15))
+			_card_box.add_child(_bar_row("Güç", u.strength(), Color(0.85, 0.5, 0.3)))
+		_card_box.add_child(_bar_row("Moral", u.morale / 100.0, Color(0.4, 0.75, 0.4)))
+		_card_box.add_child(_bar_row("Dinçlik", 1.0 - u.fatigue / 100.0, Color(0.45, 0.65, 0.9)))
+		_card_box.add_child(_bar_row("Cephane", u.ammo / 100.0, UiTheme.GOLD))
+		_card_box.add_child(UiTheme.label(u.ammo_text(), 13, UiTheme.MUTED))
+		var lines: Array[String] = []
+		lines.append("Duruş: " + u.stance_title())
+		if u.entrench > 0:
+			lines.append("Siper %d" % u.entrench)
+		if u.suppression > 0.0:
+			lines.append("Bastırılmış %%%d" % int(u.suppression * 100.0))
+		if u.suppressed > 0:
+			lines.append("Susturuldu")
+		var cell := b.grid.cell(u.cell)
+		lines.append("Arazi: %s%s, %d m" % [cell.terrain, " (yol)" if cell.road else "", int(cell.elev)])
+		if not u.is_naval() and not u.is_fort():
+			lines.append("İkmal: " + ("hatta" if u.in_supply else "KESİK (%d tur)" % u.out_supply_turns))
+		if u.hq_id != "":
+			var hq := b.find_unit(u.hq_id)
+			var hn := hq.short if hq else "?"
+			lines.append("Komuta: %s %s" % [hn, "(menzilde)" if u.in_command else "(MENZİL DIŞI)"])
+		elif u.is_hq():
+			lines.append("Komuta menzili: %d hücre (%.1f km)" % [u.command_range, u.command_range * b.hex_m / 1000.0])
 		if u.can_move():
-			st.append("Hareket puanı %.1f/%.0f" % [u.mp, u.mp_max])
-	if not st.is_empty():
-		_card_box.add_child(UiTheme.wrap_label(" · ".join(st), 14, UiTheme.MUTED, W_RIGHT - 40))
+			lines.append("Hareket puanı %.1f" % u.mp)
+		if u.attacked:
+			lines.append("Bu tur eylemini tamamladı")
+		elif u.moved:
+			lines.append("Hareket etti")
+		_card_box.add_child(UiTheme.wrap_label(" · ".join(lines), 14, UiTheme.MUTED, W_RIGHT - 40))
 	var eq := UiTheme.label("Teçhizat", 15, UiTheme.GOLD)
 	eq.add_theme_font_override("font", UiTheme.font("bold"))
 	_card_box.add_child(eq)
@@ -435,9 +469,9 @@ func _orders_section(u: Unit) -> Control:
 		g1.add_child(_small_btn("Taarruz...", func() -> void: b.give_order("attack"), w,
 			"Haritada hedef seç: birlik her tur kendiliğinden o yöne ilerler ve yolundaki düşmana saldırır. Kırmızı ok planı gösterir.", u.order == "attack"))
 		g1.add_child(_small_btn("Savun", func() -> void: b.give_order("defend"), w,
-			"Yerini tutar, siper kazar; yalnızca açıkça zayıf komşu düşmana saldırır.", u.order == "defend"))
+			"Savunma duruşuna geçer, yerini tutar ve her tur siperini derinleştirir (savunma +%25).", u.order == "defend"))
 		g1.add_child(_small_btn("Yedekte bekle", func() -> void: b.give_order("reserve"), w,
-			"Kımıldamaz, dinlenir ve siper kazar.", u.order == "reserve"))
+			"Dinlenme duruşuna geçer: yorgunluk hızla azalır, moral toparlanır.", u.order == "reserve"))
 	if not u.ranged_items().is_empty():
 		g1.add_child(_small_btn("Serbest ateş", func() -> void: b.give_order("fire"), w,
 			"Her tur menzildeki ve görülen en iyi hedefe kendiliğinden ateş eder.", u.order == "fire"))
@@ -450,10 +484,27 @@ func _orders_section(u: Unit) -> Control:
 		cb.toggled.connect(func(on: bool) -> void: b.order_group = on)
 		cb.add_theme_font_size_override("font_size", 15)
 		v.add_child(cb)
-	var t2 := UiTheme.label("ŞİMDİ (bu tur, elle)", 15, UiTheme.GOLD)
+	if u.can_move() and not u.is_hq():
+		var ts := UiTheme.label("DURUŞ: " + u.stance_title(), 15, UiTheme.GOLD)
+		ts.add_theme_font_override("font", UiTheme.font("bold"))
+		v.add_child(ts)
+		var g3 := GridContainer.new()
+		g3.columns = 2
+		g3.add_theme_constant_override("h_separation", 6)
+		g3.add_theme_constant_override("v_separation", 6)
+		v.add_child(g3)
+		g3.add_child(_small_btn("Muharebe", func() -> void: b.set_stance(u, "normal"), w,
+			"Muharebe düzeni: hareket eder ve saldırır.", u.stance == "normal"))
+		g3.add_child(_small_btn("İntikal", func() -> void: b.set_stance(u, "march"), w,
+			"Yürüyüş kolu: hareket puanı x1,5 ve yolda çok hızlı, daha az yorulur.\nAma saldıramaz, düşmana temas eden hücreye giremez ve savunması x0,6.", u.stance == "march"))
+		g3.add_child(_small_btn("Savunma", func() -> void: b.set_stance(u, "defend"), w,
+			"Savunma: hareket etmez, saldırmaz; savunma x1,25, siper iki kat hızlı (en çok 3).", u.stance == "defend"))
+		g3.add_child(_small_btn("Dinlenme", func() -> void: b.set_stance(u, "rest"), w,
+			"Dinlenme: yorgunluk tur başına 35 azalır, moral toparlanır; savunma x0,8.", u.stance == "rest"))
+	var t2 := UiTheme.label("ŞİMDİ (bu tur, elle · %d emir puanı)" % b.cp_cost(u), 15, UiTheme.GOLD)
 	t2.add_theme_font_override("font", UiTheme.font("bold"))
 	v.add_child(t2)
-	v.add_child(UiTheme.wrap_label("Sarı hücre: git · kırmızı hücre: saldır. Fareyi hedefin üstünde tut: tahmin görünür.", 13, UiTheme.MUTED, W_RIGHT - 40))
+	v.add_child(UiTheme.wrap_label("Sarı hücre: git · kırmızı hücre: saldır. Fareyi hedefin üstünde tut: bütün etkenleriyle kesin sonuç görünür.", 13, UiTheme.MUTED, W_RIGHT - 40))
 	var g2 := HBoxContainer.new()
 	g2.add_theme_constant_override("separation", 6)
 	v.add_child(g2)
@@ -461,7 +512,7 @@ func _orders_section(u: Unit) -> Control:
 		g2.add_child(_small_btn("Süngü: " + ("AÇIK" if b.bayonet else "kapalı") + " (B)", _toggle_bayonet, w,
 			"Süngü hücumu: saldırı gücü +%35, düşman morali ağır sarsılır; kendi şehit ve yaralı sayın artar.\nCephanesi bitmiş birlik de süngüyle saldırabilir.", b.bayonet))
 	if u.is_land() and not u.is_fort() and not u.moved and not u.attacked and u.entrench < 2:
-		g2.add_child(_small_btn("Siper Kaz", b.dig_in, w, "Bu tur hareket etmez ve saldırmaz; siper seviyesi artar (savunma +%35)."))
+		g2.add_child(_small_btn("Siper Kaz", b.dig_in, w, "Bu tur hareket etmez ve saldırmaz; siper seviyesi artar (her seviye savunma +%35)."))
 	return v
 
 
@@ -486,7 +537,7 @@ func show_cell(_c: HexGrid.Cell) -> void:
 	_card.visible = false
 
 
-## Fare altındaki hücre ve (varsa) seçili birliğin saldırı tahmini.
+## Fare altındaki hücre; seçili birliğin saldırısı için bütün etkenleriyle kesin sonuç.
 func hover(c: HexGrid.Cell, u: Unit) -> void:
 	if c == null:
 		_tip.visible = false
@@ -497,25 +548,17 @@ func hover(c: HexGrid.Cell, u: Unit) -> void:
 	if c.is_sea():
 		lines.append("Deniz" + (" · %d mayın" % c.mines if c.mines > 0 and (b.player_side == Unit.OTTOMAN or c.mines_known) else ""))
 	else:
-		lines.append("Yükseklik %d m · engebe %d m" % [int(round(c.elev)), int(round(c.rough))])
+		var ti := Terrain.info(c.terrain)
+		lines.append("%s%s · %d m · hareket %.1f · savunma x%.2f" % [c.terrain.capitalize(), " + yol" if c.road else "", int(round(c.elev)), float(ti["move"]), float(ti["defense"])])
 	if u:
-		lines.append("%s · %s" % [u.name, (str(u.men) + " asker") if not u.uses_hp() else "%%%d sağlam" % int(u.strength() * 100)])
+		lines.append("%s · %s · %s" % [u.name, b.enemy_strength_text(u), u.stance_title()])
 		var s := b.selected
 		if s and s.side == b.player_side and b.targets.has(c.coord):
-			var pr := b.preview(s, c.coord)
-			if pr.has("odds"):
-				var dv := Vector2i(int(round(pr["cas_def"] * 0.3)), int(pr["cas_def"]) - int(round(pr["cas_def"] * 0.3)))
-				var av := Vector2i(int(round(pr["cas_att"] * 0.3)), int(pr["cas_att"]) - int(round(pr["cas_att"] * 0.3)))
-				lines.append("Tahmin · düşman: ~%s" % Battle.cas_words(u.side, dv))
-				lines.append("Tahmin · birliğimiz: ~%s" % Battle.cas_words(s.side, av))
-				var odds: float = pr["odds"]
-				lines.append("Güç oranı 1 : %.1f  %s" % [odds, "→ düşman çekilebilir" if pr["retreat"] else ("(elverişli)" if odds >= 1.2 else ("(dengede)" if odds >= 0.8 else "(elverişsiz: destek getir)"))])
-			elif pr["hard"]:
-				lines.append("Tahmini hasar ~%%%d · mesafe %.1f km" % [int(pr["dmg"] / maxf(u.hp_max, 1.0) * 100.0), pr["dist"] / 1000.0])
-			else:
-				lines.append("Tahmini zayiat ~%d · mesafe %.1f km" % [pr["cas"], pr["dist"] / 1000.0])
+			lines.append("")
+			lines.append_array(_combat_lines(b.preview(s, c.coord), s, u))
 	elif b.selected and b.reach.has(c.coord) and b.selected.side == b.player_side:
-		lines.append("Hareket maliyeti %.1f / kalan %.1f" % [b.reach[c.coord][0], b.selected.mp])
+		var cost: float = b.reach[c.coord][0]
+		lines.append("Hareket maliyeti %.1f / kalan %.1f · yorgunluk +%d" % [cost, b.selected.mp, int(cost * (2.5 if b.selected.stance == "march" else 4.0))])
 	if b.order_mode == "attack":
 		lines.append("Tıkla: taarruz hedefi")
 	_tip_label.text = "\n".join(lines)
@@ -523,6 +566,42 @@ func hover(c: HexGrid.Cell, u: Unit) -> void:
 	_tip.reset_size()
 	var mp := get_viewport().get_mouse_position()
 	_tip.position = (mp + Vector2(20, 20)).min(get_viewport_rect().size - _tip.size - Vector2(4, 4))
+
+
+## Muharebe hesabının satır satır dökümü.
+func _combat_lines(pr: Dictionary, att: Unit, def: Unit) -> Array[String]:
+	var out: Array[String] = []
+	if pr.get("melee", false):
+		var odds: float = pr["odds"]
+		out.append("KESİN SONUÇ · güç oranı 1 : %.2f → %s" % [odds, pr["outcome"]])
+		out.append("Saldıran %s: ateş gücü %d" % [att.short, int(pr["att_base"])])
+		for f in pr["att_f"]:
+			out.append("   x%.2f  %s" % [f[1], f[0]])
+		out.append("   = %d" % int(pr["A"]))
+		out.append("Savunan %s: ateş gücü %d" % [def.short, int(pr["def_base"])])
+		for f in pr["def_f"]:
+			out.append("   x%.2f  %s" % [f[1], f[0]])
+		out.append("   = %d" % int(pr["D"]))
+		var dv := _split(int(pr["cas_def"]))
+		var av := _split(int(pr["cas_att"]))
+		out.append("Düşman: %s · Birliğimiz: %s" % [Battle.cas_words(def.side, dv), Battle.cas_words(att.side, av)])
+		out.append("Cephane: -%d%% · yorgunluk +15" % int(att.ammo_cost("bayonet" if pr["bayonet"] else "attack")))
+		if odds < 1.0:
+			out.append("İpucu: topçuyla önce bastır, yanına birlik getirip kuşat ya da süngüyü aç.")
+	else:
+		out.append("KESİN SONUÇ · %s" % pr.get("outcome", ""))
+		out.append("Atış gücü %d" % int(pr.get("att_base", 0)))
+		for f in pr["att_f"]:
+			out.append("   x%.2f  %s" % [f[1], f[0]])
+		for f in pr["def_f"]:
+			out.append("   x%.2f  %s" % [f[1], f[0]])
+		out.append("Mermi: -%d%% (%s)" % [int(att.ammo_cost("fire")), att.ammo_text()])
+	return out
+
+
+static func _split(n: int) -> Vector2i:
+	var d := int(round(n * 0.3))
+	return Vector2i(d, n - d)
 
 
 func turn_banner(t: int, total: int, time: String) -> void:
@@ -651,11 +730,12 @@ func show_briefing(sc: Dictionary, done: Callable) -> void:
 
 
 const TUTORIAL := [
-	["1 · Amacın", "Sol üstteki HEDEFLER panelinde görevin yazar. 'ZORUNLU' hedef sağlanamazsa harekât başarısız olur; ★ hedefler yıldız kazandırır. Haritada hedef tepeler altın direkli bayraklarla işaretlidir; bayrak, tepeyi kimin tuttuğunu gösterir. Kırmızı yanıp sönen halka, tepenin tehlikede olduğu anlamına gelir. Üst çubukta kaç tur kaldığı görünür."],
-	["2 · Birliklerin", "Kendi birliğine tıkla: sağda kartı açılır (asker sayısı, moral, cephane, gerçek teçhizat). Haritada sarı hücreler gidebileceği, kırmızı hücreler saldırabileceği yerlerdir. Fareyi bir hücrenin üstünde tutunca yol önizlemesi ve saldırı tahmini (beklenen şehit ve yaralı, güç oranı) görünür."],
-	["3 · Strateji: emirler", "Her birliği tek tek oynatmak zorunda değilsin. Birliğe 'Taarruz' emri verip haritada hedefe tıkla: kırmızı harekât oku çizilir ve birlik her tur kendiliğinden o yöne ilerler. 'Savun' yerinde siper kazdırır, 'Yedekte bekle' birliği dinlendirir. 'Emri bütün alaya ver' ile alayı birlikte yönetirsin. Emirler Turu Bitir'e basınca uygulanır."],
-	["4 · Taktik", "Yüksek yer savunana büyük üstünlük verir; siper kazan birlik zor yerinden edilir. Süngü hücumu (B) düşman moralini kırar ama kendi şehit ve yaralı sayın da artar. Cephanesi biten birlik ancak süngüyle çarpışır. Moral sıfıra yaklaşan birlik geri çekilir. Karargâhın yakınındaki birliklerin morali yükselir. Topçu tepe arkasından da ateş edebilir; gemi topları ise ancak gördüğünü vurur."],
-	["5 · Tur", "Her tur gerçek bir zaman dilimidir. Turu bitirince önce emirlerin uygulanır, sonra düşman oynar; mavi oklar düşmanın hareketlerini gösterir. Her turun başında KURMAY RAPORU tehlikeleri, gelen takviyeleri ve tarihten bir öneriyi söyler."],
+	["1 · Amacın", "Sol üstteki HEDEFLER panelinde görevin yazar. 'ZORUNLU' hedef sağlanamazsa harekât başarısız olur; ★ hedefler yıldız kazandırır. Hedef tepeler altın direkli bayraklarla işaretlidir; bayrak tepeyi kimin tuttuğunu gösterir, kırmızı halka tehlikeyi. Üst çubukta kaç tur kaldığı görünür."],
+	["2 · Şans yok", "Bu oyunda zar yoktur: her çarpışmanın sonucu kesindir. Kendi birliğini seçip fareyi düşmanın üstünde tut: iki tarafın ateş gücü, her etken (moral, yorgunluk, talim, cephane, arazi, yükseklik, siper, duruş, kuşatma, topçu bastırması) ve kesin zayiat tablosu görünür. Belirsizlik yalnızca göremediğin düşmandadır: uzaktaki düşmanın gücü tahminidir, maki ve derelerdeki birlikler gizlenir."],
+	["3 · Komuta: emir puanı", "Her tur sınırlı emir puanın vardır (üst çubuk). Bir birliği elle yönetmek, emir vermek ya da duruşunu değiştirmek 1 puan; karargâh menzili dışındaki birlik için 2 puandır. Taarruz, Savun, Yedek ve Serbest ateş emirleri tur sonunda puan harcamadan uygulanır: iyi bir komutan planını emirlerle kurar, elle müdahaleyi kritik anlara saklar. Karargâhı birliklerinin yakınında tut."],
+	["4 · İkmal, yorgunluk, duruş", "Cephane yalnızca ikmal hattındaki birliklere gelir (İkmal düğmesi: yeşil alan). Tabyaların mermisi sınırlıdır: ne zaman ateş edeceğini sen seç. Yürüyüş ve çarpışma yorar; yorgun birlik zayıflar. Duruşlar: İntikal (hızlı, ama saldıramaz), Muharebe, Savunma (+%25, hızlı siper), Dinlenme (toparlanır)."],
+	["5 · Birleşik harekât", "Önce topçuyla düşmanı bastır (bastırılan birliğin gücü düşer), sonra komşu birliklerle kuşatıp (her ek birlik +%12) süngüyle saldır. Güç oranı 2'yi aşarsa düşman çekilmek zorundadır; kaçacak yeri yoksa esir düşer. Yüksek yer ve siper savunana büyük üstünlük verir."],
+	["6 · Tur", "Turu bitirince emirlerin uygulanır, sonra düşman oynar; mavi oklar düşmanın görülen hareketleridir. Her tur başında KURMAY RAPORU düşman hamlesini, ikmal ve komuta sorunlarını, yorgun birlikleri ve tarihten bir öneriyi söyler. Muharebe Düzeni düğmesi bütün birliklerinin durumunu tek tabloda gösterir."],
 ]
 
 
@@ -785,3 +865,77 @@ func _show_menu() -> void:
 		show_tutorial(), 400))
 	v.add_child(UiTheme.button("Yeniden Başla", func() -> void: get_tree().reload_current_scene(), 400))
 	v.add_child(UiTheme.button("Ana Menü", func() -> void: get_tree().change_scene_to_file("res://scenes/main_menu.tscn"), 400))
+
+
+
+## Muharebe düzeni: karargâhlara göre bütün birlikler ve durumları.
+func show_oob() -> void:
+	if _overlay:
+		return
+	var v := _modal(980)
+	v.add_child(UiTheme.title("MUHAREBE DÜZENİ", 30, UiTheme.GOLD))
+	var sc := ScrollContainer.new()
+	sc.custom_minimum_size = Vector2(940, minf(520.0, get_viewport_rect().size.y - 200.0))
+	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	v.add_child(sc)
+	var list := VBoxContainer.new()
+	list.add_theme_constant_override("separation", 3)
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sc.add_child(list)
+	var groups := {}
+	for u in b.units:
+		if u.side != b.player_side or u.state == "dead" or u.state == "retired":
+			continue
+		var key := u.hq_id if u.hq_id != "" else ("_" + u.id if u.is_hq() else "_bağımsız")
+		if u.is_hq():
+			key = u.id
+		if not groups.has(key):
+			groups[key] = []
+		(groups[key] as Array).append(u)
+	var hdr := HBoxContainer.new()
+	for t in [["Birlik", 250], ["Asker", 80], ["Moral", 70], ["Dinçlik", 75], ["Cephane", 80], ["Duruş", 140], ["İkmal", 70], ["Komuta", 75], ["Emir", 150]]:
+		var l := UiTheme.label(t[0], 14, UiTheme.GOLD)
+		l.custom_minimum_size.x = t[1]
+		hdr.add_child(l)
+	list.add_child(hdr)
+	for key: String in groups:
+		var hq := b.find_unit(key)
+		var title := ("Karargâh: " + hq.name + (" · " + hq.commander if hq.commander != "" else "")) if hq else "Bağımsız birlikler"
+		var gl := UiTheme.label(title, 16, Color(0.95, 0.85, 0.6))
+		gl.add_theme_font_override("font", UiTheme.font("bold"))
+		list.add_child(gl)
+		for u: Unit in groups[key]:
+			list.add_child(_oob_row(u))
+	var cc := CenterContainer.new()
+	cc.add_child(UiTheme.button("Kapat", _close_modal, 200))
+	v.add_child(cc)
+
+
+func _oob_row(u: Unit) -> Control:
+	var row := HBoxContainer.new()
+	var reserve := u.state == "reserve"
+	var vals := [
+		[("   " if not u.is_hq() else "") + u.name, 250],
+		[str(u.men) if not u.uses_hp() else "%%%d" % int(u.strength() * 100), 80],
+		["%d" % int(u.morale), 70],
+		["%d" % int(100 - u.fatigue), 75],
+		["%d%%" % int(u.ammo), 80],
+		["(Tur %d'de gelir)" % u.arrive_turn if reserve else u.stance_title(), 140],
+		["—" if reserve else ("✔" if u.in_supply else "✘"), 70],
+		["—" if reserve else ("✔" if u.in_command else "✘"), 75],
+		[u.order_title(), 150],
+	]
+	for vv in vals:
+		var l := UiTheme.label(String(vv[0]), 14, UiTheme.MUTED if reserve else UiTheme.TEXT)
+		l.custom_minimum_size.x = vv[1]
+		l.clip_text = true
+		row.add_child(l)
+	if not reserve:
+		row.mouse_filter = Control.MOUSE_FILTER_STOP
+		row.tooltip_text = "Seç ve haritada göster"
+		row.gui_input.connect(func(e: InputEvent) -> void:
+			if e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_LEFT:
+				_close_modal()
+				b.select(u)
+				b.mcam.focus(b.map.cell_world(u.cell), Battle.WORLD_W * 0.35))
+	return row

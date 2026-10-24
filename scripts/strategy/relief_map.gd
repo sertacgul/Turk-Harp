@@ -8,6 +8,8 @@ const MARK_MOVE := 1
 const MARK_ATTACK := 2
 const MARK_SELECTED := 3
 const MARK_PATH := 4
+const MARK_SUPPLY := 5
+const MARK_NOSUPPLY := 6
 
 var geo: GeoMap
 var grid: HexGrid

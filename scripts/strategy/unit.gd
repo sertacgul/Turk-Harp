@@ -51,7 +51,29 @@ var losses := 0
 var order := ""
 var order_cell := Vector2i(-1, -1)
 var order_name := ""
+## Duruş: normal (muharebe düzeni), march (intikal/yürüyüş kolu), defend (savunma), rest (dinlenme)
+var stance := "normal"
+## 0..100: yürüyüş ve çarpışmayla artar, dinlenmeyle azalır
+var fatigue := 0.0
+## Talim/tecrübe: 0 acemi, 1 talimli, 2 tecrübeli, 3 seçkin
+var training := 1
+## Bağlı olduğu karargâhın kimliği ve komuta durumu
+var hq_id := ""
+var in_command := true
+## Karargâhlar için komuta menzili (hücre)
+var command_range := 0
+## İkmal durumu
+var in_supply := true
+var out_supply_turns := 0
+## Topçu ateşiyle bastırılma (0..0.6): muharebe değerini düşürür
+var suppression := 0.0
+## Silah başına mermi (topçu, tabya, gemi); 0 ise türüne göre varsayılan
+var shells_per_gun := 0
 var counter: Node3D
+
+const EXP_TITLES := ["Acemi", "Talimli", "Tecrübeli", "Seçkin"]
+const EXP_MULT := [0.85, 1.0, 1.12, 1.25]
+const STANCE_TITLES := {"normal": "Muharebe düzeni", "march": "İntikal (yürüyüş kolu)", "defend": "Savunma", "rest": "Dinlenme"}
 
 
 func is_naval() -> bool:
@@ -172,6 +194,90 @@ func order_title() -> String:
 
 
 
+func exp_title() -> String:
+	return EXP_TITLES[clampi(training, 0, 3)]
+
+
+func exp_mult() -> float:
+	return EXP_MULT[clampi(training, 0, 3)]
+
+
+func stance_title() -> String:
+	return STANCE_TITLES.get(stance, stance)
+
+
+## Yorgunluk hareket puanını düşürür; intikal duruşu artırır.
+func effective_mp() -> float:
+	var m := mp_max * (1.0 - fatigue / 300.0)
+	if stance == "march":
+		m *= 1.5
+	return m
+
+
+func can_act_move() -> bool:
+	return can_move() and stance in ["normal", "march"]
+
+
+func can_act_attack() -> bool:
+	return stance == "normal"
+
+
+## Silah başına tam mermi (topçu ve tabyalar için sınırlı stok)
+func shells_full() -> int:
+	if shells_per_gun > 0:
+		return shells_per_gun
+	if is_naval():
+		return 80
+	if is_fort():
+		return 40
+	for id_ in ranged_items():
+		if String(id_).contains("obus"):
+			return 60
+	return 120
+
+
+func gun_count() -> int:
+	var n := 0
+	for id_ in ranged_items():
+		n += int(equipment[id_])
+	return n
+
+
+func rifle_count() -> int:
+	var n := 0
+	for id_: String in equipment:
+		if not Equipment.is_ranged(id_) and Equipment.info(id_)["kind"] == "tüfek":
+			n += int(equipment[id_])
+	return n
+
+
+## Cephane gerçek sayılarla: piyadede fişek (tüfek başına 150), topçuda mermi.
+func ammo_text() -> String:
+	var f := ammo / 100.0
+	if not ranged_items().is_empty() and (is_artillery() or is_fort() or is_naval()):
+		var total := gun_count() * shells_full()
+		return "%d / %d mermi" % [int(round(total * f)), total]
+	var rounds := int(round(maxi(rifle_count(), 1) * 150 * strength() * f))
+	return "%s fişek (~%d hücumluk)" % [str(rounds), int(floor(ammo / 25.0))]
+
+
+## Bir eylemin cephane bedeli (yüzde)
+func ammo_cost(action: String) -> float:
+	match action:
+		"attack":
+			return 25.0
+		"bayonet":
+			return 8.0
+		"defend":
+			return 8.0
+		"fire":
+			if is_naval():
+				return 5.0
+			# Bir ateş görevi: tabyada silah başına 4, sahra ve dağ topunda 12 mermi
+			return (4.0 if is_fort() else 12.0) * 100.0 / float(shells_full())
+	return 0.0
+
+
 func kind_title() -> String:
 	return {"infantry": "Piyade", "mg": "Makineli tüfek", "artillery": "Topçu", "fort": "Tabya", "ship": "Zırhlı", "sweeper": "Mayın tarayıcı", "hq": "Karargâh"}.get(kind, kind)
 
@@ -203,4 +309,10 @@ static func from_dict(d: Dictionary) -> Unit:
 	u.role = d.get("role", "hold")
 	u.goal_name = d.get("goal", "")
 	u.retire_hp = float(d.get("retire_hp", 0.0))
+	u.training = int(d.get("exp", 1))
+	u.hq_id = d.get("hq", "")
+	u.command_range = int(d.get("command_range", 0))
+	u.shells_per_gun = int(d.get("shells", 0))
+	u.stance = d.get("stance", "normal")
+	u.fatigue = float(d.get("fatigue", 0.0))
 	return u

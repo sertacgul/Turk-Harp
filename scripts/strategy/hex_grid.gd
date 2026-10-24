@@ -31,6 +31,9 @@ class Cell:
 	var owner := ""
 	var mines := 0
 	var mines_known := false
+	## Arazi türü (Terrain.TABLE anahtarı) ve yol
+	var terrain := "açık"
+	var road := false
 
 	func is_sea() -> bool:
 		return land < 0.35

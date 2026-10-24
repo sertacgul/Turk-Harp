@@ -142,6 +142,10 @@ void fragment() {
 		col = mix(col, vec3(0.95, 0.15, 0.1), 0.3 + rim * 0.5);
 	} else if (mark == 3) {
 		col = mix(col, vec3(1.0, 0.95, 0.6), rim * 0.9);
+	} else if (mark == 5) {
+		col = mix(col, vec3(0.2, 0.65, 0.25), 0.22);
+	} else if (mark == 6) {
+		col = mix(col, vec3(0.75, 0.15, 0.1), 0.18);
 	} else if (mark == 4) {
 		col = mix(col, vec3(1.0, 0.75, 0.2), 0.45 + rim * 0.4);
 	}

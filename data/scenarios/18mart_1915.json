@@ -17,6 +17,23 @@
   "minutes_per_turn": 30,
   "turns": 16,
   "player_side": "ottoman",
+  "command_points": 6,
+  "depots": [
+    {
+      "name": "Çanakkale cephaneliği",
+      "lat": 40.14,
+      "lon": 26.425,
+      "side": "ottoman",
+      "range_km": 8.0
+    },
+    {
+      "name": "Kilitbahir cephaneliği",
+      "lat": 40.145,
+      "lon": 26.365,
+      "side": "ottoman",
+      "range_km": 6.0
+    }
+  ],
   "focus": [
     40.09,
     26.33,
@@ -120,12 +137,14 @@
     {
       "name": "Seddülbahir",
       "lat": 40.0447,
-      "lon": 26.1889
+      "lon": 26.1889,
+      "village": true
     },
     {
       "name": "Kumkale",
       "lat": 39.994,
-      "lon": 26.205
+      "lon": 26.205,
+      "village": true
     },
     {
       "name": "Morto Koyu",
@@ -145,22 +164,26 @@
     {
       "name": "Kepez",
       "lat": 40.0955,
-      "lon": 26.3931
+      "lon": 26.3931,
+      "village": true
     },
     {
       "name": "Kilitbahir",
       "lat": 40.1478,
-      "lon": 26.3793
+      "lon": 26.3793,
+      "village": true
     },
     {
       "name": "Çanakkale",
       "lat": 40.1463,
-      "lon": 26.4029
+      "lon": 26.4029,
+      "village": true
     },
     {
       "name": "Eceabat",
       "lat": 40.1852,
-      "lon": 26.3591
+      "lon": 26.3591,
+      "village": true
     },
     {
       "name": "Dar Geçit",
@@ -267,6 +290,26 @@
   ],
   "units": [
     {
+      "id": "hq_cevat",
+      "name": "Çanakkale Müstahkem Mevki Komutanlığı",
+      "short": "Cevat Paşa",
+      "side": "ottoman",
+      "kind": "hq",
+      "size": "tümen",
+      "commander": "Mirliva Cevat Paşa",
+      "men": 60,
+      "equipment": {
+        "mauser_1903": 40
+      },
+      "morale": 100,
+      "mp": 0,
+      "lat": 40.135,
+      "lon": 26.43,
+      "command_range": 40,
+      "exp": 3,
+      "note": "Tabyalar ve bataryalar telefon hatlarıyla bu karargâha bağlıydı."
+    },
+    {
       "id": "mecidiye",
       "name": "Rumeli Mecidiye Tabyası",
       "short": "Mecidiye",
@@ -284,7 +327,10 @@
       "vision": 14,
       "lat": 40.1411,
       "lon": 26.3739,
-      "note": "Seyit Onbaşı bu tabyadaydı. (Top sayıları oyun için yaklaşıktır.)"
+      "note": "Seyit Onbaşı bu tabyadaydı. (Top sayıları oyun için yaklaşıktır.)",
+      "hq": "hq_cevat",
+      "exp": 2,
+      "shells": 40
     },
     {
       "id": "hamidiye",
@@ -304,7 +350,10 @@
       "vision": 14,
       "lat": 40.1375,
       "lon": 26.4028,
-      "note": "Boğaz'ın en ağır toplarına sahip tabya."
+      "note": "Boğaz'ın en ağır toplarına sahip tabya.",
+      "hq": "hq_cevat",
+      "exp": 2,
+      "shells": 44
     },
     {
       "id": "namazgah",
@@ -323,7 +372,10 @@
       "entrench": 2,
       "vision": 14,
       "lat": 40.15,
-      "lon": 26.379
+      "lon": 26.379,
+      "hq": "hq_cevat",
+      "exp": 2,
+      "shells": 40
     },
     {
       "id": "cimenlik",
@@ -342,7 +394,10 @@
       "entrench": 2,
       "vision": 14,
       "lat": 40.149,
-      "lon": 26.4
+      "lon": 26.4,
+      "hq": "hq_cevat",
+      "exp": 2,
+      "shells": 36
     },
     {
       "id": "dardanos",
@@ -361,7 +416,10 @@
       "vision": 12,
       "lat": 40.0842,
       "lon": 26.37,
-      "note": "Mesudiye zırhlısından sökülen toplarla kurulan batarya; 18 Mart'ta ağır ateş altında görevini sürdürdü."
+      "note": "Mesudiye zırhlısından sökülen toplarla kurulan batarya; 18 Mart'ta ağır ateş altında görevini sürdürdü.",
+      "hq": "hq_cevat",
+      "exp": 2,
+      "shells": 60
     },
     {
       "id": "obus_a",
@@ -380,7 +438,9 @@
       "vision": 3,
       "lat": 40.068,
       "lon": 26.39,
-      "note": "Erenköy sırtlarının arkasına gizlenen seyyar obüsler İtilaf gemilerince bir türlü bulunamadı."
+      "note": "Erenköy sırtlarının arkasına gizlenen seyyar obüsler İtilaf gemilerince bir türlü bulunamadı.",
+      "hq": "hq_cevat",
+      "exp": 2
     },
     {
       "id": "obus_r",
@@ -398,7 +458,9 @@
       "entrench": 1,
       "vision": 3,
       "lat": 40.108,
-      "lon": 26.295
+      "lon": 26.295,
+      "hq": "hq_cevat",
+      "exp": 2
     },
     {
       "id": "obus_k",
@@ -416,7 +478,9 @@
       "entrench": 1,
       "vision": 3,
       "lat": 40.1,
-      "lon": 26.405
+      "lon": 26.405,
+      "hq": "hq_cevat",
+      "exp": 2
     },
     {
       "id": "qe",
@@ -458,7 +522,8 @@
         12,
         13
       ],
-      "note": "Dönemin en güçlü zırhlısı. 15 inçlik topları tabyaları uzaktan dövdü."
+      "note": "Dönemin en güçlü zırhlısı. 15 inçlik topları tabyaları uzaktan dövdü.",
+      "exp": 2
     },
     {
       "id": "agamemnon",
@@ -499,7 +564,8 @@
         1,
         12,
         13
-      ]
+      ],
+      "exp": 2
     },
     {
       "id": "lordnelson",
@@ -540,7 +606,8 @@
         1,
         12,
         13
-      ]
+      ],
+      "exp": 2
     },
     {
       "id": "inflexible",
@@ -581,7 +648,8 @@
         12,
         13
       ],
-      "note": "Muharebe kruvazörü. Tarihte 16:11'de Erenköy Koyu'nda mayına çarptı ve ağır hasarla Bozcaada'ya çekildi."
+      "note": "Muharebe kruvazörü. Tarihte 16:11'de Erenköy Koyu'nda mayına çarptı ve ağır hasarla Bozcaada'ya çekildi.",
+      "exp": 2
     },
     {
       "id": "suffren",
@@ -624,7 +692,8 @@
         7,
         8
       ],
-      "note": "Amiral Guépratte'nin bayrak gemisi; tabya ateşiyle ağır yara aldı."
+      "note": "Amiral Guépratte'nin bayrak gemisi; tabya ateşiyle ağır yara aldı.",
+      "exp": 2
     },
     {
       "id": "bouvet",
@@ -635,7 +704,7 @@
       "kind": "ship",
       "size": "gemi",
       "men": 710,
-      "hp": 90,
+      "hp": 80,
       "equipment": {
         "fr_305": 2,
         "fr_274": 2,
@@ -668,7 +737,8 @@
         7,
         8
       ],
-      "note": "Tarihte 13:58'de Erenköy Koyu'nda Nusret'in mayınlarından birine çarptı ve iki dakikada battı; 600'den fazla denizci hayatını kaybetti."
+      "note": "Tarihte 13:58'de Erenköy Koyu'nda Nusret'in mayınlarından birine çarptı; cephaneliği patladı ve iki dakikada battı. 600'den fazla denizci hayatını kaybetti. (Eski gövdesi nedeniyle dayanıklılığı düşüktür.)",
+      "exp": 2
     },
     {
       "id": "gaulois",
@@ -712,7 +782,8 @@
         7,
         8
       ],
-      "note": "Tarihte tabya ateşiyle su aldı, batmamak için Tavşan Adası'nda karaya oturtuldu."
+      "note": "Tarihte tabya ateşiyle su aldı, batmamak için Tavşan Adası'nda karaya oturtuldu.",
+      "exp": 2
     },
     {
       "id": "charlemagne",
@@ -754,7 +825,8 @@
         4,
         7,
         8
-      ]
+      ],
+      "exp": 2
     },
     {
       "id": "vengeance",
@@ -796,7 +868,8 @@
         8,
         14,
         15
-      ]
+      ],
+      "exp": 2
     },
     {
       "id": "irresistible",
@@ -839,7 +912,8 @@
         12,
         15
       ],
-      "note": "Tarihte 16:15'te Erenköy Koyu'nda mayına çarptı; mürettebatı tahliye edildi, gemi akşam battı."
+      "note": "Tarihte 16:15'te Erenköy Koyu'nda mayına çarptı; mürettebatı tahliye edildi, gemi akşam battı.",
+      "exp": 2
     },
     {
       "id": "albion",
@@ -881,7 +955,8 @@
         8,
         14,
         15
-      ]
+      ],
+      "exp": 2
     },
     {
       "id": "ocean",
@@ -924,7 +999,8 @@
         15,
         16
       ],
-      "note": "Tarihte Irresistible'ı kurtarmaya çalışırken 18:05'te mayına çarptı ve battı."
+      "note": "Tarihte Irresistible'ı kurtarmaya çalışırken 18:05'te mayına çarptı ve battı.",
+      "exp": 2
     },
     {
       "id": "swiftsure",
@@ -961,7 +1037,8 @@
       "plan": [
         9,
         15
-      ]
+      ],
+      "exp": 2
     },
     {
       "id": "majestic",
@@ -998,7 +1075,8 @@
       "plan": [
         9,
         15
-      ]
+      ],
+      "exp": 2
     },
     {
       "id": "sweep1",
@@ -1026,7 +1104,8 @@
           26.245
         ]
       ],
-      "note": "Sivil mürettebatlı balıkçı gemileri; ateş altında taramayı bırakıp geri döndüler."
+      "note": "Sivil mürettebatlı balıkçı gemileri; ateş altında taramayı bırakıp geri döndüler.",
+      "exp": 0
     },
     {
       "id": "sweep2",
@@ -1053,7 +1132,8 @@
           40.018,
           26.245
         ]
-      ]
+      ],
+      "exp": 0
     }
   ],
   "events": [

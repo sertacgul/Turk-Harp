@@ -63,6 +63,16 @@ var arrivals: Array[String] = []
 var _seen_enemy_ids := {}
 var report: Array = []
 var follow_enemy := true
+## Emir puanı (komuta-kontrol): elle yönetilen her birlik ve verilen her emir puan harcar.
+var cp := 0
+var cp_max := 8
+## İkmal noktaları: {name, cell, side, range}; ikmal ağı: taraf -> {hücre: maliyet}
+var depots: Array = []
+var supply_net := {Unit.OTTOMAN: {}, Unit.ENTENTE: {}}
+var show_supply := false
+var _roads: Node3D
+## Düşman turunun özeti (kurmay raporu için)
+var enemy_turn := {}
 static var _soft_tex: GradientTexture2D
 
 
@@ -131,6 +141,28 @@ func _build_world() -> void:
 		cell.owner = p.get("owner", "")
 		if vp == 0:
 			map.add_place_label(p["name"], lp, 0.95, Color(0.16, 0.1, 0.06), p.get("minor", false))
+	Terrain.classify(grid, hex_m)
+	for p: Dictionary in scenario.get("places", []):
+		if p.get("village", false):
+			var vc := place_cell(p["name"])
+			if grid.has(vc) and grid.cell(vc).is_land():
+				grid.cell(vc).terrain = "köy"
+	_roads = Node3D.new()
+	add_child(_roads)
+	for road: Array in scenario.get("roads", []):
+		var rc := Terrain.mark_road(grid, geo, road)
+		if rc.size() >= 2:
+			var pts: Array[Vector3] = []
+			for c in rc:
+				pts.append(map.cell_world(c))
+			_roads.add_child(_ribbon(pts, Color(0.42, 0.26, 0.12, 0.8), hex_m * map.s * 0.05))
+	for dp: Dictionary in scenario.get("depots", []):
+		var dc := grid.nearest(geo.local(dp["lat"], dp["lon"]))
+		# Menzil kilometre olarak verilir; arazi maliyetine çevrilir (ortalama hücre maliyeti ~1,4).
+		depots.append({"name": dp["name"], "cell": dc, "side": dp.get("side", Unit.OTTOMAN), "range": float(dp.get("range_km", 4.0)) * 1000.0 / hex_m * 1.4})
+		map.add_place_label("⚑ " + String(dp["name"]), grid.cell(dc).center, 0.8,
+			Color(0.1, 0.35, 0.1) if dp.get("side", Unit.OTTOMAN) == Unit.OTTOMAN else Color(0.15, 0.2, 0.45), true)
+	cp_max = int(scenario.get("command_points", 8))
 	for m: Dictionary in scenario.get("minefields", []):
 		var c := grid.nearest(geo.local(m["lat"], m["lon"]))
 		grid.cell(c).mines = int(m.get("mines", 5))
@@ -324,7 +356,15 @@ func update_vision(side: String) -> void:
 		for k in grid.within(u.cell, r):
 			if s.has(k):
 				continue
-			if HexGrid.distance(u.cell, k) <= 1 or los(u.cell, k, _eye(u)):
+			var dk := HexGrid.distance(u.cell, k)
+			if dk <= 1:
+				s[k] = true
+				continue
+			# Maki, dere ve köydeki birlikler ancak yakından ya da yukarıdan görülür.
+			var tk := grid.cell(k)
+			if Terrain.info(tk.terrain)["conceal"] and dk > 2 and c.top < tk.elev + 40.0:
+				continue
+			if los(u.cell, k, _eye(u)):
 				s[k] = true
 	seen[side] = s
 
@@ -354,8 +394,14 @@ func move_cost(u: Unit, a: Vector2i, b: Vector2i) -> float:
 	if cb.is_sea():
 		return INF
 	var ca := grid.cell(a)
+	var base: float = Terrain.info(cb.terrain)["move"]
+	if cb.road and ca.road:
+		base = 0.5
 	var climb := maxf(0.0, cb.elev - ca.elev)
-	return 1.0 + climb / (hex_m * 0.12) + cb.rough / (hex_m * 0.35)
+	var cost := base + climb / (hex_m * 0.12)
+	if u.stance == "march":
+		cost *= 0.8
+	return cost
 
 
 ## Dijkstra: hücre -> [maliyet, önceki]. Düşmana komşu hücreye girilir ama oradan devam edilmez.
@@ -381,6 +427,9 @@ func compute_reach(u: Unit, budget := -1.0, ignore_zoc := false) -> Dictionary:
 				continue
 			var mc := move_cost(u, cc, n)
 			if mc == INF:
+				continue
+			# Yürüyüş kolundaki birlik düşmana temas eden hücreye giremez.
+			if u.stance == "march" and not ignore_zoc and is_enemy_adjacent(u, n):
 				continue
 			var nc := cost + mc
 			# İlk adım her zaman atılabilir (yavaş ilerleme)
@@ -440,6 +489,7 @@ func move_unit(u: Unit, path: Array[Vector2i]) -> void:
 	if u.side == ai_side and u.alive() and (seen[player_side].has(start) or seen[player_side].has(u.cell)) and start != u.cell:
 		_enemy_moves.append([start, u.cell])
 	u.mp = maxf(0.0, u.mp - spent)
+	u.fatigue = minf(100.0, u.fatigue + spent * (2.5 if u.stance == "march" else 4.0))
 	u.moved = true
 	_update_control(u.cell)
 	busy = false
@@ -450,11 +500,12 @@ func _check_mine(u: Unit, c: Vector2i) -> bool:
 	var cell := grid.cell(c)
 	if cell.mines <= 0 or u.side == Unit.OTTOMAN:
 		return false
-	if rng.randf() > 0.45:
-		return false
 	cell.mines -= 1
+	# Patlamadan sonra bu hücredeki mayın hattı fark edilir; diğer gemiler buradan kaçınır.
+	cell.mines_known = true
 	_update_mine_marker(c)
-	var dmg := rng.randf_range(60.0, 115.0) * (0.75 if u.hp_max > 110.0 else 1.0)
+	# Kesin hasar: bir mayın eski bir zırhlıyı neredeyse batırır.
+	var dmg := 85.0 * (0.8 if u.hp_max > 110.0 else 1.0)
 	if u.kind == "sweeper":
 		dmg = 100.0
 	u.hp -= dmg
@@ -510,13 +561,13 @@ func attack_targets(u: Unit) -> Array[Vector2i]:
 	var out: Array[Vector2i] = []
 	if u.attacked or u.suppressed > 0 or not u.alive():
 		return out
-	if u.can_melee() and u.morale >= 20.0:
+	if u.can_melee() and u.morale >= 20.0 and u.can_act_attack():
 		for n in grid.neighbors(u.cell):
 			var o := unit_at(n)
 			if o and o.side != u.side and not o.is_naval() and visible_to(o, u.side):
 				out.append(n)
 	var ranged := u.ranged_items()
-	if not ranged.is_empty() and u.ammo > 0.0 and not (u.is_artillery() and u.moved):
+	if not ranged.is_empty() and u.ammo > 0.0 and not (u.is_artillery() and u.moved) and u.stance in ["normal", "defend"]:
 		var rmax := u.max_range_m()
 		for o in units:
 			if not o.alive() or o.side == u.side or not visible_to(o, u.side) or out.has(o.cell):
@@ -543,8 +594,8 @@ func preview(u: Unit, target: Vector2i) -> Dictionary:
 	if d == null:
 		return {"odds": 0.0, "cas_att": 0, "cas_def": 0, "retreat": false, "hard": false, "dmg": 0.0, "cas": 0, "mor": 0.0, "dist": 0.0}
 	if is_melee(u, target):
-		return Combat.melee(self, u, d, bayonet and u.side == player_side, false)
-	return Combat.ranged(self, u, d, false)
+		return Combat.melee(self, u, d, bayonet and u.side == player_side)
+	return Combat.ranged(self, u, d)
 
 
 func attack(u: Unit, target: Vector2i, use_bayonet := false) -> void:
@@ -574,8 +625,11 @@ func attack(u: Unit, target: Vector2i, use_bayonet := false) -> void:
 		d.losses += res["cas_def"]
 		u.morale = clampf(u.morale - res["mor_att"], 0.0, 100.0)
 		d.morale = clampf(d.morale - res["mor_def"], 0.0, 100.0)
-		u.ammo = maxf(0.0, u.ammo - (6.0 if use_bayonet else 16.0))
-		d.ammo = maxf(0.0, d.ammo - 10.0)
+		u.ammo = maxf(0.0, u.ammo - u.ammo_cost("bayonet" if use_bayonet else "attack"))
+		d.ammo = maxf(0.0, d.ammo - d.ammo_cost("defend"))
+		u.fatigue = minf(100.0, u.fatigue + 15.0)
+		d.fatigue = minf(100.0, d.fatigue + 6.0)
+		_note_combat(u, d, res["cas_att"], res["cas_def"])
 		Sfx.play("volley", -3.0)
 		if u.equipment.has("maxim_1909") or u.equipment.has("maxim_303") or d.equipment.has("maxim_1909") or d.equipment.has("maxim_303"):
 			Sfx.play("mg", -6.0)
@@ -606,16 +660,17 @@ func attack(u: Unit, target: Vector2i, use_bayonet := false) -> void:
 		var res := Combat.ranged(self, u, d)
 		if instant:
 			print("  T%d %s => %s dist=%.1fkm dmg=%.1f cas=%d" % [turn, u.short, d.short, res["dist"] / 1000.0, res["dmg"], res["cas"]])
-		u.ammo = maxf(0.0, u.ammo - 8.0)
+		u.ammo = maxf(0.0, u.ammo - u.ammo_cost("fire"))
 		if u.is_artillery():
 			u.mp = 0.0
+		_note_combat(u, d, 0, res["cas"])
 		Sfx.play("cannon" if u.is_naval() or u.is_fort() else "far_boom", -6.0)
 		fx_burst(aw + Vector3(0, hex_world * 0.25, 0), "muzzle")
 		if not instant:
 			Sfx.play("shell_whistle", -12.0)
 		await shell_flight(aw + Vector3(0, hex_world * 0.3, 0), dw + Vector3(0, hex_world * 0.1, 0), not u.needs_los())
-		if d.is_naval() and rng.randf() < 0.3:
-			fx_burst(dw + Vector3(rng.randf_range(-1, 1), 0, rng.randf_range(-1, 1)) * hex_world * 0.5, "splash")
+		if d.is_naval():
+			fx_burst(dw + Vector3(0.6, 0, -0.4) * hex_world * 0.5, "splash")
 		fx_burst(dw, "shell" if not d.is_naval() else "hit")
 		Sfx.play("boom", -8.0)
 		if d.is_naval():
@@ -646,6 +701,7 @@ func attack(u: Unit, target: Vector2i, use_bayonet := false) -> void:
 		else:
 			d.men -= res["cas"]
 			d.losses += res["cas"]
+			d.suppression = minf(0.6, d.suppression + float(res["supp"]))
 			var cs := add_cas(d.side, res["cas"])
 			d.morale = clampf(d.morale - res["mor"], 0.0, 100.0)
 			log_line("%s, %s birliğini ateş altına aldı: %s." % [u.name, d.name, cas_words(d.side, cs)],
@@ -684,7 +740,7 @@ func _retreat(d: Unit, from: Vector2i) -> bool:
 	for n in grid.neighbors(d.cell):
 		if by_cell.has(n) or move_cost(d, d.cell, n) == INF:
 			continue
-		var sc := float(HexGrid.distance(n, from)) * 2.0 - (3.0 if is_enemy_adjacent(d, n) else 0.0) + rng.randf() * 0.3
+		var sc := float(HexGrid.distance(n, from)) * 2.0 - (3.0 if is_enemy_adjacent(d, n) else 0.0) + grid.cell(n).elev * 0.001
 		if sc > bs:
 			bs = sc
 			best = n
@@ -779,29 +835,30 @@ func _begin_turn() -> void:
 			if u.alive() and u.side == player_side:
 				log_line("%s harekât alanına ulaştı." % u.name, UiTheme.GOLD)
 				arrivals.append(u.name)
+	_compute_supply(Unit.OTTOMAN)
+	_compute_supply(Unit.ENTENTE)
+	_compute_command(Unit.OTTOMAN)
+	_compute_command(Unit.ENTENTE)
 	for u in units:
 		if not u.alive():
 			continue
-		u.mp = u.mp_max
 		u.moved = false
 		u.attacked = false
 		u.dug = false
+		u.mp = u.effective_mp() if u.can_act_move() else 0.0
 		var contact := is_enemy_adjacent(u, u.cell)
-		if u.uses_hp():
-			if u.is_fort():
-				u.hp = minf(u.hp_max, u.hp + 2.0)
-			u.ammo = minf(100.0, u.ammo + 6.0)
-		else:
-			u.ammo = minf(100.0, u.ammo + (4.0 if contact else 12.0) * hours)
-		u.morale = minf(float(u.get_meta("morale_cap", 95.0)), u.morale + (2.0 if contact else 6.0))
+		_resupply(u, contact)
+		var mor := 2.0 if contact else 6.0
+		if u.stance == "rest":
+			mor += 6.0
+		if u.in_command and u.hq_id != "":
+			mor += 2.0
+		if not u.in_supply and u.out_supply_turns >= 2:
+			mor -= 5.0
+		u.morale = clampf(u.morale + mor, 0.0, float(u.get_meta("morale_cap", 95.0)))
 		if is_instance_valid(u.counter):
 			u.counter.refresh()
-	# Karargâh yakınındaki birliklerin morali yükselir.
-	for h in units:
-		if h.alive() and h.is_hq():
-			for o in units:
-				if o.alive() and o.side == h.side and o != h and HexGrid.distance(o.cell, h.cell) <= 2:
-					o.morale = minf(100.0, o.morale + 8.0)
+	cp = cp_max
 	for u in units:
 		u.set_meta("turn_dmg", 0.0)
 	bayonet_boost = 1.0
@@ -838,6 +895,7 @@ func end_turn() -> void:
 	_end_side(player_side)
 	phase = "ai"
 	_enemy_moves.clear()
+	enemy_turn = {"attacks": 0, "our": 0, "their": 0, "places": []}
 	ui.refresh()
 	await BattleAI.play(self, ai_side)
 	_end_side(ai_side)
@@ -857,9 +915,21 @@ func _end_side(side: String) -> void:
 		if u.alive() and u.side == side:
 			if u.suppressed > 0:
 				u.suppressed -= 1
-			# Yerinden kımıldamayan ve saldırmayan birlik siper kazar.
-			if not u.moved and not u.attacked and u.is_land() and not u.is_fort() and u.entrench < 2:
-				u.entrench += 1
+			# Bastırma, birliğin kendi turunun sonunda kalkar.
+			u.suppression = 0.0
+			# Yerinden kımıldamayan ve saldırmayan birlik siper kazar; savunma duruşunda daha hızlı.
+			var still := not u.moved and not u.attacked
+			if still and u.is_land() and not u.is_fort() and grid.cell(u.cell).terrain != "kumsal":
+				u.entrench = mini(u.entrench + (2 if u.stance == "defend" else 1), 3 if u.stance == "defend" else 2)
+			# Yorgunluk toparlanması
+			var rec := 3.0
+			if u.stance == "rest":
+				rec = 35.0
+			elif still:
+				rec = 15.0 if u.stance == "defend" else 12.0
+			if not u.in_supply:
+				rec *= 0.5
+			u.fatigue = maxf(0.0, u.fatigue - rec)
 			if is_instance_valid(u.counter):
 				u.counter.refresh()
 
@@ -1085,7 +1155,7 @@ func select(u: Unit) -> void:
 		if is_instance_valid(u.counter):
 			u.counter.set_selected(true)
 		if u.side == player_side and phase == "player":
-			if u.can_move() and u.mp > 0.0 and not u.attacked:
+			if u.can_act_move() and u.mp > 0.0 and not u.attacked:
 				reach = compute_reach(u)
 			targets = attack_targets(u)
 	_refresh_map()
@@ -1115,6 +1185,8 @@ func _on_click(screen_pos: Vector2) -> void:
 	_clear_path()
 	var u := unit_at(c)
 	if selected and selected.side == player_side and targets.has(c):
+		if not spend_cp(selected):
+			return
 		var me := selected
 		await attack(me, c, bayonet and is_melee(me, c))
 		bayonet = false
@@ -1125,6 +1197,8 @@ func _on_click(screen_pos: Vector2) -> void:
 		_check_end(false)
 		return
 	if selected and selected.side == player_side and reach.has(c) and c != selected.cell and not by_cell.has(c):
+		if not spend_cp(selected):
+			return
 		var me2 := selected
 		await move_unit(me2, path_from(reach, c))
 		update_vision(player_side)
@@ -1180,6 +1254,8 @@ func next_unit() -> void:
 ## Seçili birliğe bu tur siper kazdırır (hareket ve saldırı yapmaz).
 func dig_in() -> void:
 	if selected and selected.side == player_side and not selected.moved and not selected.attacked:
+		if not spend_cp(selected):
+			return
 		selected.mp = 0.0
 		selected.attacked = true
 		selected.dug = true
@@ -1202,6 +1278,11 @@ func _refresh_map() -> void:
 	if phase == "deploy":
 		for k in mine_zone:
 			map.mark(k, ReliefMap.MARK_MOVE if grid.cell(k).mines == 0 else ReliefMap.MARK_PATH)
+	if show_supply:
+		var net: Dictionary = supply_net[player_side]
+		for k: Vector2i in grid.cells:
+			if grid.cell(k).is_land():
+				map.mark(k, ReliefMap.MARK_SUPPLY if net.has(k) else ReliefMap.MARK_NOSUPPLY)
 	for k: Vector2i in reach:
 		if k != (selected.cell if selected else Vector2i(-99, -99)) and not by_cell.has(k):
 			map.mark(k, ReliefMap.MARK_MOVE)
@@ -1411,6 +1492,20 @@ func _apply_order(u: Unit, kind: String, c: Vector2i) -> void:
 		for o in units:
 			if o.alive() and o.side == player_side and o.regiment() == u.regiment() and not o.is_artillery():
 				group.append(o)
+	if kind != "":
+		var cost := 0
+		if group.size() > 1:
+			cost = 1
+			for o in group:
+				if not o.in_command:
+					cost += 1
+		else:
+			cost = cp_cost(u)
+		if cp < cost:
+			ui.set_hint("Emir puanı yetersiz (%d gerekli, %d var)." % [cost, cp])
+			order_mode = ""
+			return
+		cp -= cost
 	for o in group:
 		o.order = kind
 		o.order_cell = c
@@ -1442,9 +1537,21 @@ func _execute_orders() -> void:
 			continue
 		match u.order:
 			"fire":
+				if u.stance != "normal" and not u.moved:
+					u.stance = "normal"
 				if not (u.is_artillery() and u.moved):
 					await BattleAI._fire_best(self, u)
+			"reserve":
+				if not u.moved and u.stance != "rest":
+					u.stance = "rest"
+					u.mp = 0.0
 			"attack":
+				# Astın inisiyatifi: düşmandan uzaktaysa yürüyüş kolunda hızlı ilerler, yaklaşınca açılır.
+				if not u.moved:
+					var want := "normal" if _enemy_near(u, 3) else "march"
+					if u.stance != want:
+						u.stance = want
+						u.mp = u.effective_mp()
 				if u.cell == u.order_cell or (by_cell.has(u.order_cell) and by_cell[u.order_cell].side == player_side and HexGrid.distance(u.cell, u.order_cell) <= 1):
 					u.order = "defend"
 					log_line("%s hedefine ulaştı; mevziyi savunuyor." % u.name, UiTheme.GOLD)
@@ -1462,9 +1569,9 @@ func _execute_orders() -> void:
 				u.role = keep_role
 				u.goal = keep_goal
 			"defend":
-				var t2 := BattleAI._melee_choice(self, u, 1.6)
-				if t2 != Vector2i(-1, -1):
-					await attack(u, t2)
+				if not u.moved and u.stance != "defend":
+					u.stance = "defend"
+					u.mp = 0.0
 	update_vision(player_side)
 	_draw_orders()
 
@@ -1691,6 +1798,26 @@ func _build_report() -> void:
 		var ev := obj_eval(o)
 		if ev["risk"] and o.get("type", "") in ["hold", "capture", "deny", "alive"] and (o.get("required", false) or ev["ok"]):
 			report.append(["Tehlike", "%s: %s" % [o["text"], ev["text"]], Color(1.0, 0.55, 0.45)])
+	if int(enemy_turn.get("attacks", 0)) > 0:
+		report.append(["Düşman hamlesi", "Düşman %d kez saldırdı. Birliklerimiz %s; düşman %s verdi." % [enemy_turn["attacks"],
+			"%d zayiat" % int(enemy_turn["our"]), "%d zayiat" % int(enemy_turn["their"])], Color(1.0, 0.7, 0.55)])
+	var no_sup: Array[String] = []
+	var no_cmd: Array[String] = []
+	var tired: Array[String] = []
+	for u in units:
+		if u.alive() and u.side == player_side:
+			if not u.in_supply:
+				no_sup.append(u.short)
+			if not u.in_command:
+				no_cmd.append(u.short)
+			if u.fatigue >= 60.0:
+				tired.append(u.short)
+	if not no_sup.is_empty():
+		report.append(["İkmal", "İkmal hattı dışında: %s. Cephane gelmez, moral düşer. İkmal haritasını aç (yeşil alan) ve hattı aç." % ", ".join(no_sup), Color(1.0, 0.6, 0.4)])
+	if not no_cmd.is_empty():
+		report.append(["Komuta", "Karargâh menzili dışında: %s. Güçleri %%15 düşük ve emirleri 2 puan. Karargâhı yaklaştır." % ", ".join(no_cmd), Color(1.0, 0.75, 0.5)])
+	if not tired.is_empty():
+		report.append(["Yorgunluk", "Çok yorgun: %s. Dinlenme duruşu ya da yedek emri ile toparla." % ", ".join(tired), Color(0.95, 0.85, 0.6)])
 	var idle := 0
 	var low_ammo: Array[String] = []
 	for u in units:
@@ -1700,7 +1827,7 @@ func _build_report() -> void:
 			if u.ammo < 25.0 and not u.uses_hp():
 				low_ammo.append(u.short)
 	if idle > 0:
-		report.append(["Emir bekleyen", "%d birliğin emri yok. Birliği seçip Taarruz, Savun ya da Yedek emri ver; emirler tur sonunda kendiliğinden uygulanır." % idle, UiTheme.MUTED])
+		report.append(["Emir bekleyen", "%d birliğin emri yok. Bu tur %d emir puanın var: elle yönetilen her birlik ve verilen her emir 1 puan (karargâh menzili dışındaysa 2). Emirli birlikler tur sonunda puan harcamadan uygular." % [idle, cp], UiTheme.MUTED])
 	if not low_ammo.is_empty():
 		report.append(["Cephane", "Cephanesi azalan: %s. Geri çek ya da süngüyle saldır." % ", ".join(low_ammo), Color(1.0, 0.8, 0.45)])
 
@@ -1860,3 +1987,279 @@ func debug_tutorial() -> void:
 			c.queue_free()
 	ui._overlay = null
 	ui.show_tutorial(_start)
+
+
+
+# --------------------------------------------------------------------- Komuta, ikmal, emir puanı
+
+## İkmal ağı: depolardan arazi üzerinden, düşman birliklerinin tuttuğu hücreler kapalı.
+func _compute_supply(side: String) -> void:
+	var net := {}
+	var mine: Array = []
+	for d: Dictionary in depots:
+		if d["side"] == side:
+			mine.append(d)
+	if mine.is_empty():
+		supply_net[side] = {}
+		for u in units:
+			if u.alive() and u.side == side:
+				u.in_supply = true
+				u.out_supply_turns = 0
+		return
+	for d: Dictionary in mine:
+		var start: Vector2i = d["cell"]
+		var occ := unit_at(start)
+		if occ and occ.side != side:
+			continue
+		var best := {start: 0.0}
+		var open: Array = [[0.0, start]]
+		while not open.is_empty():
+			var bi := 0
+			for i in open.size():
+				if open[i][0] < open[bi][0]:
+					bi = i
+			var cur: Array = open.pop_at(bi)
+			var cc: Vector2i = cur[1]
+			var cost: float = cur[0]
+			if cost > best[cc]:
+				continue
+			for n in grid.neighbors(cc):
+				var cn := grid.cell(n)
+				if cn.is_sea():
+					continue
+				var o := unit_at(n)
+				if o and o.side != side and o.is_land():
+					continue
+				var base: float = Terrain.info(cn.terrain)["move"]
+				if cn.road and grid.cell(cc).road:
+					base = 0.5
+				var step := base + maxf(0.0, cn.elev - grid.cell(cc).elev) / (hex_m * 0.12)
+				# Düşman ateşi altındaki hücreden ikmal güç geçer.
+				for nb in grid.neighbors(n):
+					var e := unit_at(nb)
+					if e and e.side != side and e.is_land():
+						step += 1.5
+						break
+				var nc := cost + step
+				if nc > float(d["range"]):
+					continue
+				if not best.has(n) or nc < best[n]:
+					best[n] = nc
+					open.append([nc, n])
+		for k: Vector2i in best:
+			if not net.has(k) or best[k] < net[k]:
+				net[k] = best[k]
+	supply_net[side] = net
+	for u in units:
+		if not u.alive() or u.side != side:
+			continue
+		var ok: bool = u.is_naval() or u.is_fort() or net.has(u.cell)
+		if not ok:
+			for nb in grid.neighbors(u.cell):
+				if net.has(nb):
+					ok = true
+					break
+		u.in_supply = ok
+		u.out_supply_turns = 0 if ok else u.out_supply_turns + 1
+
+
+## Komuta: birlik bağlı olduğu karargâhın menzilindeyse komuta altındadır.
+func _compute_command(side: String) -> void:
+	for u in units:
+		if not u.alive() or u.side != side:
+			continue
+		if u.hq_id == "" or u.is_hq():
+			u.in_command = true
+			continue
+		var h := find_unit(u.hq_id)
+		u.in_command = h != null and h.alive() and HexGrid.distance(h.cell, u.cell) <= h.command_range
+
+
+## Tur başı ikmal: cephane yalnızca ikmal ağındaki birliklere gelir; tabyaların mermisi sınırlıdır.
+func _resupply(u: Unit, contact: bool) -> void:
+	if u.is_fort():
+		u.hp = minf(u.hp_max, u.hp + 2.0)
+		return
+	if u.is_naval():
+		u.ammo = minf(100.0, u.ammo + 4.0)
+		return
+	if not u.in_supply:
+		return
+	var depot_near := false
+	for d: Dictionary in depots:
+		if d["side"] == u.side and HexGrid.distance(d["cell"], u.cell) <= 1:
+			depot_near = true
+	var gain := 30.0 if depot_near else (6.0 if contact else 15.0)
+	if u.is_artillery():
+		gain *= 0.6
+	u.ammo = minf(100.0, u.ammo + gain * hours)
+
+
+func cp_cost(u: Unit) -> int:
+	return 1 if u.in_command else 2
+
+
+## Bu tur elle yönetilen birlik için emir puanı harcar (aynı birlik aynı tur bir kez öder).
+func spend_cp(u: Unit) -> bool:
+	if u.side != player_side or int(u.get_meta("cp_turn", -1)) == turn:
+		return true
+	var c := cp_cost(u)
+	if cp < c:
+		ui.set_hint("Emir puanı yetersiz (%d gerekli). Emirli birlikler tur sonunda puan harcamadan hareket eder." % c)
+		Sfx.play("paper", -4.0)
+		return false
+	cp -= c
+	u.set_meta("cp_turn", turn)
+	ui.refresh()
+	return true
+
+
+## Duruş değişikliği (emir puanı harcar).
+func set_stance(u: Unit, st: String) -> void:
+	if u == null or u.side != player_side or u.stance == st or phase != "player":
+		return
+	if st in ["defend", "rest"] and (u.moved or u.attacked):
+		ui.set_hint("Bu tur hareket eden ya da saldıran birlik savunma ya da dinlenme duruşuna geçemez.")
+		return
+	if not spend_cp(u):
+		return
+	var was := u.stance
+	u.stance = st
+	if st == "march" and was != "march" and not u.moved:
+		u.mp = u.effective_mp()
+	elif st in ["defend", "rest"]:
+		u.mp = 0.0
+	elif st == "normal" and was == "march":
+		u.mp = minf(u.mp, u.effective_mp())
+	log_line("%s: %s" % [u.name, u.stance_title()], UiTheme.GOLD)
+	Sfx.play("stamp", -6.0)
+	if is_instance_valid(u.counter):
+		u.counter.refresh()
+	select(u)
+
+
+func _note_combat(att: Unit, def: Unit, ca: int, cd: int) -> void:
+	if phase != "ai" or att.side != ai_side:
+		return
+	enemy_turn["attacks"] = int(enemy_turn.get("attacks", 0)) + 1
+	enemy_turn["our"] = int(enemy_turn.get("our", 0)) + cd
+	enemy_turn["their"] = int(enemy_turn.get("their", 0)) + ca
+
+
+## Arazi üstünde düz şerit (yollar için).
+func _ribbon(pts: Array[Vector3], col: Color, w: float) -> MeshInstance3D:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var samples: Array[Vector3] = []
+	for i in pts.size() - 1:
+		for j in 4:
+			samples.append(pts[i].lerp(pts[i + 1], j / 4.0))
+	samples.append(pts[-1])
+	for i in samples.size():
+		samples[i] = map.to_world(map.world_to_local(samples[i]), hex_world * 0.04)
+	for i in samples.size() - 1:
+		var dir := samples[i + 1] - samples[i]
+		dir.y = 0.0
+		var n := Vector3(-dir.normalized().z, 0, dir.normalized().x) * w * 0.5
+		# Kesik çizgi (patika)
+		if i % 2 == 1:
+			continue
+		st.add_vertex(samples[i] + n)
+		st.add_vertex(samples[i] - n)
+		st.add_vertex(samples[i + 1] + n)
+		st.add_vertex(samples[i] - n)
+		st.add_vertex(samples[i + 1] - n)
+		st.add_vertex(samples[i + 1] + n)
+	var mi := MeshInstance3D.new()
+	mi.mesh = st.commit()
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.cull_mode = BaseMaterial3D.CULL_DISABLED
+	m.albedo_color = col
+	mi.material_override = m
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	return mi
+
+
+## Düşmanın gücü: yakındaysa kesin, uzaktaysa yuvarlanmış tahmin (gizli bilgi, şans değil).
+func enemy_strength_text(u: Unit) -> String:
+	if u.uses_hp():
+		return "%%%d sağlam" % int(round(u.strength() * 100.0))
+	var near := false
+	for o in units:
+		if o.alive() and o.side == player_side and HexGrid.distance(o.cell, u.cell) <= 1:
+			near = true
+			break
+	if near or u.side == player_side:
+		return "%d asker" % u.men
+	return "~%d asker (tahmini)" % (int(round(u.men / 100.0)) * 100)
+
+
+
+func _enemy_near(u: Unit, r: int) -> bool:
+	for o in units:
+		if o.alive() and o.side != u.side and o.is_land() and HexGrid.distance(o.cell, u.cell) <= r and visible_to(o, u.side):
+			return true
+	return false
+
+
+
+func toggle_supply() -> void:
+	show_supply = not show_supply
+	_refresh_map()
+
+
+func debug_preview() -> void:
+	ui._popups.clear()
+	if ui._overlay:
+		ui._overlay.queue_free()
+		ui._overlay = null
+	for u in units:
+		if u.alive() and u.side == player_side and u.can_melee() and not u.is_hq():
+			select(u)
+			for t in targets:
+				if is_melee(u, t):
+					mcam.focus(map.cell_world(u.cell), WORLD_W * 0.3)
+					Input.warp_mouse(Vector2(560, 300))
+					ui.hover(grid.cell(t), unit_at(t))
+					return
+
+
+func debug_oob() -> void:
+	ui._popups.clear()
+	if ui._overlay:
+		ui._overlay.queue_free()
+		ui._overlay = null
+	ui.show_oob()
+
+
+func debug_preview_auto() -> void:
+	await debug_auto_turns()
+	debug_preview()
+
+
+func debug_print_preview() -> void:
+	await debug_auto_turns()
+	for u in units:
+		if u.alive() and u.side == player_side and u.can_melee() and not u.is_hq():
+			select(u)
+			for t in targets:
+				if is_melee(u, t):
+					print("\n".join(ui._combat_lines(preview(u, t), u, unit_at(t))))
+					var r := Combat.ranged(self, find_unit("dag_57"), unit_at(t)) if find_unit("dag_57") and find_unit("dag_57").alive() else {}
+					if not r.is_empty():
+						print("\n".join(ui._combat_lines(r, find_unit("dag_57"), unit_at(t))))
+					get_tree().quit()
+					return
+	get_tree().quit()
+
+
+func debug_supply_view() -> void:
+	ui._popups.clear()
+	if ui._overlay:
+		ui._overlay.queue_free()
+		ui._overlay = null
+	show_supply = true
+	_refresh_map()
+	mcam.focus(Vector3(10, 0, 0), WORLD_W * 0.85)

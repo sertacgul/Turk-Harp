@@ -19,6 +19,8 @@ static func play(b: Battle, side: String) -> void:
 		if u.is_naval():
 			await _naval(b, u)
 		elif u.is_artillery() or u.is_fort():
+			if u.stance != "normal" and u.stance != "defend":
+				u.stance = "normal"
 			await _fire_best(b, u)
 		else:
 			await _land(b, u)
@@ -69,6 +71,12 @@ static func _melee_choice(b: Battle, u: Unit, min_odds: float) -> Vector2i:
 
 
 static func _land(b: Battle, u: Unit) -> void:
+	if u.side == b.ai_side:
+		if u.is_hq():
+			return
+		_ai_stance(b, u)
+	if u.stance in ["defend", "rest"]:
+		return
 	if u.morale < 22.0:
 		await _fall_back(b, u)
 		return
@@ -199,8 +207,8 @@ static func _sweep(b: Battle, u: Unit) -> void:
 	for n in [u.cell] + b.grid.neighbors(u.cell):
 		var nc := b.grid.cell(n)
 		if nc.mines > 0 and nc.mines_known:
-			if not under_fire and b.rng.randf() < 0.55:
-				nc.mines = maxi(0, nc.mines - 3)
+			if not under_fire:
+				nc.mines = maxi(0, nc.mines - 2)
 				b._update_mine_marker(n)
 				b.log_line("%s %s mayın hattının bir kısmını taradı." % [u.name, nc.place if nc.place != "" else "Kepez"], Color(1.0, 0.7, 0.5))
 			return
@@ -238,3 +246,22 @@ static func _threatened(b: Battle, u: Unit, c: Vector2i) -> bool:
 		if d <= o.max_range_m() * 0.8 and b.seen[o.side].has(c):
 			return true
 	return false
+
+
+
+## Yapay zekâ duruş seçimi: tutan birlik savunmada; çok yorgun ve temassız birlik dinlenir;
+## düşmandan uzak taarruz birliği yürüyüş kolunda ilerler.
+static func _ai_stance(b: Battle, u: Unit) -> void:
+	if u.moved or u.attacked or u.is_hq():
+		return
+	var want := "normal"
+	var near := b._enemy_near(u, 1)
+	if u.role == "hold":
+		want = "defend" if not near or u.morale < 60.0 else "normal"
+	elif u.fatigue > 75.0 and not near:
+		want = "rest"
+	elif u.role == "attack" and not b._enemy_near(u, 3):
+		want = "march"
+	if want != u.stance:
+		u.stance = want
+		u.mp = u.effective_mp() if u.can_act_move() else 0.0

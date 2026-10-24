@@ -17,6 +17,57 @@
   "minutes_per_turn": 30,
   "turns": 13,
   "player_side": "ottoman",
+  "command_points": 7,
+  "depots": [
+    {
+      "name": "Büyükanafarta ikmal",
+      "lat": 40.2816,
+      "lon": 26.3292,
+      "side": "ottoman",
+      "range_km": 4.5
+    },
+    {
+      "name": "Kocaçimen arkası",
+      "lat": 40.262,
+      "lon": 26.332,
+      "side": "ottoman",
+      "range_km": 2.5
+    },
+    {
+      "name": "Ağıl Dere ağzı",
+      "lat": 40.2634,
+      "lon": 26.28,
+      "side": "entente",
+      "range_km": 2.5
+    },
+    {
+      "name": "Anzak cephanesi",
+      "lat": 40.244,
+      "lon": 26.284,
+      "side": "entente",
+      "range_km": 2.5
+    }
+  ],
+  "roads": [
+    [
+      [
+        40.2816,
+        26.3292
+      ],
+      [
+        40.27,
+        26.329
+      ],
+      [
+        40.262,
+        26.326
+      ],
+      [
+        40.2593,
+        26.3199
+      ]
+    ]
+  ],
   "focus": [
     40.254,
     26.308,
@@ -130,7 +181,8 @@
     {
       "name": "Büyükanafarta",
       "lat": 40.2816,
-      "lon": 26.3292
+      "lon": 26.3292,
+      "village": true
     }
   ],
   "units": [
@@ -152,7 +204,9 @@
       "lat": 40.2605,
       "lon": 26.324,
       "vision": 4,
-      "note": "Karargâhın 2 hücre yakınındaki birliklerin morali her tur yükselir. Karargâh vurulursa bütün birliklerin morali sarsılır."
+      "note": "Karargâhın 2 hücre yakınındaki birliklerin morali her tur yükselir. Karargâh vurulursa bütün birliklerin morali sarsılır.",
+      "command_range": 7,
+      "exp": 3
     },
     {
       "id": "a23_1",
@@ -168,7 +222,10 @@
       },
       "morale": 90,
       "lat": 40.2545,
-      "lon": 26.315
+      "lon": 26.315,
+      "hq": "hq_af",
+      "exp": 2,
+      "fatigue": 20
     },
     {
       "id": "a23_2",
@@ -183,7 +240,10 @@
       },
       "morale": 90,
       "lat": 40.251,
-      "lon": 26.316
+      "lon": 26.316,
+      "hq": "hq_af",
+      "exp": 2,
+      "fatigue": 20
     },
     {
       "id": "a24_1",
@@ -198,7 +258,10 @@
       },
       "morale": 88,
       "lat": 40.2575,
-      "lon": 26.312
+      "lon": 26.312,
+      "hq": "hq_af",
+      "exp": 2,
+      "fatigue": 20
     },
     {
       "id": "a24_2",
@@ -213,7 +276,10 @@
       },
       "morale": 88,
       "lat": 40.259,
-      "lon": 26.316
+      "lon": 26.316,
+      "hq": "hq_af",
+      "exp": 2,
+      "fatigue": 20
     },
     {
       "id": "a28_1",
@@ -228,7 +294,10 @@
       },
       "morale": 86,
       "lat": 40.248,
-      "lon": 26.31
+      "lon": 26.31,
+      "hq": "hq_af",
+      "exp": 2,
+      "fatigue": 20
     },
     {
       "id": "a28_2",
@@ -243,7 +312,10 @@
       },
       "morale": 86,
       "lat": 40.247,
-      "lon": 26.314
+      "lon": 26.314,
+      "hq": "hq_af",
+      "exp": 2,
+      "fatigue": 20
     },
     {
       "id": "mg_8",
@@ -260,7 +332,10 @@
       },
       "morale": 90,
       "lat": 40.256,
-      "lon": 26.319
+      "lon": 26.319,
+      "hq": "hq_af",
+      "exp": 2,
+      "fatigue": 20
     },
     {
       "id": "bt_8",
@@ -276,7 +351,10 @@
       "morale": 85,
       "mp": 2,
       "lat": 40.256,
-      "lon": 26.333
+      "lon": 26.333,
+      "hq": "hq_af",
+      "exp": 2,
+      "fatigue": 20
     },
     {
       "id": "obus_8",
@@ -292,7 +370,10 @@
       "morale": 85,
       "mp": 1,
       "lat": 40.25,
-      "lon": 26.335
+      "lon": 26.335,
+      "hq": "hq_af",
+      "exp": 2,
+      "fatigue": 20
     },
     {
       "id": "a33_1",
@@ -308,7 +389,10 @@
       "morale": 82,
       "lat": 40.252,
       "lon": 26.33,
-      "arrive": 5
+      "arrive": 5,
+      "hq": "hq_af",
+      "exp": 2,
+      "fatigue": 20
     },
     {
       "id": "lnl6",
@@ -327,7 +411,10 @@
       "lat": 40.252,
       "lon": 26.3086,
       "role": "hold",
-      "note": "Gece Yeni Zelandalıları değiştirip tepeye çıktı; siperleri sığ ve yorgundu."
+      "note": "Gece Yeni Zelandalıları değiştirip tepeye çıktı; siperleri sığ ve yorgundu.",
+      "hq": "hq_38",
+      "exp": 0,
+      "fatigue": 50
     },
     {
       "id": "wilts5",
@@ -346,7 +433,10 @@
       "lat": 40.2555,
       "lon": 26.3045,
       "role": "hold",
-      "note": "Tarihte tüfeklerini çatıp dinlenirken baskına uğradı ve neredeyse tamamen yok oldu."
+      "note": "Tarihte tüfeklerini çatıp dinlenirken baskına uğradı ve neredeyse tamamen yok oldu.",
+      "hq": "hq_38",
+      "exp": 0,
+      "fatigue": 65
     },
     {
       "id": "elancs6",
@@ -364,7 +454,9 @@
       "entrench": 1,
       "lat": 40.2543,
       "lon": 26.301,
-      "role": "hold"
+      "role": "hold",
+      "hq": "hq_38",
+      "exp": 0
     },
     {
       "id": "worc9",
@@ -382,7 +474,9 @@
       "entrench": 0,
       "lat": 40.257,
       "lon": 26.299,
-      "role": "hold"
+      "role": "hold",
+      "hq": "hq_38",
+      "exp": 0
     },
     {
       "id": "slancs6",
@@ -400,7 +494,9 @@
       "entrench": 1,
       "lat": 40.25,
       "lon": 26.2975,
-      "role": "hold"
+      "role": "hold",
+      "hq": "hq_38",
+      "exp": 0
     },
     {
       "id": "gurkha",
@@ -418,7 +514,9 @@
       "lat": 40.258,
       "lon": 26.307,
       "role": "hold",
-      "note": "9 Ağustos'ta Q Tepesi'ne ulaşmış, ardından geri çekilmişti."
+      "note": "9 Ağustos'ta Q Tepesi'ne ulaşmış, ardından geri çekilmişti.",
+      "exp": 2,
+      "fatigue": 60
     },
     {
       "id": "otago",
@@ -437,7 +535,9 @@
       "lat": 40.2524,
       "lon": 26.292,
       "role": "hold",
-      "note": "8 Ağustos'ta Conkbayırı'nı alan Wellington Taburu'nun 760 askerinden yalnızca 70'i ayakta kalmıştı."
+      "note": "8 Ağustos'ta Conkbayırı'nı alan Wellington Taburu'nun 760 askerinden yalnızca 70'i ayakta kalmıştı.",
+      "exp": 2,
+      "fatigue": 70
     },
     {
       "id": "rfa",
@@ -454,7 +554,8 @@
       "morale": 75,
       "mp": 1,
       "lat": 40.244,
-      "lon": 26.286
+      "lon": 26.286,
+      "exp": 1
     },
     {
       "id": "warw9",
@@ -473,7 +574,30 @@
       "lon": 26.286,
       "arrive": 4,
       "role": "attack",
-      "goal": "Çiftlik"
+      "goal": "Çiftlik",
+      "hq": "hq_38",
+      "exp": 0
+    },
+    {
+      "id": "hq_38",
+      "name": "38. Tugay Karargâhı",
+      "short": "38. Tug. K.",
+      "side": "entente",
+      "nation": "uk",
+      "kind": "hq",
+      "size": "alay",
+      "commander": "Tuğgeneral Anthony Baldwin",
+      "men": 60,
+      "equipment": {
+        "smle_mk3": 40
+      },
+      "morale": 60,
+      "mp": 2,
+      "lat": 40.256,
+      "lon": 26.2985,
+      "command_range": 5,
+      "role": "hold",
+      "note": "Tuğgeneral Baldwin 10 Ağustos sabahı Çiftlik'te hayatını kaybetti."
     }
   ],
   "events": [

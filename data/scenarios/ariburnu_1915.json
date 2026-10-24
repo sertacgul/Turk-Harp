@@ -17,6 +17,72 @@
   "minutes_per_turn": 60,
   "turns": 14,
   "player_side": "ottoman",
+  "command_points": 7,
+  "depots": [
+    {
+      "name": "Bigalı ikmal",
+      "lat": 40.2357,
+      "lon": 26.3597,
+      "side": "ottoman",
+      "range_km": 5.5
+    },
+    {
+      "name": "Kocadere ikmal",
+      "lat": 40.216,
+      "lon": 26.338,
+      "side": "ottoman",
+      "range_km": 5.0
+    },
+    {
+      "name": "Anzak Koyu çıkarma yeri",
+      "lat": 40.2359,
+      "lon": 26.2768,
+      "side": "entente",
+      "range_km": 3.5
+    }
+  ],
+  "roads": [
+    [
+      [
+        40.2357,
+        26.3597
+      ],
+      [
+        40.244,
+        26.342
+      ],
+      [
+        40.254,
+        26.33
+      ],
+      [
+        40.2593,
+        26.3199
+      ]
+    ],
+    [
+      [
+        40.2357,
+        26.3597
+      ],
+      [
+        40.228,
+        26.338
+      ],
+      [
+        40.22,
+        26.325
+      ],
+      [
+        40.215,
+        26.3
+      ],
+      [
+        40.21,
+        26.28
+      ]
+    ]
+  ],
   "focus": [
     40.245,
     26.3,
@@ -129,12 +195,14 @@
     {
       "name": "Bigalı",
       "lat": 40.2357,
-      "lon": 26.3597
+      "lon": 26.3597,
+      "village": true
     },
     {
       "name": "Büyükanafarta",
       "lat": 40.2816,
-      "lon": 26.3292
+      "lon": 26.3292,
+      "village": true
     },
     {
       "name": "Düz Tepe",
@@ -171,7 +239,30 @@
       "lat": 40.2357,
       "lon": 26.356,
       "vision": 4,
-      "note": "Karargâhın 2 hücre yakınındaki birliklerin morali her tur yükselir. Karargâh vurulursa bütün birliklerin morali sarsılır."
+      "note": "Karargâhın 2 hücre yakınındaki birliklerin morali her tur yükselir. Karargâh vurulursa bütün birliklerin morali sarsılır.",
+      "command_range": 6,
+      "exp": 3
+    },
+    {
+      "id": "hq27",
+      "name": "27. Alay Karargâhı",
+      "short": "27. Alay K.",
+      "side": "ottoman",
+      "kind": "hq",
+      "size": "alay",
+      "commander": "Yarbay Mehmet Şefik",
+      "men": 40,
+      "equipment": {
+        "mauser_1903": 30
+      },
+      "morale": 95,
+      "mp": 4,
+      "lat": 40.225,
+      "lon": 26.333,
+      "arrive": 2,
+      "command_range": 4,
+      "exp": 2,
+      "note": "27. Alay'ın komutanı; alayı kendi inisiyatifiyle Arıburnu'na yürüttü."
     },
     {
       "id": "b8_27",
@@ -190,7 +281,10 @@
       "lat": 40.246,
       "lon": 26.293,
       "entrench": 0,
-      "note": "Arıburnu kıyısını savunan tek bölük. Şafaktan beri çarpışıyor; cephanesi tükenmek üzere."
+      "note": "Arıburnu kıyısını savunan tek bölük. Şafaktan beri çarpışıyor; cephanesi tükenmek üzere.",
+      "hq": "hq27",
+      "exp": 2,
+      "fatigue": 50
     },
     {
       "id": "t2_27",
@@ -208,7 +302,9 @@
       "lat": 40.216,
       "lon": 26.282,
       "entrench": 1,
-      "note": "Kabatepe-Arıburnu kıyısına dağılmış taburun geri kalanı."
+      "note": "Kabatepe-Arıburnu kıyısına dağılmış taburun geri kalanı.",
+      "hq": "hq27",
+      "exp": 2
     },
     {
       "id": "bat_kabatepe",
@@ -225,7 +321,8 @@
       "mp": 2,
       "lat": 40.213,
       "lon": 26.293,
-      "entrench": 1
+      "entrench": 1,
+      "hq": "hq27"
     },
     {
       "id": "t1_27",
@@ -245,7 +342,9 @@
       "lat": 40.223,
       "lon": 26.33,
       "arrive": 2,
-      "note": "Yarbay Mehmet Şefik (Aker) 27. Alay'ı kendi inisiyatifiyle Maydos'tan Arıburnu'na yürüttü."
+      "note": "Yarbay Mehmet Şefik (Aker) 27. Alay'ı kendi inisiyatifiyle Maydos'tan Arıburnu'na yürüttü.",
+      "hq": "hq27",
+      "exp": 2
     },
     {
       "id": "t3_27",
@@ -262,7 +361,9 @@
       "morale": 82,
       "lat": 40.218,
       "lon": 26.333,
-      "arrive": 3
+      "arrive": 3,
+      "hq": "hq27",
+      "exp": 2
     },
     {
       "id": "t1_57",
@@ -280,7 +381,9 @@
       "morale": 95,
       "lat": 40.239,
       "lon": 26.354,
-      "mp": 4
+      "mp": 4,
+      "hq": "hq19",
+      "exp": 2
     },
     {
       "id": "t2_57",
@@ -297,7 +400,9 @@
       "morale": 95,
       "lat": 40.233,
       "lon": 26.353,
-      "mp": 4
+      "mp": 4,
+      "hq": "hq19",
+      "exp": 2
     },
     {
       "id": "t3_57",
@@ -314,7 +419,9 @@
       "morale": 95,
       "lat": 40.237,
       "lon": 26.362,
-      "mp": 4
+      "mp": 4,
+      "hq": "hq19",
+      "exp": 2
     },
     {
       "id": "mg_57",
@@ -332,7 +439,9 @@
       "morale": 95,
       "lat": 40.234,
       "lon": 26.36,
-      "mp": 4
+      "mp": 4,
+      "hq": "hq19",
+      "exp": 2
     },
     {
       "id": "dag_57",
@@ -349,7 +458,9 @@
       "mp": 3,
       "lat": 40.231,
       "lon": 26.358,
-      "note": "Mustafa Kemal 57. Alay'la birlikte bir dağ bataryasını da yürüttü."
+      "note": "Mustafa Kemal 57. Alay'la birlikte bir dağ bataryasını da yürüttü.",
+      "hq": "hq19",
+      "exp": 2
     },
     {
       "id": "top_19",
@@ -366,7 +477,8 @@
       "mp": 2,
       "lat": 40.225,
       "lon": 26.335,
-      "arrive": 5
+      "arrive": 5,
+      "hq": "hq19"
     },
     {
       "id": "t1_77",
@@ -383,7 +495,9 @@
       "morale": 65,
       "lat": 40.256,
       "lon": 26.345,
-      "arrive": 8
+      "arrive": 8,
+      "hq": "hq19",
+      "exp": 0
     },
     {
       "id": "t2_77",
@@ -400,7 +514,9 @@
       "morale": 65,
       "lat": 40.262,
       "lon": 26.342,
-      "arrive": 8
+      "arrive": 8,
+      "hq": "hq19",
+      "exp": 0
     },
     {
       "id": "t1_72",
@@ -417,7 +533,8 @@
       "morale": 75,
       "lat": 40.268,
       "lon": 26.35,
-      "arrive": 10
+      "arrive": 10,
+      "hq": "hq19"
     },
     {
       "id": "aif9",
@@ -436,7 +553,10 @@
       "lat": 40.232,
       "lon": 26.283,
       "role": "attack",
-      "goal": "Kemalyeri"
+      "goal": "Kemalyeri",
+      "hq": "hq_au1",
+      "exp": 1,
+      "fatigue": 35
     },
     {
       "id": "aif10",
@@ -455,7 +575,10 @@
       "lat": 40.237,
       "lon": 26.286,
       "role": "attack",
-      "goal": "Kemalyeri"
+      "goal": "Kemalyeri",
+      "hq": "hq_au1",
+      "exp": 1,
+      "fatigue": 35
     },
     {
       "id": "aif11",
@@ -474,7 +597,10 @@
       "lat": 40.243,
       "lon": 26.282,
       "role": "attack",
-      "goal": "Cesaret Tepe"
+      "goal": "Cesaret Tepe",
+      "hq": "hq_au1",
+      "exp": 1,
+      "fatigue": 35
     },
     {
       "id": "aif12",
@@ -493,7 +619,10 @@
       "lat": 40.24,
       "lon": 26.279,
       "role": "attack",
-      "goal": "Cesaret Tepe"
+      "goal": "Cesaret Tepe",
+      "hq": "hq_au1",
+      "exp": 1,
+      "fatigue": 35
     },
     {
       "id": "aif5",
@@ -512,7 +641,9 @@
       "lon": 26.278,
       "arrive": 2,
       "role": "attack",
-      "goal": "Kanlısırt"
+      "goal": "Kanlısırt",
+      "hq": "hq_au1",
+      "exp": 1
     },
     {
       "id": "aif6",
@@ -531,7 +662,9 @@
       "lon": 26.279,
       "arrive": 2,
       "role": "attack",
-      "goal": "Topçu Sırtı"
+      "goal": "Topçu Sırtı",
+      "hq": "hq_au1",
+      "exp": 1
     },
     {
       "id": "aif7",
@@ -550,7 +683,9 @@
       "lon": 26.2775,
       "arrive": 3,
       "role": "attack",
-      "goal": "Kemalyeri"
+      "goal": "Kemalyeri",
+      "hq": "hq_au1",
+      "exp": 1
     },
     {
       "id": "aif8",
@@ -569,7 +704,9 @@
       "lon": 26.279,
       "arrive": 3,
       "role": "attack",
-      "goal": "Kanlısırt"
+      "goal": "Kanlısırt",
+      "hq": "hq_au1",
+      "exp": 1
     },
     {
       "id": "aif1",
@@ -588,7 +725,9 @@
       "lon": 26.277,
       "arrive": 4,
       "role": "attack",
-      "goal": "Cesaret Tepe"
+      "goal": "Cesaret Tepe",
+      "hq": "hq_au1",
+      "exp": 1
     },
     {
       "id": "aif2",
@@ -607,7 +746,9 @@
       "lon": 26.277,
       "arrive": 4,
       "role": "attack",
-      "goal": "Conkbayırı"
+      "goal": "Conkbayırı",
+      "hq": "hq_au1",
+      "exp": 1
     },
     {
       "id": "aif3",
@@ -626,7 +767,9 @@
       "lon": 26.2775,
       "arrive": 5,
       "role": "attack",
-      "goal": "Kanlısırt"
+      "goal": "Kanlısırt",
+      "hq": "hq_au1",
+      "exp": 1
     },
     {
       "id": "aif4",
@@ -645,7 +788,9 @@
       "lon": 26.2775,
       "arrive": 5,
       "role": "attack",
-      "goal": "Kemalyeri"
+      "goal": "Kemalyeri",
+      "hq": "hq_au1",
+      "exp": 1
     },
     {
       "id": "nz_auck",
@@ -664,7 +809,9 @@
       "lon": 26.278,
       "arrive": 6,
       "role": "attack",
-      "goal": "Conkbayırı"
+      "goal": "Conkbayırı",
+      "hq": "hq_nza",
+      "exp": 1
     },
     {
       "id": "nz_canty",
@@ -683,7 +830,9 @@
       "lon": 26.279,
       "arrive": 7,
       "role": "attack",
-      "goal": "Cesaret Tepe"
+      "goal": "Cesaret Tepe",
+      "hq": "hq_nza",
+      "exp": 1
     },
     {
       "id": "nz_well",
@@ -702,7 +851,9 @@
       "lon": 26.2775,
       "arrive": 8,
       "role": "attack",
-      "goal": "Conkbayırı"
+      "goal": "Conkbayırı",
+      "hq": "hq_nza",
+      "exp": 1
     },
     {
       "id": "nz_otago",
@@ -721,7 +872,9 @@
       "lon": 26.2775,
       "arrive": 9,
       "role": "attack",
-      "goal": "Cesaret Tepe"
+      "goal": "Cesaret Tepe",
+      "hq": "hq_nza",
+      "exp": 1
     },
     {
       "id": "kohat",
@@ -739,7 +892,9 @@
       "mp": 2,
       "lat": 40.238,
       "lon": 26.279,
-      "arrive": 6
+      "arrive": 6,
+      "hq": "hq_au1",
+      "exp": 2
     },
     {
       "id": "triumph",
@@ -760,7 +915,8 @@
       "vision": 6,
       "lat": 40.238,
       "lon": 26.256,
-      "role": "naval"
+      "role": "naval",
+      "exp": 2
     },
     {
       "id": "bacchante",
@@ -782,7 +938,8 @@
       "lat": 40.22,
       "lon": 26.256,
       "role": "naval",
-      "note": "Kabatepe açıklarında ANZAC'ın sağ kanadını destekledi."
+      "note": "Kabatepe açıklarında ANZAC'ın sağ kanadını destekledi.",
+      "exp": 2
     },
     {
       "id": "london",
@@ -803,7 +960,50 @@
       "vision": 6,
       "lat": 40.256,
       "lon": 26.258,
-      "role": "naval"
+      "role": "naval",
+      "exp": 2
+    },
+    {
+      "id": "hq_au1",
+      "name": "1. Avustralya Tümeni Karargâhı",
+      "short": "1. Avs. Tm. K.",
+      "side": "entente",
+      "nation": "au",
+      "kind": "hq",
+      "size": "tümen",
+      "commander": "Tümgeneral William Bridges",
+      "men": 80,
+      "equipment": {
+        "smle_mk3": 60
+      },
+      "morale": 80,
+      "mp": 3,
+      "lat": 40.237,
+      "lon": 26.279,
+      "arrive": 3,
+      "command_range": 6,
+      "role": "hold"
+    },
+    {
+      "id": "hq_nza",
+      "name": "Yeni Zelanda ve Avustralya Tümeni Karargâhı",
+      "short": "NZ&A Tm. K.",
+      "side": "entente",
+      "nation": "nz",
+      "kind": "hq",
+      "size": "tümen",
+      "commander": "Tümgeneral Alexander Godley",
+      "men": 80,
+      "equipment": {
+        "smle_mk3": 60
+      },
+      "morale": 80,
+      "mp": 3,
+      "lat": 40.242,
+      "lon": 26.278,
+      "arrive": 6,
+      "command_range": 6,
+      "role": "hold"
     }
   ],
   "events": [

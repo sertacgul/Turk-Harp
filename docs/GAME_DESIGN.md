@@ -33,16 +33,20 @@ Zayiat şehit/ölü, yaralı ve esir olarak ayrılır (Birinci Dünya Savaşı'n
 - Efektler: namlu ışıkları, mermi uçuşu, patlama ve duman parçacıkları, su sütunları, uçan şehit/yaralı yazıları.
 - Sesler (kodla sentezlenir): tüfek yaylım ateşi, makineli tüfek, top, mermi ıslığı, patlama, subay düdüğü, borazan, "Allah Allah" haykırışı, asker adımları, gemi düdüğü, tur çanı, emir mührü, uzak muharebe ve deniz ambiyansı.
 
-## Kurallar
-- **Hareket:** Hareket puanı; tırmanış ve engebe maliyeti artırır. Düşmana komşu hücreye giren durur (kontrol bölgesi). Gemiler yalnızca denizde.
-- **Görüş:** Her birlik, gerçek arazi üzerinden hesaplanan görüş hattıyla görür; görülmeyen düşman haritada gösterilmez. Sırtların arka yamaçları gizler.
-- **Yakın muharebe:** Tüfek ve makineli tüfek ateş gücü × moral × cephane; savunanı siper, yükseklik farkı ve engebe korur. Ağır kayıp ya da moral çöküşü geri çekilmeye, kuşatılmışsa esarete yol açar.
-- **Süngü hücumu:** Saldırı +%35, düşman morali ağır sarsılır, kendi kaybın artar; cephanesi bitmiş birlik de yapabilir.
-- **Topçu ve gemiler:** Dolaylı atışlı toplar (obüs, sahra ve dağ topları) gözcünün gördüğü her hedefi döver; gemi ve kıyı topları kendi görüş hattına ihtiyaç duyar. Gemi topları düz atışlı olduğundan siperlere az etkilidir. Ağır ateş alan tabya bir tur susar.
-- **Mayınlar:** Mayınlı hücreye giren gemi büyük olasılıkla vurulur. İtilaf yalnızca bilinen hatları görür ve tarayıcılarla temizlemeye çalışır; tarayıcı ateş altındaysa geri döner.
-- **Siper:** Kımıldamayan birlik her tur siperini derinleştirir (en çok 2).
-- **Karargâh:** Komutanın karargâhı yakındaki birliklerin moralini yükseltir; vurulursa bütün birlikler sarsılır.
-- **Zorluk:** Oyuncu ve düşman ateş gücü çarpanları.
+## Kurallar (şans yok)
+Oyunda zar yoktur: aynı durumda aynı karar her zaman aynı sonucu verir. Belirsizlik yalnızca görülmeyen düşmandan gelir (gizli birlikler, uzaktaki düşmanın tahmini gücü).
+
+- **Muharebe:** Her iki tarafın ateş gücü (tüfek, makineli tüfek, top) etkenlerle çarpılır: moral, yorgunluk, talim, cephane, komuta, ikmal, topçu bastırması, süngü, kuşatma (her ek komşu birlik +%12), zorluk; savunanda ayrıca arazi, yükseklik farkı, siper ve duruş. Güç oranı zayiatı belirler; oran 2'yi aşarsa ya da savunanın morali çökerse savunan çekilir, çekilecek yer yoksa esir düşer. Arayüz bütün etkenleri ve kesin sonucu saldırmadan önce gösterir.
+- **Topçu ve gemiler:** Zayiat ve bastırma (bastırılan birliğin gücü kendi turu bitene kadar düşer). Dolaylı atışlı toplar gözcünün gördüğünü döver; gemi ve kıyı topları kendi görüş hattına muhtaçtır ve düz atışlıdır.
+- **Emir puanı (komuta-kontrol):** Her tur sınırlı. Elle yönetilen her birlik, verilen her emir ve duruş değişikliği 1 puan; karargâh menzili dışındaki birlik için 2 puan. Emirler (Taarruz, Savun, Yedek, Serbest ateş) tur sonunda puansız uygulanır; taarruz emrindeki birlik düşmandan uzaksa kendiliğinden yürüyüş koluna geçer.
+- **Karargâhlar:** Her birlik bir karargâha bağlıdır. Menzil dışındaki birliğin gücü %15 düşer ve ona emir vermek iki kat puan ister. Karargâh vurulursa bütün birliklerin morali sarsılır.
+- **İkmal:** Cephane depolardan arazi üzerinden ulaşır; düşmanın tuttuğu hücreler hattı keser, düşmana komşu hücreler zorlaştırır. İkmal dışındaki birliğe cephane gelmez, yorgunluğu yavaş geçer ve iki turdan sonra morali düşer. Tabyaların mermisi sınırlıdır ve yenilenmez.
+- **Cephane:** Piyadede fişek (tüfek başına 150), topçuda mermi sayısı gösterilir. Hücum %25, süngü %8, savunma %8; tabya ateşi silah başına 4, sahra topu 12 mermi.
+- **Duruşlar:** Muharebe düzeni; İntikal (hareket x1,5, yolda çok hızlı, saldıramaz, savunma x0,6); Savunma (hareket etmez, savunma x1,25, siper iki kat hızlı, en çok 3); Dinlenme (yorgunluk -35/tur, savunma x0,8).
+- **Yorgunluk ve talim:** Yürüyüş ve çarpışma yorar (en çok %40 güç kaybı). Talim seviyeleri: acemi x0,85, talimli x1, tecrübeli x1,12, seçkin x1,25.
+- **Arazi:** Gerçek yükseklik verisinden sırt, dere yatağı, sarp yamaç ve kumsal çıkarılır; maki örtüsü, köyler ve patikalar eklenir. Her türün hareket ve savunma değeri vardır; maki, dere ve köy birlikleri gizler.
+- **Mayınlar:** Mayınlı hücreye giren gemi mayına çarpar; patlamadan sonra o hat düşmanca bilinir. Tarayıcılar ateş altında değilse tur başına 2 mayın temizler.
+- **Muharebe düzeni ekranı:** Karargâhlara göre bütün birliklerin asker, moral, dinçlik, cephane, duruş, ikmal, komuta ve emir durumu.
 
 ## Senaryolar (Çanakkale 1915)
 | Senaryo | Ölçek | Oyuncu | Öne çıkan |
