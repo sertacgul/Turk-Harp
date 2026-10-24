@@ -16,25 +16,18 @@ jobs:
       - uses: actions/checkout@v4
       - name: Import project
         run: godot --headless --import --path . 2>&1 | tee import.log; ! grep -E "SCRIPT ERROR|Parse Error" import.log
-      - name: Autoplay Nusret mission
-        run: >
-          godot --headless --path . res://tools/shot.tscn --
-          scene=res://scenes/missions/nusret_night.tscn
-          cmds=0.5:start_mission,0.6:debug_autoplay,25:debug_status,26:quit speed=8 2>&1 | tee nusret.log
-      - name: Autoplay 18 Mart mission
-        run: >
-          godot --headless --path . res://tools/shot.tscn --
-          scene=res://scenes/missions/strait_defense.tscn
-          cmds=0.5:start_mission,0.6:debug_autoplay,45:debug_status,46:quit speed=8 2>&1 | tee strait.log
-      - name: Autoplay Ariburnu mission
-        run: >
-          godot --headless --path . res://tools/shot.tscn --
-          scene=res://scenes/missions/ariburnu.tscn
-          cmds=0.5:start_mission,0.6:debug_autoplay,60:debug_status,61:quit speed=8 2>&1 | tee ariburnu.log
+      - name: Autoplay scenarios (AI vs AI)
+        run: |
+          for sc in 18mart_1915 ariburnu_1915 conkbayiri_1915; do
+            timeout 600 godot --headless --path . res://tools/shot.tscn -- \
+              scene=res://scenes/battle.tscn scenario=res://data/scenarios/$sc.json \
+              cmds=1:debug_skip_intro,2:debug_autoplay,500:quit 2>&1 | tee $sc.log
+            grep -q "phase=over" $sc.log
+          done
       - name: Load main menu
         run: godot --headless --path . res://tools/shot.tscn -- cmds=3:show_campaign,4:quit 2>&1 | tee menu.log
       - name: Fail on script errors
-        run: "! grep -E 'SCRIPT ERROR' nusret.log strait.log ariburnu.log menu.log"
+        run: "! grep -E 'SCRIPT ERROR' *.log"
 
   export:
     needs: test

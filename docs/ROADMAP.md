@@ -1,10 +1,8 @@
 # Yol Haritası
 
-- **v0.1:** 2D prototip (tamamlandı, yerini 3D'ye bıraktı).
-- **v0.2:** 3D Çanakkale seferi: Nusret ve 18 Mart görevleri, kampanya/yıldız/Şeref/yükseltme, prosedürel dünya, efektler, sentez ses, CI ile otomatik test ve masaüstü derlemeler.
-- **v0.3 (şimdi):** Zorluk seviyeleri, Godot 4.7, Arıburnu görevi (piyade + bölük komutası).
-- **v0.4:** Conkbayırı, intro'lar, el bombası, ganimet silahlar, şehit bildirimi, seslendirme altyapısı, gerçekçilik turu.
-- **v0.5:** Gerçek seslendirme kayıtları, müzik, sanatçı modelleri, Kurtuluş Savaşı seferi.
-- **v0.4:** Conkbayırı, İngilizce çeviri, dokunmatik kontrol ince ayarı, performans profilleri.
-- **v0.5:** Çok oyunculu ilk deneme (işbirlikçi tabya savunması).
-- **v1.0:** Çanakkale seferinin tamamı; ardından Kurtuluş Savaşı, Malazgirt ve diğer seferler.
+- **v0.1-v0.4:** 2D prototip, ardından 3D aksiyon sürümü (yerini strateji oyununa bıraktı; git geçmişinde duruyor).
+- **v0.5 (şimdi):** Sıra tabanlı harekât oyunu: gerçek SRTM haritası, 3B kabartma masa, gerçek birlikler ve teçhizat, görüş hattı, mayınlar, yapay zekâ. Senaryolar: 18 Mart, Arıburnu, Conkbayırı.
+- **v0.6:** Seddülbahir çıkarması (25 Nisan), Kirte muharebeleri, Anafartalar (Suvla); senaryolar arası kampanya (kayıpların bir sonraki senaryoya taşınması), ikmal hatları, gece turları.
+- **v0.7:** İki kişilik çok oyunculu (sırayla, aynı cihazda ve çevrim içi); İtilaf tarafını oynayabilme.
+- **v0.8:** Kurtuluş Savaşı seferi (Sakarya, Büyük Taarruz) için Anadolu haritaları.
+- **v1.0:** Çanakkale ve Kurtuluş Savaşı seferlerinin tamamı; ardından Malazgirt, İstanbul'un Fethi ve diğer dönemler.

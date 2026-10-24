@@ -1,40 +1,46 @@
 # Oyun Tasarım Belgesi
 
 ## Vizyon
-Türk tarihinin gerçek savaşlarını, oyuncunun hem **bireysel** (top başında, dümende, siperde) hem de **komutan** (bataryalar, birlikler, filolar) olarak yaşadığı 3D, ilerlemeli bir kampanya.
+Türk tarihinin gerçek savaşlarını, **gerçek haritalar** üzerinde, **gerçek birlikler, komutanlar ve harp teçhizatıyla** canlandıran sıra tabanlı bir harekât oyunu. Oyuncu bir kurmay masasının başındadır: tabur, batarya, tabya ve gemilere emir verir; tarihî olaylar zamanında yaşanır ve sonunda "Tarihte ne oldu?" ile karşılaştırılır.
 
 ## Çekirdek döngü
-1. **Brifing:** Tarihî bağlam, komutanlar, hedefler.
-2. **Görev:** Bireysel kontrol + komuta katmanı (taktik harita).
-3. **Sonuç:** 1-3 yıldız, Şeref puanı, tarihte gerçekte ne olduğu.
-4. **İlerleme:** Şeref ile yükseltmeler; bir görevin sonucu sonrakini etkiler (ör. Nusret'in mayınları 18 Mart'ta aynı yerde).
+1. **Giriş:** Savaşın Türk tarihindeki yerini anlatan kartlar.
+2. **Brifing:** Tarihî durum, hedefler ve kontroller. (Bazı senaryolarda hazırlık aşaması: ör. Nusret'in mayınları.)
+3. **Tur:** Her tur gerçek bir zaman dilimidir (30 dk - 1 saat). Önce oyuncu bütün birliklerini yönetir, sonra düşman oynar. Tur başında tarihî olaylar ve takviyeler gelir.
+4. **Sonuç:** Zafer/yenilgi, 1-3 yıldız, kayıplar ve tarihî karşılaştırma.
 
-## Çanakkale seferi (ilk sefer)
-| Görev | Durum | Bireysel | Komuta |
+## Harita
+- `tools/fetch_heightmap.py` gerçek SRTM yükseklik verisini indirir (`assets/maps/<ad>_height.png`, `data/maps/<ad>.json`).
+- Her senaryo bir enlem/boylam kutusu ve altıgen boyutu seçer (ör. Arıburnu 400 m, 18 Mart 800 m).
+- `ReliefMap`: kabartma masa; 1915 kurmay haritası üslubunda yükseklik renkleri, eş yükselti eğrileri, kıyı çizgisi, denizde kıyıya paralel çizgiler.
+- Hücre özellikleri gerçek araziden hesaplanır: ortalama/en yüksek yükseklik, engebe, kara/deniz oranı.
+
+## Kurallar
+- **Hareket:** Hareket puanı; tırmanış ve engebe maliyeti artırır. Düşmana komşu hücreye giren durur (kontrol bölgesi). Gemiler yalnızca denizde.
+- **Görüş:** Her birlik, gerçek arazi üzerinden hesaplanan görüş hattıyla görür; görülmeyen düşman haritada gösterilmez. Sırtların arka yamaçları gizler.
+- **Yakın muharebe:** Tüfek ve makineli tüfek ateş gücü × moral × cephane; savunanı siper, yükseklik farkı ve engebe korur. Ağır kayıp ya da moral çöküşü geri çekilmeye, kuşatılmışsa esarete yol açar.
+- **Süngü hücumu:** Saldırı +%35, düşman morali ağır sarsılır, kendi kaybın artar; cephanesi bitmiş birlik de yapabilir.
+- **Topçu ve gemiler:** Dolaylı atışlı toplar (obüs, sahra ve dağ topları) gözcünün gördüğü her hedefi döver; gemi ve kıyı topları kendi görüş hattına ihtiyaç duyar. Gemi topları düz atışlı olduğundan siperlere az etkilidir. Ağır ateş alan tabya bir tur susar.
+- **Mayınlar:** Mayınlı hücreye giren gemi büyük olasılıkla vurulur. İtilaf yalnızca bilinen hatları görür ve tarayıcılarla temizlemeye çalışır; tarayıcı ateş altındaysa geri döner.
+- **Siper:** Kımıldamayan birlik her tur siperini derinleştirir (en çok 2).
+- **Karargâh:** Komutanın karargâhı yakındaki birliklerin moralini yükseltir; vurulursa bütün birlikler sarsılır.
+- **Zorluk:** Oyuncu ve düşman ateş gücü çarpanları.
+
+## Senaryolar (Çanakkale 1915)
+| Senaryo | Ölçek | Oyuncu | Öne çıkan |
 |---|---|---|---|
-| Nusret'in Gecesi (7-8 Mart 1915) | Oynanabilir | Nusret'i dümenle, ışıldaklardan kaç, mayın bırak | Rota ve zamanlama |
-| 18 Mart: Boğaz Savunması | Oynanabilir | Rumeli Mecidiye topu, Seyit Onbaşı | Taktik haritadan diğer bataryalara hedef |
-| Arıburnu: 57. Alay (25 Nisan) | Oynanabilir | Üçüncü şahıs piyade subayı, tüfek ve süngü | 6 bölüğe emir, mevzi ele geçirme, süngü hücumu |
-| Conkbayırı (10 Ağustos) | Oynanabilir | Piyade subayı | Kamçı işaretiyle süngü hücumu, üç mevzi |
+| 18 Mart: Boğaz Savunması | 800 m, 30 dk, 16 tur | Tabyalar, seyyar obüsler | Nusret'in mayın aşaması, Seyit Onbaşı, Erenköy Koyu |
+| Arıburnu: 25 Nisan | 400 m, 1 saat, 14 tur | 19. Tümen (57. ve 27. Alay...) | "Taarruzu değil, ölmeyi emrediyorum", gelen ANZAC dalgaları |
+| Conkbayırı: 10 Ağustos | 260 m, 30 dk, 13 tur | 8. Tümen, Anafartalar Grubu | Kamçı işareti, süngü hücumu, cep saati |
 
-## Ortak piyade özellikleri
-- Silahlar: Mauser M1893 (başlangıç), ganimet Lee-Enfield ve Webley; T ile toplanır, X ile değiştirilir.
-- El bombası (G): küre bomba, 3,2 sn fitil; ganimet sandıklarından toplanır. Düşman da bomba atar.
-- Şehitler: düşen her askerimiz adı ve memleketiyle bildirilir; sonuç ekranında şehit sayısı yer alır.
-- Yakınlaştırma: fare tekerleği ya da +/-.
-- Her görev, savaşın Türk tarihindeki yerini anlatan sinematik bir introyla açılır.
-- Seslendirme: `assets/voices/` kayıtları; yoksa işletim sisteminin Türkçe sesi (bkz. docs/VOICES.md).
+## Veri biçimi
+Senaryolar `data/scenarios/*.json`: bölge, altıgen boyutu, başlangıç zamanı, yerler (enlem/boylam, hedef puanı), birlikler (teçhizat, asker sayısı, moral, varış turu, yapay zekâ rolü ve hedefi, gemi rotaları), olaylar (tur), tetikleyiciler (koşul), zafer koşulları ve tarihî özet. Teçhizat veritabanı `scripts/strategy/equipment.gd`.
 
 ## Teknik mimari
-- **Motor:** Godot 4.7, GDScript. Masaüstü Forward+, mobil Mobile render.
-- `scripts/core`: `GameState` (kayıt, ilerleme, yükseltmeler), `Sfx` (çalışma anında sentezlenen sesler, ses hızına göre gecikme).
-- `scripts/world`: `StraitWorld` ve `PeninsulaWorld` (prosedürel arazi), `Atmosphere` (gökyüzü shader'ı, ışık, sis, deniz), `Vegetation` (çimen ve maki), `ShipBuilder` (dönem gemileri, bayraklar), `HumanBuilder` + `HumanRig` (iskeletli insan modelleri, IK ile tüfek ve dürbün tutma).
-- `shaders`: `sky` (bulut, güneş, yıldız), `terrain` (katmanlı kaya, mikro kabartma), `water` (Gerstner dalgaları, kıyı köpüğü), `foliage` (rüzgârda salınan bitki).
-- `scripts/fx`: `Fx` (patlama, su sütunu, namlu alevi, duman, yangın, iz).
-- `scripts/missions`: `MissionBase` (HUD, intro, brifing, duraklatma, sonuç), `InfantryMission` (piyade görevlerinin ortak altyapısı), görevler.
-- Tüm görseller kodla üretilir; sanatçı modelleri geldikçe `ShipBuilder` ve `StraitWorld` içindeki ilgili parçalar .glb modellerle değiştirilecek.
+- `scripts/strategy`: `GeoMap` (yükseklik ve coğrafi dönüşüm), `HexGrid`, `ReliefMap` + `shaders/relief_map.gdshader`, `MapCamera`, `Unit`, `Equipment`, `Combat`, `Battle` (tur akışı), `BattleAI`, `BattleUI`, `UnitCounter` (NATO sembollü pullar).
+- `scripts/core`: `GameState` (kayıt, ayarlar), `Sfx` (sentez sesler), `Voice` (kayıt ya da Türkçe TTS).
 
 ## Tarihî doğruluk kuralları
-- Her görev, lider ve gemi kaydı en az iki güvenilir kaynağa dayanır.
-- Oyun içi sonuç ekranı gerçekte ne olduğunu söyler.
-- Gerçek kişilere ve tüm taraflardaki kayıplara saygılı dil.
+- Birlik, komutan ve olaylar güvenilir kaynaklara dayanır; emin olunmayan ayrıntı (ör. komutan adı) yazılmaz, yaklaşık değerler belirtilir.
+- Sonuç ekranı gerçekte ne olduğunu söyler.
+- Bütün taraflardaki kayıplara saygılı dil.

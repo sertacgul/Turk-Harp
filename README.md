@@ -1,8 +1,8 @@
 # Türk Harp
 
-Türk tarihinin kuruluşundan günümüze uzanan gerçek savaşlarını konu alan; **ücretsiz**, **açık kaynak**, **3D**, **tek ve çok oyunculu** bir strateji/aksiyon oyunu. Bilgisayar (Mac, Windows, Linux), iOS ve Android için Godot 4 ile geliştirilir.
+Türk tarihinin kuruluşundan günümüze uzanan gerçek savaşlarını **gerçek haritalar** üzerinde canlandıran; **ücretsiz**, **açık kaynak**, **sıra tabanlı** bir strateji oyunu. Bilgisayar (Mac, Windows, Linux), iOS ve Android için Godot 4 ile geliştirilir.
 
-> Durum: v0.4. İlk sefer **Çanakkale 1915** tamamlandı: *Nusret'in Gecesi*, *18 Mart: Boğaz Savunması*, *Arıburnu: 57. Alay* ve *Conkbayırı*. Her görev tarihî bir introyla açılır; el bombası, ganimet silah toplama, yakınlaştırma ve Türkçe seslendirme vardır.
+> Durum: v0.5. Oyun sıra tabanlı bir harekât oyununa dönüştü. Gelibolu Yarımadası ve Çanakkale Boğazı, gerçek uydu yükseklik verisinden (SRTM) 3B kabartma bir kurmay masası olarak çizilir. Senaryolar: *18 Mart 1915: Boğaz Savunması* (Nusret'in mayınlarıyla), *Arıburnu: 25 Nisan 1915* ve *Conkbayırı: 10 Ağustos 1915*. Gerçek birlikler (57. Alay, ANZAC taburları, zırhlılar), gerçek teçhizat (Mauser, Krupp topları, 15 inçlik gemi topları), görüş hattı, siper, süngü hücumu, mayınlar ve tarihî olaylar vardır.
 
 ## Hemen oyna
 
@@ -13,9 +13,9 @@ Ayrıntılar ve mobil derleme: [docs/BUILD.md](docs/BUILD.md).
 
 ## Fikir
 
-- **Çift katmanlı oynanış:** Oyuncu hem *bireysel savaşçı* (kahraman/komutan kontrolü) hem de *ordu yöneticisi* (birlik, lojistik, taktik) olarak savaşır.
+- **Kurmay masası:** Oyuncu tabur, batarya, tabya ve gemilere gerçek haritada emir verir; her tur gerçek bir zaman dilimidir.
 - **Gerçek tarih:** Her savaşta o dönemin hakan, sultan, padişah, komutan ve liderleri yer alır.
-- **Tek ve çok oyunculu:** Kampanya modu, tekil savaş senaryoları ve çevrim içi çok oyunculu modlar.
+- **Tek ve çok oyunculu:** Senaryolar ve sefer; sıra tabanlı yapı sayesinde çok oyunculu (sırayla) mod planlanıyor.
 - **Ücretsiz ve açık:** Kod GPL-3.0, tarihî içerik (veri) CC BY-SA 4.0 ile paylaşılır.
 
 ## Kapsanacak Dönemler (taslak)

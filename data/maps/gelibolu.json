@@ -1,0 +1,12 @@
+{
+  "name": "gelibolu",
+  "lat0": 39.95,
+  "lon0": 26.12,
+  "lat1": 40.36,
+  "lon1": 26.48,
+  "width": 1048,
+  "height": 1551,
+  "width_m": 30629.6,
+  "height_m": 45321.4,
+  "source": "AWS Terrain Tiles (Mapzen), SRTM tabanlı, zoom 12"
+}

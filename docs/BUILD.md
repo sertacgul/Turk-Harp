@@ -24,23 +24,28 @@ macOS derlemesi imzasızdır: ilk açılışta uygulamaya sağ tıklayıp **Aç*
 2. `export_presets.cfg` içindeki iOS ön ayarına Team ID gir.
 3. Project > Export > iOS ile Xcode projesi oluştur, Xcode'dan cihaza yükle.
 
-## Fotogerçekçi varlıklar
+## Gerçek harita verisi
 
-Gökyüzü, arazi dokuları ve kaya modelleri için `docs/ASSETS.md`.
+Haritalar SRTM tabanlı açık yükseklik verisinden üretilir:
+
+```
+python3 tools/fetch_heightmap.py gelibolu 39.95 26.12 40.36 26.48
+```
+
+Yeni bir savaş bölgesi için bölgeye bir ad ve enlem/boylam kutusu verin; ardından `data/scenarios/` altında bu haritayı kullanan bir senaryo yazın.
 
 ## Render
-- Varsayılan her yerde Compatibility (OpenGL/WebGL): Mac'te en sorunsuz mod.
-- İsteğe bağlı Forward+: Project Settings > Rendering > Renderer > Rendering Method = forward_plus. SSAO, SSIL, ekran uzayı yansımaları ve hacimsel sis açılır. Mac'te Godot'u çökertirse Compatibility'ye geri dönün.
-- Düşük donanım için Ayarlar > Grafik: Düşük (gölge, parçacık sayısı ve arazi çözünürlüğü azalır).
+- Her yerde Compatibility (OpenGL/WebGL): Mac'te en sorunsuz mod.
+- Düşük donanım için Ayarlar > Grafik: Düşük (harita çözünürlüğü ve kenar yumuşatma azalır).
 
 ## Testler
-`tools/shot.tscn` bir sahneyi yükler, zamanlanmış komutları çalıştırır ve isteğe bağlı ekran görüntüsü alır:
+`tools/shot.tscn` bir sahneyi yükler, zamanlanmış komutları çalıştırır ve isteğe bağlı ekran görüntüsü alır. Bir senaryoyu yapay zekâya karşı yapay zekâyla baştan sona oynatmak (denge testi):
 
 ```
 godot --headless --path . res://tools/shot.tscn -- \
-  scene=res://scenes/missions/strait_defense.tscn \
-  cmds=0.5:start_mission,0.6:debug_autoplay,45:debug_status,46:quit speed=8
+  scene=res://scenes/battle.tscn scenario=res://data/scenarios/ariburnu_1915.json \
+  cmds=1:debug_skip_intro,2:debug_autoplay
 ```
 
-`debug_autoplay` görevi otomatik oynatır; CI her push'ta iki görevi de bu şekilde baştan sona oynatır ve betik hatası arar.
-Ekran görüntüsü için `--headless` yerine bir ekran (ör. `xvfb-run`) ile çalıştırıp `shot` komutunu kullanın.
+Her tur sonunda `STATUS` satırı (kayıplar, hedeflerin sahipleri, batan gemiler) yazılır; grafik yokken animasyonlar atlanır ve bir senaryo birkaç saniyede biter.
+Ekran görüntüsü için `--headless` yerine bir ekran (ör. `xvfb-run`) ile çalıştırıp `shot` komutunu kullanın; `instant=1` animasyonları atlar.

@@ -1,134 +1,74 @@
 extends Node
-## Kampanya ilerlemesi, yükseltmeler ve ayarlar. user://save.json dosyasına kaydedilir.
+## Senaryo ilerlemesi ve ayarlar. user://save.json dosyasına kaydedilir.
 
 const SAVE_PATH := "user://save.json"
-## Test için bütün görevler açık. Yayın öncesi false yapılacak.
+## Test için bütün senaryolar açık. Yayın öncesi false yapılacak.
 const UNLOCK_ALL := true
 
-const MISSIONS := [
-	{
-		"id": "nusret",
-		"title": "Nusret'in Gecesi",
-		"date": "7-8 Mart 1915",
-		"scene": "res://scenes/missions/nusret_night.tscn",
-		"requires": "",
-		"summary": "İtilaf ışıldakları boğazı tararken küçük mayın gemisi Nusret, Erenköy Koyu'na kıyıya paralel 26 mayın döşer. Bu mayınlar 18 Mart'ın kaderini belirleyecektir.",
-	},
-	{
-		"id": "18mart",
-		"title": "18 Mart: Boğaz Savunması",
-		"date": "18 Mart 1915",
-		"scene": "res://scenes/missions/strait_defense.tscn",
-		"requires": "nusret",
-		"summary": "İtilaf donanması üç hat halinde boğaza girer. Rumeli Mecidiye Tabyası'nın topunu sen yönet, diğer bataryalara hedef göster. Cephane bittiğinde Seyit Onbaşı mermiyi sırtında taşır.",
-	},
-	{
-		"id": "ariburnu",
-		"title": "Arıburnu: 57. Alay",
-		"date": "25 Nisan 1915",
-		"scene": "res://scenes/missions/ariburnu.tscn",
-		"requires": "18mart",
-		"summary": "Şafakta ANZAC birlikleri Arıburnu'na çıkar. Mustafa Kemal'in 57. Alay'ı ile Conkbayırı'nı tut, bölüklerini yönet ve süngü hücumuyla sırtları geri al.",
-	},
-	{
-		"id": "conkbayiri",
-		"title": "Conkbayırı",
-		"date": "8-10 Ağustos 1915",
-		"scene": "res://scenes/missions/conkbayiri.tscn",
-		"requires": "ariburnu",
-		"summary": "Albay Mustafa Kemal'in kamçı işaretiyle başlayan şafak süngü hücumu. Conkbayırı tepesini, Şahin Sırtı'nı ve Çiftlik'i İngiliz birliklerinden geri al.",
-	},
+## Senaryolar tarih sırasıyla; ayrıntılar data/scenarios/*.json dosyalarındadır.
+const SCENARIOS := [
+	"res://data/scenarios/18mart_1915.json",
+	"res://data/scenarios/ariburnu_1915.json",
+	"res://data/scenarios/conkbayiri_1915.json",
 ]
 
-const UPGRADES := {
-	"range": {"title": "Barut Hakkı", "desc": "Mermi hızı ve menzil +%8", "costs": [2, 4, 7]},
-	"reload": {"title": "Talimli Top Mürettebatı", "desc": "Dolum süresi -%12", "costs": [2, 4, 7]},
-	"armor": {"title": "Tabya Tahkimatı", "desc": "Tabya dayanıklılığı +%15", "costs": [2, 4, 7]},
-	"seyit": {"title": "Seyit'in Gücü", "desc": "Cephane taşıma süresi -%20", "costs": [1, 3, 5]},
-}
-
-## Zorluk çarpanları. enemy_damage: düşman hasarı, enemy_scatter: düşman isabetsizliği,
-## player_damage: oyuncu hasarı, detection: ışıldak tespit hızı, honor: kazanılan Şeref.
+## Zorluk çarpanları: enemy_power düşman ateş gücü, player_power oyuncu ateş gücü.
 const DIFFICULTIES := {
-	"kolay": {"title": "Kolay", "enemy_damage": 0.6, "enemy_scatter": 1.35, "player_damage": 1.3, "detection": 0.6, "honor": 0.75},
-	"normal": {"title": "Normal", "enemy_damage": 1.0, "enemy_scatter": 1.0, "player_damage": 1.0, "detection": 1.0, "honor": 1.0},
-	"zor": {"title": "Zor", "enemy_damage": 1.45, "enemy_scatter": 0.75, "player_damage": 0.85, "detection": 1.45, "honor": 1.5},
+	"kolay": {"title": "Kolay", "enemy_power": 0.75, "player_power": 1.2},
+	"normal": {"title": "Normal", "enemy_power": 1.0, "player_power": 1.0},
+	"zor": {"title": "Zor", "enemy_power": 1.25, "player_power": 0.9},
 }
-
-## Varsayılan (tarihî) mayın hattı: Erenköy Koyu'nda kıyıya paralel 26 mayın.
-var default_mines: Array[Vector3] = []
 
 var stars := {}
-var honor := 0
-var upgrades := {"range": 0, "reload": 0, "armor": 0, "seyit": 0}
-var laid_mines: Array[Vector3] = []
 var settings := {"quality": "high", "sfx": 0.8, "difficulty": "normal"}
-var current_mission := ""
+var current_scenario := ""
+var _meta_cache := {}
 
 
 func _ready() -> void:
-	default_mines = StraitWorld.default_mine_line()
-	# Telefon ve tablette (uygulama ya da tarayıcı) varsayılan grafik ayarı Düşük.
 	if is_mobile():
 		settings["quality"] = "low"
 	load_game()
 	apply_render_settings()
 
 
-## Düşük ayarda 3D sahne daha düşük çözünürlükte çizilir; arayüz keskin kalır.
 func apply_render_settings() -> void:
 	var root := get_tree().root
-	root.scaling_3d_scale = 1.0 if high_quality() else 0.6
-	root.msaa_3d = Viewport.MSAA_2X if high_quality() else Viewport.MSAA_DISABLED
+	root.scaling_3d_scale = 1.0 if high_quality() else 0.7
+	root.msaa_3d = Viewport.MSAA_4X if high_quality() else Viewport.MSAA_DISABLED
 
 
 func is_mobile() -> bool:
 	return OS.has_feature("mobile") or OS.has_feature("web_ios") or OS.has_feature("web_android")
 
 
-func mission(id: String) -> Dictionary:
-	for m in MISSIONS:
-		if m["id"] == id:
-			return m
-	return {}
+## Senaryonun menüde gösterilen özeti (id, title, subtitle, summary, requires).
+func scenario_meta(path: String) -> Dictionary:
+	if _meta_cache.has(path):
+		return _meta_cache[path]
+	var f := FileAccess.open(path, FileAccess.READ)
+	var d: Dictionary = {}
+	if f:
+		var all: Dictionary = JSON.parse_string(f.get_as_text())
+		for k in ["id", "title", "subtitle", "summary", "requires"]:
+			if all.has(k):
+				d[k] = all[k]
+	d["path"] = path
+	_meta_cache[path] = d
+	return d
 
 
-func is_unlocked(id: String) -> bool:
+func is_unlocked(meta: Dictionary) -> bool:
 	if UNLOCK_ALL:
 		return true
-	var req: String = mission(id).get("requires", "")
+	var req: String = meta.get("requires", "")
 	return req == "" or stars.get(req, 0) > 0
 
 
-func complete(id: String, earned_stars: int, honor_gain: int) -> void:
+func complete(id: String, earned_stars: int) -> void:
 	if earned_stars > stars.get(id, 0):
 		stars[id] = earned_stars
-	honor += honor_gain
 	save_game()
-
-
-func upgrade_level(key: String) -> int:
-	return upgrades.get(key, 0)
-
-
-func upgrade_cost(key: String) -> int:
-	var costs: Array = UPGRADES[key]["costs"]
-	var lvl := upgrade_level(key)
-	return -1 if lvl >= costs.size() else costs[lvl]
-
-
-func buy_upgrade(key: String) -> bool:
-	var cost := upgrade_cost(key)
-	if cost < 0 or honor < cost:
-		return false
-	honor -= cost
-	upgrades[key] = upgrade_level(key) + 1
-	save_game()
-	return true
-
-
-func mines_for_battle() -> Array[Vector3]:
-	return laid_mines if laid_mines.size() > 0 else default_mines
 
 
 func difficulty() -> String:
@@ -140,7 +80,6 @@ func difficulty_title() -> String:
 	return DIFFICULTIES[difficulty()]["title"]
 
 
-## Seçili zorluğun çarpanı (ör. diff("enemy_damage")).
 func diff(key: String) -> float:
 	return DIFFICULTIES[difficulty()][key]
 
@@ -156,13 +95,9 @@ func high_quality() -> bool:
 
 
 func save_game() -> void:
-	var mines := []
-	for m in laid_mines:
-		mines.append([m.x, m.z])
-	var data := {"stars": stars, "honor": honor, "upgrades": upgrades, "mines": mines, "settings": settings}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f:
-		f.store_string(JSON.stringify(data))
+		f.store_string(JSON.stringify({"stars": stars, "settings": settings, "version": 2}))
 
 
 func load_game() -> void:
@@ -174,20 +109,12 @@ func load_game() -> void:
 	var data = JSON.parse_string(f.get_as_text())
 	if not data is Dictionary:
 		return
-	stars = data.get("stars", {})
-	honor = int(data.get("honor", 0))
-	for k in upgrades:
-		upgrades[k] = int(data.get("upgrades", {}).get(k, 0))
+	# Eski (3B sürüm) kayıtlarındaki yıldızlar yeni senaryolara aktarılmaz.
+	if int(data.get("version", 1)) >= 2:
+		stars = data.get("stars", {})
 	settings.merge(data.get("settings", {}), true)
-	laid_mines.clear()
-	for m in data.get("mines", []):
-		laid_mines.append(Vector3(m[0], 0.0, m[1]))
 
 
 func reset_progress() -> void:
 	stars = {}
-	honor = 0
-	for k in upgrades:
-		upgrades[k] = 0
-	laid_mines.clear()
 	save_game()
